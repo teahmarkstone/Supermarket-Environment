@@ -29,6 +29,7 @@ class SupermarketEnv(gym.Env):
         self.observation_space = gym.spaces.Dict()
 
     def step(self, action):
+        done = False
         for i, player_action in enumerate(action):
             if player_action in MOVEMENT_ACTIONS:
                 self.game.player_move(i, player_action)
@@ -42,7 +43,10 @@ class SupermarketEnv(gym.Env):
                 self.game.cancel_interaction(i)
         observation = self.game.update_observation()
         self.step_count += 1
-        return observation, 0., False, None
+        if not self.game.running:
+            done = True
+            pygame.quit()
+        return observation, 0., done, None
 
     def reset(self):
         screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
