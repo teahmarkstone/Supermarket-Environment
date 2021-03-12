@@ -77,7 +77,7 @@ class Game:
     def set_up(self):
         # make players
         for i in range(0, self.num_players):
-            player = Player(i+1, 12, Direction.EAST, i+1)
+            player = Player(i+1, 15, Direction.EAST, i+1)
             self.players.append(player)
 
         self.running = True
@@ -486,26 +486,26 @@ class Game:
     def get_cart_index(self, cart):
         return index_or_minus_one(cart, self.carts)
 
-    def add_player_info(self):
-        new_player = {"index": None,
-                      "position": [],
-                      "direction": None,
-                      "curr_cart": None,
-                      "shopping_list": [],
-                      "list_quant": [],
-                      "holding_food": None,
-                      "bought_holding_food": None
-                      }
-        supermarket_obs["player"].append(new_player)
+    # def add_player_info(self):
+    #     new_player = {"index": None,
+    #                   "position": [],
+    #                   "direction": None,
+    #                   "curr_cart": None,
+    #                   "shopping_list": [],
+    #                   "list_quant": [],
+    #                   "holding_food": None,
+    #                   "bought_holding_food": None
+    #                   }
+    #     supermarket_obs["player"].append(new_player)
 
-    def add_cart_info(self):
-        new_cart = {"position": None,
-                    "owner": None,
-                    "state": None,
-                    "direction": None,
-                    "being_held": None,
-                    "last_held": None,
-                    "contents": None,
-                    "purchased_contents": None
-                    }
-        supermarket_obs["cart"].append(new_cart)
+    # def add_cart_info(self):
+    #     new_cart = {"position": None,
+    #                 "owner": None,
+    #                 "state": None,
+    #                 "direction": None,
+    #                 "being_held": None,
+    #                 "last_held": None,
+    #                 "contents": None,
+    #                 "purchased_contents": None
+    #                 }
+    #     supermarket_obs["cart"].append(new_cart)

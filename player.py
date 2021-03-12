@@ -136,7 +136,7 @@ class Player:
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
                                          (int(430), int(460)))
         screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
-        text = render_text("Shopping List: ", True)
+        text = render_text("Shopping List: ", True, (0, 0, 0))
         screen.blit(text, (200, 50))
         spacing = 30
         y_position = 50 + spacing
@@ -144,44 +144,59 @@ class Player:
         counter = 0
         inventory = self.get_inventory(carts)
         for food in self.shopping_list:
-            text = render_text(food, False)
+            text = render_text(food, False, (0, 0, 0))
             screen.blit(text, (155, y_position))
             quantity = str(self.list_quant[counter])
-            text = render_text(quantity, False)
+            text = render_text(quantity, False, (0, 0, 0))
             screen.blit(text, (470, y_position))
-            if food in inventory and self.list_quant[self.shopping_list.index(food)] <= inventory[food]:
+            if food in inventory and self.list_quant[self.shopping_list.index(food)] <= inventory[food][1]:
                 pygame.draw.line(screen, [255, 0, 0], (150, y_position + 7), (487, y_position + 7), width=2)
             counter += 1
             y_position += spacing
 
     # Currently includes both purchased and unpurchased items. We could potentially separate it for finer-grained info.
     def get_inventory(self, carts):
-        inventory = defaultdict(int)
+        inventory = defaultdict(defaultdict)
+
         if self.holding_food is not None:
-            inventory[self.holding_food] = 1
+            if self.bought_holding_food is True:
+                inventory[self.holding_food]["purchased"] = 1
+                inventory[self.holding_food]["unpurchased"] = 0
+            else:
+                inventory[self.holding_food]["purchased"] = 0
+                inventory[self.holding_food]["unpurchased"] = 1
         for cart in carts:
             if cart.last_held == self:
                 for food, quantity in cart.contents.items():
-                    inventory[food] += quantity
+                    inventory[food]["unpurchased"] = 0
+                    inventory[food]["purchased"] = 0
+                    inventory[food]["unpurchased"] += quantity
                 for food, quantity in cart.purchased_contents.items():
-                    inventory[food] += quantity
+                    if "unpurchased" not in inventory[food]:
+                        inventory[food]["unpurchased"] = 0
+                    inventory[food]["purchased"] = 0
+                    inventory[food]["purchased"] += quantity
         return inventory
 
     def render_items(self, screen, carts):
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
                                          (int(430), int(450)))
         screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
-        text = render_text("Inventory: ", True)
+        text = render_text("Inventory: ", True, (0, 0, 0))
         screen.blit(text, (230, 50))
         spacing = 30
         y_position = 50 + spacing
         inventory = self.get_inventory(carts)
-        for food, quantity in inventory.items():
+        for food in inventory.keys():
             # if not food in rendered_food:
-            text = render_text(food, False)
+            text = render_text(food, False, (0, 0, 0))
             screen.blit(text, (155, y_position))
-            text = render_text(str(quantity), False)
-            screen.blit(text, (470, y_position))
+
+            unpurchased = render_text(str(inventory[food]["unpurchased"]), False, (250, 0, 0))
+            purchased = render_text(str(inventory[food]["purchased"]), False, (0, 250, 0))
+
+            screen.blit(unpurchased, (420, y_position))
+            screen.blit(purchased, (460, y_position))
             y_position += spacing
 
     def collision(self, x_position, y_position):

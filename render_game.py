@@ -26,7 +26,7 @@ def render_decor(screen, camera):
     doormat = pygame.transform.scale(pygame.image.load("images/decor/doormat.png"),
                                      (int(config.SCALE), int(config.SCALE)))
     screen.blit(doormat, (int(0 * config.SCALE) - (camera.position[0] * config.SCALE),
-                          int(12 * config.SCALE) - (camera.position[1] * config.SCALE)))
+                          int(15 * config.SCALE) - (camera.position[1] * config.SCALE)))
     exit_mat = pygame.transform.scale(pygame.image.load("images/decor/exit_mat.png"),
                                       (int(config.SCALE), int(config.SCALE)))
     screen.blit(exit_mat, (int(0 * config.SCALE) - (camera.position[0] * config.SCALE),
@@ -68,15 +68,15 @@ def render_pickup(screen):
     textbox = pygame.transform.scale(pygame.image.load("text/textbox.png"),
                                      (int(640), int(150)))
     screen.blit(textbox, (int(0 * config.SCALE), int(330)))
-    text = render_text("Your number has been called.", False)
+    text = render_text("Your number has been called.", False, (0, 0, 0))
     screen.blit(text, (17, 380))
 
 
-def render_text(string, bold):
+def render_text(string, bold, color):
     font = pygame.font.Font("text/pokemonfont.ttf", 17)
     if bold:
         font.bold = True
-    text = font.render(string, True, (0, 0, 0))
+    text = font.render(string, True, color)
     return text
 
 
@@ -92,6 +92,6 @@ def render_textbox(screen, text):
         if candidate_x > 623:
             y_coord += 30
             x_coord = 0
-        text = render_text(" " + word, False)
+        text = render_text(" " + word, False, (0, 0, 0))
         screen.blit(text, (x_coord, y_coord))
         x_coord += 17*(1+len(word))
