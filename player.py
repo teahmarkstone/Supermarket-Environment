@@ -157,24 +157,28 @@ class Player:
     # Currently includes both purchased and unpurchased items. We could potentially separate it for finer-grained info.
     def get_inventory(self, carts):
         inventory = defaultdict(defaultdict)
-
         if self.holding_food is not None:
-            if self.bought_holding_food is True:
-                inventory[self.holding_food]["purchased"] = 1
+            if "unpurchased" not in inventory[self.holding_food]:
                 inventory[self.holding_food]["unpurchased"] = 0
-            else:
+            if "purchased" not in inventory[self.holding_food]:
                 inventory[self.holding_food]["purchased"] = 0
-                inventory[self.holding_food]["unpurchased"] = 1
+            if self.bought_holding_food is True:
+                inventory[self.holding_food]["purchased"] += 1
+            else:
+                inventory[self.holding_food]["unpurchased"] += 1
         for cart in carts:
             if cart.last_held == self:
                 for food, quantity in cart.contents.items():
-                    inventory[food]["unpurchased"] = 0
-                    inventory[food]["purchased"] = 0
+                    if "unpurchased" not in inventory[food]:
+                        inventory[food]["unpurchased"] = 0
+                    if "purchased" not in inventory[food]:
+                        inventory[food]["purchased"] = 0
                     inventory[food]["unpurchased"] += quantity
                 for food, quantity in cart.purchased_contents.items():
                     if "unpurchased" not in inventory[food]:
                         inventory[food]["unpurchased"] = 0
-                    inventory[food]["purchased"] = 0
+                    if "purchased" not in inventory[food]:
+                        inventory[food]["purchased"] = 0
                     inventory[food]["purchased"] += quantity
         return inventory
 

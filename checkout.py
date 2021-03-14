@@ -27,10 +27,12 @@ class Register(InteractiveObject):
 
     def interact(self, game, player):
         # first interactive stage is just rendering prompt
+        if not game.render_messages:
+            self.interactive_stage = 1
         if self.interactive_stage == 0:
             self.interaction_message = "Hello! Would you like to check out?"
             return
-        if self.interactive_stage == 1:
+        if self.interactive_stage == 1 or not game.render_messages:
             has_items = False
             if player.holding_food is not None and not player.bought_holding_food:
                 player.bought_holding_food = True

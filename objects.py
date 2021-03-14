@@ -18,7 +18,8 @@ class InteractiveObject(abc.ABC):
 
     def render_interaction(self, game, screen):
         if self.interaction and self.interaction_message is not None:
-            render_textbox(screen, self.interaction_message)
+            if game.render_messages:
+                render_textbox(screen, self.interaction_message)
 
     @abc.abstractmethod
     def can_interact(self, player):

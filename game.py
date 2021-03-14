@@ -74,6 +74,8 @@ class Game:
         self.curr_player = 0
         self.player_speed = player_speed
 
+        self.render_messages = True
+
     def set_up(self):
         # make players
         for i in range(0, self.num_players):
@@ -121,7 +123,8 @@ class Game:
             if obj is not None:
                 obj.interaction = True
                 obj.interact(self, player)
-                self.game_state = GameState.INTERACTIVE
+                if self.render_messages:
+                    self.game_state = GameState.INTERACTIVE
         elif self.game_state == GameState.INTERACTIVE:
             obj = self.check_interactions()
             if obj is not None:
