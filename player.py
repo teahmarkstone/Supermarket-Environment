@@ -149,8 +149,11 @@ class Player:
             quantity = str(self.list_quant[counter])
             text = render_text(quantity, False, (0, 0, 0))
             screen.blit(text, (470, y_position))
-            if food in inventory and self.list_quant[self.shopping_list.index(food)] <= inventory[food][1]:
-                pygame.draw.line(screen, [255, 0, 0], (150, y_position + 7), (487, y_position + 7), width=2)
+            if food in inventory and self.list_quant[self.shopping_list.index(food)] <= inventory[food]["purchased"]:
+                pygame.draw.line(screen, [0, 255, 0], (150, y_position + 7), (487, y_position + 7), width=2)
+            elif food in inventory and self.list_quant[self.shopping_list.index(food)] <= \
+                    inventory[food]["unpurchased"] + inventory[food]["purchased"]:
+                    pygame.draw.line(screen, [255, 0, 0], (150, y_position + 7), (487, y_position + 7), width=2)
             counter += 1
             y_position += spacing
 
