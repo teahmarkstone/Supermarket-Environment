@@ -55,7 +55,7 @@ def get_obj_category(obj):
 
 class Game:
 
-    def __init__(self, screen, num_players=1, player_speed=0.07):
+    def __init__(self, screen, num_players=1, player_speed=0.07, render_messages=False):
         self.screen = screen
         self.objects = []
         self.carts = []
@@ -74,7 +74,7 @@ class Game:
         self.curr_player = 0
         self.player_speed = player_speed
 
-        self.render_messages = True
+        self.render_messages = render_messages
 
     def set_up(self):
         # make players

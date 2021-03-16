@@ -13,7 +13,7 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
 
     num_players = 1
-    game = Game(screen, num_players)
+    game = Game(screen, num_players, render_messages=True)
 
     game.set_up()
 
