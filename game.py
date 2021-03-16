@@ -209,11 +209,13 @@ class Game:
 
                 # i key shows inventory
                 elif event.key == pygame.K_i:
+                    self.players[self.curr_player].render_shopping_list = False
                     self.players[self.curr_player].render_inventory = True
                     self.game_state = GameState.INTERACTIVE
 
                 # l key shows shopping list
                 elif event.key == pygame.K_l:
+                    self.players[self.curr_player].render_inventory = False
                     self.players[self.curr_player].render_shopping_list = True
                     self.game_state = GameState.INTERACTIVE
 
@@ -267,12 +269,14 @@ class Game:
                     self.interact(self.curr_player)
                 # i key turns off inventory rendering
                 elif event.key == pygame.K_i:
-                    self.players[self.curr_player].render_inventory = False
-                    self.game_state = GameState.EXPLORATORY
+                    if self.players[self.curr_player].render_inventory:
+                        self.players[self.curr_player].render_inventory = False
+                        self.game_state = GameState.EXPLORATORY
                 # l key turns off shopping list rendering
                 elif event.key == pygame.K_l:
-                    self.players[self.curr_player].render_shopping_list = False
-                    self.game_state = GameState.EXPLORATORY
+                    if self.players[self.curr_player].render_shopping_list:
+                        self.players[self.curr_player].render_shopping_list = False
+                        self.game_state = GameState.EXPLORATORY
 
     # Reading in map
     def load_map(self, file_name):

@@ -27,7 +27,7 @@ if __name__ == "__main__":
         clock.tick(120)
         game.update()
         for norm in norms:
-            norm.monitor(game)
+            norm.monitor(game, 0)
 
         pygame.display.flip()
 
