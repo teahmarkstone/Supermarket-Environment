@@ -55,7 +55,7 @@ def get_obj_category(obj):
 
 class Game:
 
-    def __init__(self, screen, num_players=1, player_speed=0.07, render_messages=False):
+    def __init__(self, screen, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False):
         self.screen = screen
         self.objects = []
         self.carts = []
@@ -74,6 +74,7 @@ class Game:
         self.curr_player = 0
         self.player_speed = player_speed
 
+        self.keyboard_input = keyboard_input
         self.render_messages = render_messages
 
     def set_up(self):
@@ -108,10 +109,11 @@ class Game:
         render.render_interactions(self, self.screen, self.objects)
 
         # checking keyboard input/events for either exploratory or interactive
-        if self.game_state == GameState.EXPLORATORY:
-            self.exploratory_events()
-        elif self.game_state == GameState.INTERACTIVE:
-            self.interactive_events()
+        if self.keyboard_input:
+            if self.game_state == GameState.EXPLORATORY:
+                self.exploratory_events()
+            elif self.game_state == GameState.INTERACTIVE:
+                self.interactive_events()
 
         # print(self.update_observation())
 

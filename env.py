@@ -12,7 +12,7 @@ MOVEMENT_ACTIONS = [PlayerAction.NORTH, PlayerAction.SOUTH, PlayerAction.EAST, P
 
 class SupermarketEnv(gym.Env):
 
-    def __init__(self, num_players=1, player_speed=0.15):
+    def __init__(self, num_players=1, player_speed=0.15, render_messages=False):
         pygame.init()
         super(SupermarketEnv, self).__init__()
 
@@ -20,6 +20,7 @@ class SupermarketEnv(gym.Env):
 
         self.clock = pygame.time.Clock()
         self.step_count = 0
+        self.render_messages = render_messages
 
         self.num_players = num_players
         self.player_speed = player_speed
@@ -50,7 +51,7 @@ class SupermarketEnv(gym.Env):
 
     def reset(self):
         screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
-        self.game = Game(screen, self.num_players, self.player_speed)
+        self.game = Game(screen, self.num_players, self.player_speed, render_messages=self.render_messages)
         self.game.set_up()
         self.step_count = 0
         return self.game.update_observation()
