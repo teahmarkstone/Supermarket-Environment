@@ -29,9 +29,10 @@ class Norm(ABC):
 
 
 class NormWrapper(gym.Wrapper):
-    def __init__(self, norms, env):
+    def __init__(self, env, norms):
         super(NormWrapper, self).__init__(env)
         self.norms = list(norms)
+        self.violations = set()
 
     def step(self, action):
         for norm in self.norms:
@@ -40,10 +41,18 @@ class NormWrapper(gym.Wrapper):
         violations = set()
         for norm in self.norms:
             violations.update(norm.monitor(self.env.game, action))
-        new_obs = {'violations': violations, 'obs': obs}
+        self.violations = violations
+        new_obs = obs
+        # new_obs = {'violations': violations, 'obs': obs}
         return new_obs, reward, done, info
 
-    def reset(self, action):
+    def render(self, mode='human', **kwargs):
+        self.env.render(mode, **kwargs)
+        for violation in self.violations:
+            print(violation)
+        self.violations = set()
+
+    def reset(self):
         super(NormWrapper, self).reset()
         for norm in self.norms:
             norm.reset()

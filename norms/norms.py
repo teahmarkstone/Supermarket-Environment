@@ -64,8 +64,8 @@ class ShopliftingNorm(Norm):
             if player.position[0] > 1:
                 continue
             stolen_food = []
-            if player.holding_cart is not None:
-                cart = player.holding_cart
+            if player.curr_cart is not None:
+                cart = player.curr_cart
                 stolen_food.extend(cart.contents)
             elif player.holding_food is not None and not player.bought_holding_food:
                 stolen_food.append((player.holding_food, 1))
@@ -97,8 +97,8 @@ class WrongShelfViolation(NormViolation):
 
 class WrongShelfNorm(Norm):
     def preprocess(self, game, action):
-        for player in game.players:
-            if player.holding_food is not None and action == PlayerAction.INTERACT:
+        for i, player in enumerate(game.players):
+            if player.holding_food is not None and action[i] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) and interaction_object.string_type != player.holding_food:
                     self.violations.add(WrongShelfViolation(player, player.holding_food, interaction_object))

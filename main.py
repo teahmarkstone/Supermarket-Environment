@@ -4,7 +4,8 @@ from enums.game_state import GameState
 from enums.player_action import PlayerAction
 from env import SupermarketEnv
 from game import Game
-from norms.theft import CartTheftNorm
+from norms.norm import NormWrapper
+from norms.norms import CartTheftNorm, WrongShelfNorm, ShopliftingNorm
 
 
 class SupermarketEventHandler:
@@ -50,8 +51,10 @@ class SupermarketEventHandler:
                 # switch players
                 elif event.key == pygame.K_1:
                     self.curr_player = 0
+                    self.env.game.curr_player = 0
                 elif event.key == pygame.K_2:
                     self.curr_player = 1
+                    self.env.game.curr_player = 1
 
                 elif event.key == pygame.K_c:
                     self.env.step(self.single_player_action(PlayerAction.TOGGLE))
@@ -74,7 +77,8 @@ class SupermarketEventHandler:
             self.env.step(self.single_player_action(PlayerAction.EAST))
 
         self.running = self.env.game.running
-        self.env.render()
+        if self.running:
+            self.env.render()
 
     def handle_interactive_events(self):
         for event in pygame.event.get():
@@ -104,12 +108,17 @@ class SupermarketEventHandler:
                         self.env.game.players[self.curr_player].render_shopping_list = False
                         self.env.game.game_state = GameState.EXPLORATORY
         self.running = self.env.game.running
-        self.env.render()
+        if self.running:
+            self.env.render()
 
 
 if __name__ == "__main__":
 
-    env = SupermarketEnv(num_players=1, player_speed=0.07, render_messages=True)
+    env = SupermarketEnv(num_players=2, player_speed=0.07, render_messages=True)
+
+    norms = [CartTheftNorm(), WrongShelfNorm(), ShopliftingNorm()]
+
+    env = NormWrapper(env, norms)
 
     handler = SupermarketEventHandler(env)
 
