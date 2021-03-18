@@ -284,6 +284,7 @@ class EntranceOnlyNorm(Norm):
 
 class UnattendedCartViolation(NormViolation):
     def __init__(self, cart, distance, time):
+        super().__init__()
         self.cart = cart
         self.time = time
         self.distance = distance
@@ -324,3 +325,28 @@ class UnattendedCartNorm(Norm):
         self.time_threshold = time_threshold
         self.time_too_far_away = defaultdict(int)
         self.old_violations = set()
+
+
+class OneCartOnlyViolation(NormViolation):
+    def __init__(self, player):
+        super().__init__()
+        self.player = player
+
+    def as_string(self):
+        return "{player} has more than one cart.".format(player=self.player)
+
+
+class OneCartOnlyNorm(Norm):
+    def post_monitor(self, game, action):
+        violations = set()
+        has_cart = set()
+        for cart in game.carts:
+            if cart.last_held is None:
+                continue
+            if cart.last_held in has_cart:
+                if cart.last_held not in self.known_violations:
+                    violations.add(OneCartOnlyViolation(cart.last_held))
+                    self.known_violations.add(cart.last_held)
+            else:
+                has_cart.add(cart.last_held)
+        return violations

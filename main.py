@@ -5,8 +5,7 @@ from enums.player_action import PlayerAction
 from env import SupermarketEnv
 from game import Game
 from norms.norm import NormWrapper
-from norms.norms import CartTheftNorm, WrongShelfNorm, ShopliftingNorm, PlayerCollisionNorm, ObjectCollisionNorm, \
-    WallCollisionNorm, BlockingExitNorm, EntranceOnlyNorm, UnattendedCartNorm
+from norms.norms import *
 
 
 class SupermarketEventHandler:
@@ -124,6 +123,7 @@ if __name__ == "__main__":
              BlockingExitNorm(),
              EntranceOnlyNorm(),
              UnattendedCartNorm(),
+             OneCartOnlyNorm(),
              ]
 
     env = NormWrapper(env, norms)
