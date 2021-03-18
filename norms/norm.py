@@ -18,12 +18,11 @@ class Norm(ABC):
     def __init__(self):
         self.known_violations = set()
 
-    def preprocess(self, game, action):
-        pass
+    def pre_monitor(self, game, action):
+        return set()
 
-    @abstractmethod
-    def monitor(self, game, action):
-        pass
+    def post_monitor(self, game, action):
+        return set()
 
     def reset(self):
         self.known_violations = set()
@@ -36,12 +35,12 @@ class NormWrapper(gym.Wrapper):
         self.violations = set()
 
     def step(self, action):
-        for norm in self.norms:
-            norm.preprocess(self.env.game, action)
-        obs, reward, done, info = self.env.step(action)
         violations = set()
         for norm in self.norms:
-            violations.update(norm.monitor(self.env.game, action))
+            violations.update(norm.pre_monitor(self.env.game, action))
+        obs, reward, done, info = self.env.step(action)
+        for norm in self.norms:
+            violations.update(norm.post_monitor(self.env.game, action))
         self.violations = violations
         new_obs = obs
         # new_obs = {'violations': violations, 'obs': obs}

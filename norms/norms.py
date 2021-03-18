@@ -24,7 +24,7 @@ class CartTheftNorm(Norm):
     def __init__(self):
         super(CartTheftNorm, self).__init__()
 
-    def monitor(self, game, action):
+    def post_monitor(self, game, action):
         new_violations = set()
         for player in game.players:
             cart = player.curr_cart
@@ -59,7 +59,7 @@ class ShopliftingNorm(Norm):
     def __init__(self):
         super(ShopliftingNorm, self).__init__()
 
-    def monitor(self, game, action):
+    def post_monitor(self, game, action):
         new_violations = set()
         for player in game.players:
             if player.position[0] > 1:
@@ -76,7 +76,7 @@ class ShopliftingNorm(Norm):
                     self.known_violations.add(violation)
                     new_violations.add(violation)
         return new_violations
-    
+
     def reset(self):
         super(ShopliftingNorm, self).reset()
 
@@ -97,28 +97,19 @@ class WrongShelfViolation(NormViolation):
 
 
 class WrongShelfNorm(Norm):
-    def preprocess(self, game, action):
+    def pre_monitor(self, game, action):
+        violations = set()
         for i, player in enumerate(game.players):
             if player.holding_food is not None and action[i] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) and interaction_object.string_type != player.holding_food:
-                    self.violations.add(WrongShelfViolation(player, player.holding_food, interaction_object))
-
-    def monitor(self, game, action):
-        new_violations = self.violations
-        self.violations = set()
-        return new_violations
-
-    def reset(self):
-        super().reset()
-
-    def __init__(self):
-        super(WrongShelfNorm, self).__init__()
-        self.violations = set()
+                    violations.add(WrongShelfViolation(player, player.holding_food, interaction_object))
+        return violations
 
 
 class PlayerCollisionViolation(NormViolation):
     def __init__(self, collider, collidee):
+        super().__init__()
         self.collider = collider
         self.collidee = collidee
 
@@ -127,39 +118,35 @@ class PlayerCollisionViolation(NormViolation):
 
 
 class PlayerCollisionNorm(Norm):
-    def preprocess(self, game, action):
+    def pre_monitor(self, game, action):
+        violations = set()
         next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
         for i, player in enumerate(game.players):
             for j, player2 in enumerate(game.players):
                 if i == j:
                     continue
-                if 1 <= action[i] <= 4 and pos_collision(next_positions[i][0], next_positions[i][1], next_positions[j][0],
-                                 next_positions[j][1], x_margin=0.55, y_margin=0.55):
+                if 1 <= action[i] <= 4 and pos_collision(next_positions[i][0], next_positions[i][1],
+                                                         next_positions[j][0],
+                                                         next_positions[j][1], x_margin=0.55, y_margin=0.55):
                     if (player, player2) not in self.old_collisions:
-                        self.violations.add(PlayerCollisionViolation(collider=player, collidee=player2))
+                        violations.add(PlayerCollisionViolation(collider=player, collidee=player2))
                         self.old_collisions.add((player, player2))
                 elif (player, player2) in self.old_collisions:
                     self.old_collisions.remove((player, player2))
-
-
-    def monitor(self, game, action):
-        new_violations = self.violations
-        self.violations = set()
-        return new_violations
+        return violations
 
     def reset(self):
         super(PlayerCollisionNorm, self).reset()
-        self.violations = set()
         self.old_collisions = set()
-        
+
     def __init__(self):
         super(PlayerCollisionNorm, self).__init__()
-        self.violations = set()
         self.old_collisions = set()
 
 
 class ObjectCollisionViolation(NormViolation):
     def __init__(self, collider, obj):
+        super().__init__()
         self.collider = collider
         self.obj = obj
 
@@ -168,7 +155,8 @@ class ObjectCollisionViolation(NormViolation):
 
 
 class ObjectCollisionNorm(Norm):
-    def preprocess(self, game, action):
+    def pre_monitor(self, game, action):
+        violations = set()
         for i, player in enumerate(game.players):
             next_pos = game.next_position(player, action[i])
             for obj in game.objects:
@@ -176,30 +164,55 @@ class ObjectCollisionNorm(Norm):
                     continue
                 if 1 <= action[i] <= 4 and obj.collision(next_pos[0], next_pos[1]):
                     if (player, obj) not in self.old_collisions:
-                        self.violations.add(ObjectCollisionViolation(player, obj))
+                        violations.add(ObjectCollisionViolation(player, obj))
                         self.old_collisions.add((player, obj))
                 elif (player, obj) in self.old_collisions:
                     self.old_collisions.remove((player, obj))
-        return set()
-
-    def monitor(self, game, action):
-        new_violations = self.violations
-        self.violations = set()
-        return new_violations
+        return violations
 
     def reset(self):
         super(ObjectCollisionNorm, self).reset()
-        self.violations = set()
         self.old_collisions = set()
 
     def __init__(self):
         super(ObjectCollisionNorm, self).__init__()
-        self.violations = set()
+        self.old_collisions = set()
+
+
+class WallCollisionViolation(NormViolation):
+    def __init__(self, player):
+        super().__init__()
+        self.player = player
+
+    def as_string(self):
+        return "{player} ran into a wall".format(player=self.player)
+
+
+class WallCollisionNorm(Norm):
+    def pre_monitor(self, game, action):
+        new_violations = set()
+        for i, player in enumerate(game.players):
+            next_pos = game.next_position(player, action[i])
+            if 1 <= action[i] <= 4 and game.map[round(next_pos[1])][round(next_pos[0])] != "F" and \
+                    game.map[round(next_pos[1])][round(next_pos[0])] != "Y":
+                if player not in self.old_collisions:
+                    new_violations.add(WallCollisionViolation(player))
+                    self.old_collisions.add(player)
+            elif player in self.old_collisions:
+                self.old_collisions.remove(player)
+        return new_violations
+
+    def reset(self):
+        super(WallCollisionNorm, self).reset()
+        self.old_collisions = set()
+
+    def __init__(self):
+        super(WallCollisionNorm, self).__init__()
         self.old_collisions = set()
 
 
 class ObstructionNorm(Norm):
-    def monitor(self, game, action):
+    def post_monitor(self, game, action):
         return set()
 
     def reset(self):
@@ -210,5 +223,5 @@ class ObstructionNorm(Norm):
 
 
 class UnattendedCartNorm(Norm):
-    def monitor(self, game, action):
+    def post_monitor(self, game, action):
         pass
