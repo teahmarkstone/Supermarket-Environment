@@ -19,6 +19,9 @@ class Carts(InteractiveObject):
                                             (int(1.5 * config.SCALE),
                                              6 * config.SCALE))
 
+    def __str__(self):
+        return "the cart return"
+
     def render(self, screen, camera):
         screen.blit(self.image, ((self.position[0] * config.SCALE) - (camera.position[0] * config.SCALE),
                                  (self.position[1] * config.SCALE) - (camera.position[1] * config.SCALE)))

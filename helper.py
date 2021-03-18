@@ -5,6 +5,11 @@ def obj_collision(obj,  x_position, y_position, x_margin=0.55, y_margin=0.55):
     return obj.position[0] - x_margin < x_position < obj.position[0] + obj.width + x_margin and \
            obj.position[1] - y_margin < y_position < obj.position[1] + obj.height + y_margin
 
+
+def pos_collision(x1, y1,  x2, y2, x_margin, y_margin):
+    return x1 - x_margin < x2 < x1 + x_margin and y1 - y_margin < y2 < y1 + y_margin
+
+
 def can_interact_default(obj, player, range=0.5):
     if player.direction == Direction.NORTH:
         return obj.collision(player.position[0], player.position[1] - range)

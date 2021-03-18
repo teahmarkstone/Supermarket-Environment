@@ -24,6 +24,9 @@ class Shelf(InteractiveObject):
         else:
             self.is_fridge = True
 
+    def __str__(self):
+        return "the {food} shelf".format(food=self.string_type)
+
     def load_images(self, food_image, shelf_image):
         if shelf_image is None:
             self.image = pygame.image.load("images/Shelves/shelf.png")

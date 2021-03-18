@@ -52,7 +52,6 @@ def get_obj_category(obj):
         return "shelves"
     return "misc_objects"
 
-
 class Game:
 
     def __init__(self, screen, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False):
@@ -167,6 +166,14 @@ class Game:
 
     def nop(self, player):
         self.players[player].stand_still()
+
+    def next_position(self, player, action):
+        try:
+            direction, (x1, y1), anim_to_advance = ACTION_DIRECTION[action]
+            next_pos =  [player.position[0] + self.player_speed * x1, player.position[1] + self.player_speed*y1]
+            return next_pos
+        except KeyError:
+            return player.position
 
     # TODO we may need to think a little more about the logic of breaking ties when two players move onto the same spot.
     def player_move(self, player_index, action):

@@ -18,6 +18,9 @@ class Register(InteractiveObject):
         self.width = 1.5
         self.height = 2
 
+    def __str__(self):
+        return "a checkout counter"
+
     def collision(self, x_position, y_position):
         return obj_collision(self, x_position, y_position)
 

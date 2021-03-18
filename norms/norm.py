@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import gym
 
+
 class NormViolation(ABC):
     def __init__(self):
         pass

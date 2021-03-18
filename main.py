@@ -5,7 +5,7 @@ from enums.player_action import PlayerAction
 from env import SupermarketEnv
 from game import Game
 from norms.norm import NormWrapper
-from norms.norms import CartTheftNorm, WrongShelfNorm, ShopliftingNorm
+from norms.norms import CartTheftNorm, WrongShelfNorm, ShopliftingNorm, PlayerCollisionNorm, ObjectCollisionNorm
 
 
 class SupermarketEventHandler:
@@ -116,7 +116,12 @@ if __name__ == "__main__":
 
     env = SupermarketEnv(num_players=2, player_speed=0.07, render_messages=True)
 
-    norms = [CartTheftNorm(), WrongShelfNorm(), ShopliftingNorm()]
+    norms = [CartTheftNorm(),
+             WrongShelfNorm(),
+             ShopliftingNorm(),
+             PlayerCollisionNorm(),
+             ObjectCollisionNorm(),
+             ]
 
     env = NormWrapper(env, norms)
 

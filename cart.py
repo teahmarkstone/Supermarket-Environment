@@ -26,6 +26,9 @@ class Cart(InteractiveObject):
         else:
             self.interaction_message = "Just as I thought! It's a shopping cart!"
 
+    def __str__(self):
+        return "a shopping cart"
+
     def __init__(self, x_position, y_position, owner, direction, cart_state, capacity=12):
         super().__init__(num_stages=1)
         self.position = [x_position, y_position]

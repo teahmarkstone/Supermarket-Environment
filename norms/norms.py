@@ -1,4 +1,5 @@
 from enums.player_action import PlayerAction
+from helper import pos_collision
 from norms.norm import Norm, NormViolation
 from shelves import Shelf
 
@@ -116,26 +117,85 @@ class WrongShelfNorm(Norm):
         self.violations = set()
 
 
+class PlayerCollisionViolation(NormViolation):
+    def __init__(self, collider, collidee):
+        self.collider = collider
+        self.collidee = collidee
+
+    def as_string(self):
+        return "{collider} collided with {collidee}".format(collider=self.collider, collidee=self.collidee)
+
+
 class PlayerCollisionNorm(Norm):
+    def preprocess(self, game, action):
+        next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
+        for i, player in enumerate(game.players):
+            for j, player2 in enumerate(game.players):
+                if i == j:
+                    continue
+                if 1 <= action[i] <= 4 and pos_collision(next_positions[i][0], next_positions[i][1], next_positions[j][0],
+                                 next_positions[j][1], x_margin=0.55, y_margin=0.55):
+                    if (player, player2) not in self.old_collisions:
+                        self.violations.add(PlayerCollisionViolation(collider=player, collidee=player2))
+                        self.old_collisions.add((player, player2))
+                elif (player, player2) in self.old_collisions:
+                    self.old_collisions.remove((player, player2))
+
+
     def monitor(self, game, action):
-        return set()
+        new_violations = self.violations
+        self.violations = set()
+        return new_violations
 
     def reset(self):
         super(PlayerCollisionNorm, self).reset()
+        self.violations = set()
+        self.old_collisions = set()
         
     def __init__(self):
         super(PlayerCollisionNorm, self).__init__()
-        
-        
+        self.violations = set()
+        self.old_collisions = set()
+
+
+class ObjectCollisionViolation(NormViolation):
+    def __init__(self, collider, obj):
+        self.collider = collider
+        self.obj = obj
+
+    def as_string(self):
+        return "{collider} ran into {obj}".format(collider=self.collider, obj=self.obj)
+
+
 class ObjectCollisionNorm(Norm):
-    def monitor(self, game, action):
+    def preprocess(self, game, action):
+        for i, player in enumerate(game.players):
+            next_pos = game.next_position(player, action[i])
+            for obj in game.objects:
+                if player.curr_cart is not None and obj == player.curr_cart:
+                    continue
+                if 1 <= action[i] <= 4 and obj.collision(next_pos[0], next_pos[1]):
+                    if (player, obj) not in self.old_collisions:
+                        self.violations.add(ObjectCollisionViolation(player, obj))
+                        self.old_collisions.add((player, obj))
+                elif (player, obj) in self.old_collisions:
+                    self.old_collisions.remove((player, obj))
         return set()
-    
+
+    def monitor(self, game, action):
+        new_violations = self.violations
+        self.violations = set()
+        return new_violations
+
     def reset(self):
         super(ObjectCollisionNorm, self).reset()
-        
+        self.violations = set()
+        self.old_collisions = set()
+
     def __init__(self):
         super(ObjectCollisionNorm, self).__init__()
+        self.violations = set()
+        self.old_collisions = set()
 
 
 class ObstructionNorm(Norm):

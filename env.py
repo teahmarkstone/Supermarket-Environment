@@ -61,6 +61,7 @@ class SupermarketEnv(gym.Env):
         self.game.update()
         pygame.display.flip()
 
+
 if __name__ == "__main__":
     env = SupermarketEnv(2)
     env.reset()

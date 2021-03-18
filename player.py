@@ -5,6 +5,7 @@ import pygame
 import config
 from enums.direction import Direction
 from enums.cart_state import CartState
+from helper import obj_collision
 from render_game import render_text
 
 
@@ -51,6 +52,9 @@ class Player:
         if self.curr_cart is not None:
             if self.curr_cart.being_held:
                 self.curr_cart.update_position(new_position[0], new_position[1])
+
+    def __str__(self):
+        return "Player {i}".format(i=self.player_number)
 
     def stand_still(self):
         self.stage[0] = 6
@@ -207,18 +211,7 @@ class Player:
             y_position += spacing
 
     def collision(self, x_position, y_position):
-        i = self.position[0]
-        while i <= self.position[0] + self.width:
-            j = self.position[1]
-            while j <= self.position[1] + self.height:
-
-                y_distance = abs(y_position - j)
-                x_distance = abs(x_position - i)
-                if y_distance < .7 and x_distance < .7:
-                    return True
-                j += 0.5
-            i += 0.5
-        return False
+        return obj_collision(self, x_position, y_position, x_margin=0.55, y_margin=0.55)
 
     def reset_cart(self):
         if self.curr_cart is not None:

@@ -20,6 +20,9 @@ class Counter(InteractiveObject):
         self.width = 0.5
         self.height = 2
 
+    def __str__(self):
+        return "the {food} counter".format(food=self.string_type)
+
     def collision(self, x_position, y_position):
         return obj_collision(self, x_position, y_position, x_margin=0.55, y_margin=0.55)
 
