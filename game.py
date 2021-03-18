@@ -201,8 +201,8 @@ class Game:
 
         # iterating the stage the player is in, for walking animation purposes
         player.iterate_stage(anim_to_advance)
-
         self.move_unit(player, [current_speed * x1, current_speed * y1])
+        # print(player.position)
 
     # main keyboard input
     def exploratory_events(self):

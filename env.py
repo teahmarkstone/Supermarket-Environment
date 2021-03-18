@@ -46,7 +46,6 @@ class SupermarketEnv(gym.Env):
         self.step_count += 1
         if not self.game.running:
             done = True
-            pygame.quit()
         return observation, 0., done, None
 
     def reset(self):
@@ -58,8 +57,11 @@ class SupermarketEnv(gym.Env):
 
     def render(self, mode='human'):
         self.clock.tick(120)
-        self.game.update()
-        pygame.display.flip()
+        if self.game.running:
+            self.game.update()
+            pygame.display.flip()
+        else:
+            pygame.quit()
 
 
 if __name__ == "__main__":

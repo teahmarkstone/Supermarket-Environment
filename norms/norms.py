@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from enums.player_action import PlayerAction
 from helper import pos_collision
 from norms.norm import Norm, NormViolation
@@ -17,7 +19,7 @@ class CartTheftViolation(NormViolation):
         return hash((self.thief, self.cart))
 
     def as_string(self):
-        return "Player {player} stole a cart from {owner}".format(player=self.thief, owner=self.cart.owner)
+        return "{player} stole a cart from {owner}".format(player=self.thief, owner=self.cart.owner)
 
 
 class CartTheftNorm(Norm):
@@ -52,7 +54,7 @@ class ShopliftingViolation(NormViolation):
         return hash(self.thief)
 
     def as_string(self):
-        return "Player {player} shoplifted".format(player=self.thief)
+        return "{player} shoplifted".format(player=self.thief)
 
 
 class ShopliftingNorm(Norm):
@@ -62,7 +64,7 @@ class ShopliftingNorm(Norm):
     def post_monitor(self, game, action):
         new_violations = set()
         for player in game.players:
-            if player.position[0] > 1:
+            if player.position[0] >= 0:
                 continue
             stolen_food = []
             if player.curr_cart is not None:
@@ -209,6 +211,74 @@ class WallCollisionNorm(Norm):
     def __init__(self):
         super(WallCollisionNorm, self).__init__()
         self.old_collisions = set()
+
+
+# TODO need a version of collision norm for when the player is holding a shopping cart
+def in_exit_zone(player):
+    return player.position[0] <= 1.1 and (6.5 <= player.position[1] <= 7.5 or 2.5 <= player.position[1] <= 3.5)
+
+
+def in_entrance_zone(player):
+    return player.position[0] <= 1.1 and 14.5 <= player.position[1] <= 15.5
+
+
+class BlockingExitViolation(NormViolation):
+    def __init__(self, player, entrance):
+        super().__init__()
+        self.entrance = entrance
+        self.player = player
+
+    def as_string(self):
+        exit_or_entrance_str = "entrance" if self.entrance else "exit"
+        return "{player} is blocking an {e}".format(player=self.player, e=exit_or_entrance_str)
+
+
+class BlockingExitNorm(Norm):
+    def __init__(self, time_threshold=30):
+        self.time_threshold = time_threshold
+        self.time_in_exit = defaultdict(int)
+        self.old_violations = set()
+
+    def post_monitor(self, game, action):
+        violations = set()
+        for player in game.players:
+            if in_exit_zone(player) or in_entrance_zone(player):
+                self.time_in_exit[player] += 1
+                if self.time_in_exit[player] >= self.time_threshold and player not in self.old_violations:
+                    print(self.time_in_exit[player])
+                    self.old_violations.add(player)
+                    if in_entrance_zone(player):
+                        violations.add(BlockingExitViolation(player, True))
+                    elif in_exit_zone(player):
+                        violations.add(BlockingExitViolation(player, False))
+            else:
+                if player in self.old_violations:
+                    self.old_violations.remove(player)
+                self.time_in_exit[player] = 0
+        return violations
+
+    def reset(self):
+        super(BlockingExitNorm, self).reset()
+        self.old_violations = set()
+        self.time_in_exit = defaultdict(int)
+
+
+class EntranceOnlyViolation(NormViolation):
+    def __init__(self, player):
+        super(EntranceOnlyViolation, self).__init__()
+        self.player = player
+
+    def as_string(self):
+        return "{player} exited through an entrance".format(player=self.player)
+
+
+class EntranceOnlyNorm(Norm):
+    def post_monitor(self, game, action):
+        violations = set()
+        for player in game.players:
+            if player.position[0] < 0 and in_entrance_zone(player):
+                violations.add(EntranceOnlyViolation(player))
+        return violations
 
 
 class ObstructionNorm(Norm):

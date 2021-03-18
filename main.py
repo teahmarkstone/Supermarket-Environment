@@ -6,7 +6,7 @@ from env import SupermarketEnv
 from game import Game
 from norms.norm import NormWrapper
 from norms.norms import CartTheftNorm, WrongShelfNorm, ShopliftingNorm, PlayerCollisionNorm, ObjectCollisionNorm, \
-    WallCollisionNorm
+    WallCollisionNorm, BlockingExitNorm, EntranceOnlyNorm
 
 
 class SupermarketEventHandler:
@@ -78,8 +78,7 @@ class SupermarketEventHandler:
             self.env.step(self.single_player_action(PlayerAction.EAST))
 
         self.running = self.env.game.running
-        if self.running:
-            self.env.render()
+        self.env.render()
 
     def handle_interactive_events(self):
         for event in pygame.event.get():
@@ -109,8 +108,7 @@ class SupermarketEventHandler:
                         self.env.game.players[self.curr_player].render_shopping_list = False
                         self.env.game.game_state = GameState.EXPLORATORY
         self.running = self.env.game.running
-        if self.running:
-            self.env.render()
+        self.env.render()
 
 
 if __name__ == "__main__":
@@ -123,6 +121,8 @@ if __name__ == "__main__":
              PlayerCollisionNorm(),
              ObjectCollisionNorm(),
              WallCollisionNorm(),
+             BlockingExitNorm(),
+             EntranceOnlyNorm(),
              ]
 
     env = NormWrapper(env, norms)
