@@ -1,3 +1,4 @@
+import math
 from collections import defaultdict
 
 from enums.player_action import PlayerAction
@@ -281,17 +282,45 @@ class EntranceOnlyNorm(Norm):
         return violations
 
 
-class ObstructionNorm(Norm):
-    def post_monitor(self, game, action):
-        return set()
+class UnattendedCartViolation(NormViolation):
+    def __init__(self, cart, distance, time):
+        self.cart = cart
+        self.time = time
+        self.distance = distance
 
-    def reset(self):
-        super(ObstructionNorm, self).reset()
-
-    def __init__(self):
-        super(ObstructionNorm, self).__init__()
+    def as_string(self):
+        return "{player} has been too far away (distance={dist}) from their cart for too long(time={time})".format(
+            player=self.cart.last_held,
+            time=self.time,
+            dist=self.distance)
 
 
 class UnattendedCartNorm(Norm):
     def post_monitor(self, game, action):
-        pass
+        violations = set()
+        for cart in game.carts:
+            if cart.last_held is not None:
+                distance = math.dist(cart.position, cart.last_held.position)
+                if distance > self.dist_threshold:
+                    self.time_too_far_away[cart] += 1
+                    if self.time_too_far_away[cart] > self.time_threshold and cart not in self.old_violations:
+                        violations.add(UnattendedCartViolation(cart, distance=self.dist_threshold,
+                                                               time=self.time_threshold))
+                        self.old_violations.add(cart)
+                else:
+                    self.time_too_far_away[cart] = 0
+                    if cart in self.old_violations:
+                        self.old_violations.remove(cart)
+        return violations
+
+    def reset(self):
+        super(UnattendedCartNorm, self).reset()
+        self.time_too_far_away = defaultdict(int)
+        self.old_violations = set()
+
+    def __init__(self, dist_threshold=2, time_threshold=1):
+        super(UnattendedCartNorm, self).__init__()
+        self.dist_threshold = dist_threshold
+        self.time_threshold = time_threshold
+        self.time_too_far_away = defaultdict(int)
+        self.old_violations = set()

@@ -6,7 +6,7 @@ from env import SupermarketEnv
 from game import Game
 from norms.norm import NormWrapper
 from norms.norms import CartTheftNorm, WrongShelfNorm, ShopliftingNorm, PlayerCollisionNorm, ObjectCollisionNorm, \
-    WallCollisionNorm, BlockingExitNorm, EntranceOnlyNorm
+    WallCollisionNorm, BlockingExitNorm, EntranceOnlyNorm, UnattendedCartNorm
 
 
 class SupermarketEventHandler:
@@ -123,6 +123,7 @@ if __name__ == "__main__":
              WallCollisionNorm(),
              BlockingExitNorm(),
              EntranceOnlyNorm(),
+             UnattendedCartNorm(),
              ]
 
     env = NormWrapper(env, norms)
