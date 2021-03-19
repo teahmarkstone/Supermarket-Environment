@@ -43,11 +43,12 @@ class Carts(InteractiveObject):
             # Player is not holding a cart
             if player.curr_cart is None:
                 if player.holding_food is None:
-                    new_cart = Cart(player.position[0],
-                                    player.position[1],
+                    new_cart = Cart(0,
+                                    0,
                                     player,
                                     Direction.SOUTH,
                                     CartState.EMPTY)
+                    new_cart.update_position(player.position[0], player.position[1])
                     game.carts.append(new_cart)
                     game.objects.append(new_cart)
                     player.curr_cart = new_cart

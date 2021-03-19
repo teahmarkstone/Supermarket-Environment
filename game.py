@@ -157,7 +157,7 @@ class Game:
             if player.holding_food is None:
                 # check if player is holding onto cart (should prob restructure bc this is ugly)
                 for cart in self.carts:
-                    if cart.can_toggle(player.position[0], player.position[1]) and not cart.being_held:
+                    if cart.can_toggle(player) and not cart.being_held:
                         # Ensure you can't pick up a cart someone else is currently holding
                         player.curr_cart = cart
                         cart.last_held = player
