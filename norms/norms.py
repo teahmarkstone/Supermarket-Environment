@@ -217,12 +217,14 @@ class ObjectCollisionNorm(Norm):
 
 
 class WallCollisionViolation(NormViolation):
-    def __init__(self, player):
+    def __init__(self, player, with_cart=False):
         super().__init__()
         self.player = player
+        self.with_cart = with_cart
 
     def as_string(self):
-        return "{player} ran into a wall".format(player=self.player)
+        with_cart_str = " with a cart" if self.with_cart else ""
+        return "{player} ran into a wall{w}".format(player=self.player,w=with_cart_str)
 
 
 class WallCollisionNorm(Norm):
@@ -230,13 +232,24 @@ class WallCollisionNorm(Norm):
         new_violations = set()
         for i, player in enumerate(game.players):
             next_pos = game.next_position(player, action[i])
-            if 1 <= action[i] <= 4 and game.map[round(next_pos[1])][round(next_pos[0])] != "F" and \
-                    game.map[round(next_pos[1])][round(next_pos[0])] != "Y":
+            cart = player.curr_cart
+            prev_dir = player.direction
+            if cart is not None:
+                cart.set_direction(game.next_direction(player, action[i]))
+                cart.update_position(next_pos[0], next_pos[1])
+            if 1 <= action[i] <= 4 and game.hits_wall(player, next_pos[0], next_pos[1]):
                 if player not in self.old_collisions:
-                    new_violations.add(WallCollisionViolation(player))
+                    new_violations.add(WallCollisionViolation(player, with_cart=False))
+                    self.old_collisions.add(player)
+            elif 1 <= action[i] <= 4 and cart is not None and game.hits_wall(cart, cart.position[0], cart.position[1]):
+                if player not in self.old_collisions:
+                    new_violations.add(WallCollisionViolation(player, with_cart=True))
                     self.old_collisions.add(player)
             elif player in self.old_collisions:
                 self.old_collisions.remove(player)
+            if cart is not None:
+                cart.set_direction(prev_dir)
+                cart.update_position(player.position[0], player.position[1])
         return new_violations
 
     def reset(self):

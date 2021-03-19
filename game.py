@@ -183,6 +183,19 @@ class Game:
         except KeyError:
             return player.position
 
+    def hits_wall(self, unit, x, y):
+        wall_width = 0.4
+        if unit.direction == Direction.NORTH:
+            wall_width = 2
+            return y <= wall_width
+        if unit.direction == Direction.SOUTH:
+            return y + unit.height >= len(self.map) - wall_width
+        if unit.direction == Direction.EAST:
+            return x + unit.width >= len(self.map[0]) - wall_width
+        if unit.direction == Direction.WEST:
+            return x  <= wall_width
+        return False
+
     # TODO we may need to think a little more about the logic of breaking ties when two players move onto the same spot.
     def player_move(self, player_index, action):
 
@@ -201,14 +214,11 @@ class Game:
             cart = player.curr_cart
             cart.set_direction(direction)
             cart.update_position(player.position[0] + current_speed*x1, player.position[1] + current_speed*y1)
-            if self.collide(cart, cart.position[0], cart.position[1]):
+            if self.collide(cart, cart.position[0], cart.position[1]) or self.hits_wall(cart, cart.position[0], cart.position[1]):
                 # Undo the turning of the cart bc we're canceling the action
                 cart.set_direction(prev_direction)
                 cart.update_position(player.position[0], player.position[1])
                 return
-            # if cart_end_pos[0] >= 0 and self.map[round(cart_end_pos[1])][round(cart_end_pos[0])] != "F" and \
-            #         self.map[round(cart_end_pos[1])][round(cart_end_pos[0])] != "Y":
-            #     return
 
         player.direction = direction
         cart = player.curr_cart
@@ -314,17 +324,16 @@ class Game:
     def move_unit(self, unit, position_change):
         new_position = [unit.position[0] + position_change[0], unit.position[1] + position_change[1]]
 
-        if new_position[0] < 0 or new_position[0] > (len(self.map[0]) - 1):
+        if new_position[0] < 0 or new_position[0] > len(self.map[0]):
             self.running = False
 
-        if new_position[1] < 0 or new_position[1] > (len(self.map) - 1):
+        if new_position[1] < 0 or new_position[1] > len(self.map):
             self.running = False
 
         if self.collide(unit, new_position[0], new_position[1]):
             return
 
-        if self.map[round(new_position[1])][round(new_position[0])] != "F" and \
-                self.map[round(new_position[1])][round(new_position[0])] != "Y":
+        if self.hits_wall(unit, new_position[0], new_position[1]):
             return
 
         unit.update_position(new_position)
