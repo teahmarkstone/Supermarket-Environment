@@ -21,11 +21,11 @@ def pos_collision(x1, y1,  x2, y2, x_margin, y_margin):
 
 def can_interact_default(obj, player, range=0.5):
     if player.direction == Direction.NORTH:
-        return obj.collision(player.position[0], player.position[1] - range)
+        return obj.collision(player, player.position[0], player.position[1] - range)
     elif player.direction == Direction.SOUTH:
-        return obj.collision(player.position[0], player.position[1] + range)
+        return obj.collision(player, player.position[0], player.position[1] + range)
     elif player.direction == Direction.WEST:
-        return obj.collision(player.position[0] - range, player.position[1])
+        return obj.collision(player, player.position[0] - range, player.position[1])
     elif player.direction == Direction.EAST:
-        return obj.collision(player.position[0] + range, player.position[1])
+        return obj.collision(player, player.position[0] + range, player.position[1])
     return False

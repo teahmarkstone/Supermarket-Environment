@@ -1,11 +1,11 @@
 from collections import defaultdict
 
 import pygame
+
 import config
-from enums.direction import Direction
 from enums.cart_state import CartState
-from helper import obj_collision, can_interact_default, overlap
-from render_game import render_text, render_textbox
+from enums.direction import Direction
+from helper import can_interact_default, overlap
 from objects import InteractiveObject
 
 
@@ -126,9 +126,9 @@ class Cart(InteractiveObject):
             self.position[0] = x_position-0.8
             self.position[1] = y_position
 
-    def collision(self, x_position, y_position):
+    def collision(self, obj, x_position, y_position):
         return overlap(self.position[0], self.position[1], self.width, self.height,
-                           x_position, y_position, 0.6, 0.4)
+                           x_position, y_position, obj.width, obj.height)
 
     def can_toggle(self, player):
         return player.direction == self.direction and can_interact_default(self, player, 0.3)

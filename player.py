@@ -226,9 +226,9 @@ class Player:
             screen.blit(purchased, (460, y_position))
             y_position += spacing
 
-    def collision(self, x_position, y_position):
+    def collision(self, obj, x_position, y_position):
         return overlap(self.position[0], self.position[1], self.width, self.height,
-                       x_position, y_position, self.width, self.height)
+                       x_position, y_position, obj.width, obj.height)
 
     def reset_cart(self):
         if self.curr_cart is not None:

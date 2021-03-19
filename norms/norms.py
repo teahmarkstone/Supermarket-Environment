@@ -165,7 +165,7 @@ class ObjectCollisionNorm(Norm):
             for obj in game.objects:
                 if player.curr_cart is not None and obj == player.curr_cart:
                     continue
-                if 1 <= action[i] <= 4 and obj.collision(next_pos[0], next_pos[1]):
+                if 1 <= action[i] <= 4 and obj.collision(player, next_pos[0], next_pos[1]):
                     if (player, obj) not in self.old_collisions:
                         violations.add(ObjectCollisionViolation(player, obj))
                         self.old_collisions.add((player, obj))

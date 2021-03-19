@@ -185,14 +185,18 @@ class Game:
 
         # If the player is holding a cart, this keeps track of whether the cart would collide with something.
         if player.curr_cart is not None:
-            cart_length = 0.7
-            cart_end_pos = (player.position[0] + (current_speed + cart_length) * x1,
-                            player.position[1] + (current_speed + cart_length) * y1)
-            if self.collide(player, cart_end_pos[0], cart_end_pos[1]):
+
+            prev_direction = player.direction
+            cart = player.curr_cart
+            cart.set_direction(direction)
+            cart.update_position(player.position[0] + current_speed*x1, player.position[1] + current_speed*y1)
+            if self.collide(cart, cart.position[0], cart.position[1]):
+                cart.set_direction(prev_direction)
+                cart.update_position(player.position[0], player.position[1])
                 return
-            if cart_end_pos[0] >= 0 and self.map[round(cart_end_pos[1])][round(cart_end_pos[0])] != "F" and \
-                    self.map[round(cart_end_pos[1])][round(cart_end_pos[0])] != "Y":
-                return
+            # if cart_end_pos[0] >= 0 and self.map[round(cart_end_pos[1])][round(cart_end_pos[0])] != "F" and \
+            #         self.map[round(cart_end_pos[1])][round(cart_end_pos[0])] != "Y":
+            #     return
 
         player.direction = direction
         cart = player.curr_cart
@@ -258,8 +262,6 @@ class Game:
     # keyboard input when player is interacting with an object
     def interactive_events(self):
         for event in pygame.event.get():
-            # returns the object that player is interacting with or returns -1
-            object = self.check_interactions()
 
             if event.type == pygame.QUIT:
                 self.running = False
@@ -318,14 +320,16 @@ class Game:
     # checks if given [x,y] collides with an object
     def collide(self, unit, x_position, y_position):
         for object in self.objects:
-            if unit.curr_cart is not None and object == unit.curr_cart:
+            if isinstance(unit, Player) and unit.curr_cart is not None and object == unit.curr_cart:
                 continue
-            if object.collision(x_position, y_position):
+            elif unit == object:
+                continue
+            if object.collision(unit, x_position, y_position):
                 return True
         # checking if players are colliding
         for player in self.players:
             if player != unit:
-                if player.collision(x_position, y_position):
+                if player.collision(unit, x_position, y_position):
                     return True
         return False
 

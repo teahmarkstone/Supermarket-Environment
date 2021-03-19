@@ -26,9 +26,9 @@ class Counter(InteractiveObject):
     def __str__(self):
         return "the {food} counter".format(food=self.string_type)
 
-    def collision(self, x_position, y_position):
+    def collision(self, obj, x_position, y_position):
         return overlap(self.position[0], self.position[1], self.width, self.height,
-                       x_position, y_position, 0.6, 0.4)
+                       x_position, y_position, obj.width, obj.height)
 
     def render(self, screen, camera):
 

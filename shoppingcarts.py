@@ -34,9 +34,9 @@ class Carts(InteractiveObject):
             return can_interact_default(self, player)
         return False
 
-    def collision(self, x_position, y_position):
+    def collision(self, obj, x_position, y_position):
         return overlap(self.position[0], self.position[1], self.width, self.height,
-                       x_position, y_position, 0.6, 0.4)
+                       x_position, y_position, obj.width, obj.height)
 
     def interact(self, game, player):
         if self.interactive_stage == 0:

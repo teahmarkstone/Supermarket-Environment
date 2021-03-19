@@ -40,9 +40,9 @@ class Shelf(InteractiveObject):
         self.image = pygame.transform.scale(self.image, (int(2 * config.SCALE), int(2 * config.SCALE)))
         self.food_image = food_image
 
-    def collision(self, x_position, y_position):
+    def collision(self, obj, x_position, y_position):
         return overlap(self.position[0], self.position[1], self.width, self.height,
-                       x_position, y_position, 0.6, 0.4)
+                       x_position, y_position, obj.width, obj.height)
         # return obj_collision(self, x_position, y_position, x_margin=0, y_margin=0)
 
     def can_interact(self, player):

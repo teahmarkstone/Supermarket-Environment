@@ -24,15 +24,13 @@ class Register(InteractiveObject):
     def __str__(self):
         return "a checkout counter"
 
-    def collision(self, x_position, y_position):
+    def collision(self, obj, x_position, y_position):
         return overlap(self.position[0], self.position[1], self.width, self.height,
-                       x_position, y_position, 0.6, 0.4)
-        # return obj_collision(self, x_position, y_position)
+                       x_position, y_position, obj.width, obj.height)
 
     def render(self, screen, camera):
         screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
                                  (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE))
-
 
     def interact(self, game, player):
         # first interactive stage is just rendering prompt
@@ -43,12 +41,15 @@ class Register(InteractiveObject):
             return
         if self.interactive_stage == 1 or not game.render_messages:
             has_items = False
+            x_margin = 0.5
+            y_margin = 1
             if player.holding_food is not None and not player.bought_holding_food:
                 player.bought_holding_food = True
                 has_items = True
             for cart in game.carts:
                 if cart.last_held == player \
-                        and obj_collision(self, cart.position[0], cart.position[1], x_margin=1, y_margin=1.5):
+                        and overlap(self.position[0] - x_margin, self.position[1] - y_margin, self.width + 2*x_margin,
+                                    self.height + 2*y_margin, cart.position[0], cart.position[1], cart.width, cart.height):
                     if sum(cart.contents.values()) > 0:
                         cart.buy()
                         has_items = True
