@@ -2,7 +2,7 @@ import math
 from collections import defaultdict
 
 from enums.player_action import PlayerAction
-from helper import pos_collision
+from helper import pos_collision, overlap
 from norms.norm import Norm, NormViolation
 from shelves import Shelf
 
@@ -111,13 +111,17 @@ class WrongShelfNorm(Norm):
 
 
 class PlayerCollisionViolation(NormViolation):
-    def __init__(self, collider, collidee):
+    def __init__(self, collider, collidee, with_cart=False):
         super().__init__()
         self.collider = collider
         self.collidee = collidee
+        self.with_cart = with_cart
 
     def as_string(self):
-        return "{collider} collided with {collidee}".format(collider=self.collider, collidee=self.collidee)
+        with_cart_str = " with a cart" if self.with_cart else ""
+        return "{collider} collided with {collidee}{with_cart_str}".format(collider=self.collider,
+                                                                           collidee=self.collidee,
+                                                                           with_cart_str=with_cart_str)
 
 
 class PlayerCollisionNorm(Norm):
@@ -125,17 +129,32 @@ class PlayerCollisionNorm(Norm):
         violations = set()
         next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
         for i, player in enumerate(game.players):
+            cart = player.curr_cart
+            prev_dir = player.direction
+            next_pos = next_positions[i]
+            if cart is not None:
+                cart.set_direction(game.next_direction(player, action[i]))
+                cart.update_position(next_pos[0], next_pos[1])
             for j, player2 in enumerate(game.players):
                 if i == j:
                     continue
-                if 1 <= action[i] <= 4 and pos_collision(next_positions[i][0], next_positions[i][1],
-                                                         next_positions[j][0],
-                                                         next_positions[j][1], x_margin=0.55, y_margin=0.55):
+                if 1 <= action[i] <= 4 and overlap(next_pos[0], next_pos[1], player.width, player.height,
+                                                   next_positions[j][0], next_positions[j][1], player2.width,
+                                                   player2.height):
                     if (player, player2) not in self.old_collisions:
-                        violations.add(PlayerCollisionViolation(collider=player, collidee=player2))
+                        violations.add(PlayerCollisionViolation(collider=player, collidee=player2, with_cart=False))
+                        self.old_collisions.add((player, player2))
+                elif 1 <= action[i] <= 4 and cart is not None and \
+                    overlap(cart.position[0], cart.position[1], cart.width, cart.height,
+                            next_positions[j][0], next_positions[j][1], player2.width, player2.height):
+                    if (player, player2) not in self.old_collisions:
+                        violations.add(PlayerCollisionViolation(player, player2, with_cart=True))
                         self.old_collisions.add((player, player2))
                 elif (player, player2) in self.old_collisions:
                     self.old_collisions.remove((player, player2))
+            if cart is not None:
+                cart.set_direction(prev_dir)
+                cart.update_position(player.position[0], player.position[1])
         return violations
 
     def reset(self):
@@ -148,13 +167,16 @@ class PlayerCollisionNorm(Norm):
 
 
 class ObjectCollisionViolation(NormViolation):
-    def __init__(self, collider, obj):
+    def __init__(self, collider, obj, with_cart=False):
         super().__init__()
         self.collider = collider
         self.obj = obj
+        self.with_cart = with_cart
 
     def as_string(self):
-        return "{collider} ran into {obj}".format(collider=self.collider, obj=self.obj)
+        with_cart_str = " with a cart" if self.with_cart else ""
+        return "{collider} ran into {obj}{with_cart_str}".format(collider=self.collider, obj=self.obj,
+                                                                 with_cart_str=with_cart_str)
 
 
 class ObjectCollisionNorm(Norm):
@@ -162,15 +184,27 @@ class ObjectCollisionNorm(Norm):
         violations = set()
         for i, player in enumerate(game.players):
             next_pos = game.next_position(player, action[i])
+            cart = player.curr_cart
+            prev_dir = player.direction
+            if cart is not None:
+                cart.set_direction(game.next_direction(player, action[i]))
+                cart.update_position(next_pos[0], next_pos[1])
             for obj in game.objects:
                 if player.curr_cart is not None and obj == player.curr_cart:
                     continue
                 if 1 <= action[i] <= 4 and obj.collision(player, next_pos[0], next_pos[1]):
                     if (player, obj) not in self.old_collisions:
-                        violations.add(ObjectCollisionViolation(player, obj))
+                        violations.add(ObjectCollisionViolation(player, obj, with_cart=False))
+                        self.old_collisions.add((player, obj))
+                elif 1 <= action[i] <= 4 and cart is not None and obj.collision(cart, cart.position[0], cart.position[1]):
+                    if (player, obj) not in self.old_collisions:
+                        violations.add(ObjectCollisionViolation(player, obj, with_cart=True))
                         self.old_collisions.add((player, obj))
                 elif (player, obj) in self.old_collisions:
                     self.old_collisions.remove((player, obj))
+            if cart is not None:
+                cart.set_direction(prev_dir)
+                cart.update_position(player.position[0], player.position[1])
         return violations
 
     def reset(self):

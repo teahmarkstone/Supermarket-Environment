@@ -167,10 +167,18 @@ class Game:
     def nop(self, player):
         self.players[player].stand_still()
 
+    def next_direction(self, player, action):
+        try:
+            direction, (x1, y1), anim_to_advance = ACTION_DIRECTION[action]
+            return direction
+        except KeyError:
+            return player.direction
+
     def next_position(self, player, action):
         try:
             direction, (x1, y1), anim_to_advance = ACTION_DIRECTION[action]
-            next_pos =  [player.position[0] + self.player_speed * x1, player.position[1] + self.player_speed*y1]
+            speed = self.player_speed if player.direction == direction else 0.
+            next_pos = [player.position[0] + speed * x1, player.position[1] + speed*y1]
             return next_pos
         except KeyError:
             return player.position
@@ -183,6 +191,9 @@ class Game:
 
         direction, (x1, y1), anim_to_advance = ACTION_DIRECTION[action]
 
+        if direction != player.direction:
+            current_speed = 0  # The initial move just turns the player, doesn't move them.
+
         # If the player is holding a cart, this keeps track of whether the cart would collide with something.
         if player.curr_cart is not None:
 
@@ -191,6 +202,7 @@ class Game:
             cart.set_direction(direction)
             cart.update_position(player.position[0] + current_speed*x1, player.position[1] + current_speed*y1)
             if self.collide(cart, cart.position[0], cart.position[1]):
+                # Undo the turning of the cart bc we're canceling the action
                 cart.set_direction(prev_direction)
                 cart.update_position(player.position[0], player.position[1])
                 return
