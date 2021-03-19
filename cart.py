@@ -91,7 +91,7 @@ class Cart(InteractiveObject):
         screen.blit(image, rect)
 
     def can_interact(self, player):
-        return can_interact_default(self, player)
+        return player.curr_cart != self and can_interact_default(self, player)
 
     def empty_cart(self):
         self.contents = {}

@@ -31,7 +31,8 @@ class Carts(InteractiveObject):
 
     def can_interact(self, player):
         if player.direction == Direction.SOUTH:
-            return can_interact_default(self, player)
+            range = 1.5 if player.curr_cart is not None or self.interaction else 0.5
+            return can_interact_default(self, player, range=range)
         return False
 
     def collision(self, obj, x_position, y_position):
