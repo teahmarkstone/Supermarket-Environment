@@ -197,7 +197,7 @@ class Game:
         player.direction = direction
         cart = player.curr_cart
         if cart is not None:
-            cart.direction = direction
+            cart.set_direction(direction)
 
         # iterating the stage the player is in, for walking animation purposes
         player.iterate_stage(anim_to_advance)
@@ -333,46 +333,46 @@ class Game:
     def set_shelves(self):
 
         # milk aisle
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 5.5, 0.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 7.5, 0.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 9.5, 0.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 11.5, 0.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_strawberry.png", "strawberry milk", 13.5, 0.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 5.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 7.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 9.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 11.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_strawberry.png", "strawberry milk", 13.5, 1.5)
 
         # fruit aisle
-        self.set_shelf(None, "images/food/apples.png", "apples", 5, 5)
-        self.set_shelf(None, "images/food/oranges.png", "oranges", 7, 5)
-        self.set_shelf(None, "images/food/banana.png", "banana", 9, 5)
-        self.set_shelf(None, "images/food/strawberry.png", "strawberry", 11, 5)
-        self.set_shelf(None, "images/food/raspberry.png", "raspberry", 13, 5)
+        self.set_shelf(None, "images/food/apples.png", "apples", 5.5, 5.5)
+        self.set_shelf(None, "images/food/oranges.png", "oranges", 7.5, 5.5)
+        self.set_shelf(None, "images/food/banana.png", "banana", 9.5, 5.5)
+        self.set_shelf(None, "images/food/strawberry.png", "strawberry", 11.5, 5.5)
+        self.set_shelf(None, "images/food/raspberry.png", "raspberry", 13.5, 5.5)
 
         # meat aisle
-        self.set_shelf(None, "images/food/sausage.png", "sausage", 5.5, 8.5)
-        self.set_shelf(None, "images/food/meat_01.png", "steak", 7.5, 8.5)
-        self.set_shelf(None, "images/food/meat_02.png", "steak", 9.5, 8.5)
-        self.set_shelf(None, "images/food/meat_03.png", "chicken", 11.5, 8.5)
-        self.set_shelf(None, "images/food/ham.png", "ham", 13.5, 8.5)
+        self.set_shelf(None, "images/food/sausage.png", "sausage", 5.5, 9.5)
+        self.set_shelf(None, "images/food/meat_01.png", "steak", 7.5, 9.5)
+        self.set_shelf(None, "images/food/meat_02.png", "steak", 9.5, 9.5)
+        self.set_shelf(None, "images/food/meat_03.png", "chicken", 11.5, 9.5)
+        self.set_shelf(None, "images/food/ham.png", "ham", 13.5, 9.5)
 
         # cheese aisle
-        self.set_shelf(None, "images/food/cheese_01.png", "brie cheese", 5.5, 12.5)
-        self.set_shelf(None, "images/food/cheese_02.png", "swiss cheese", 7.5, 12.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 9.5, 12.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 11.5, 12.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 13.5, 12.5)
+        self.set_shelf(None, "images/food/cheese_01.png", "brie cheese", 5.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_02.png", "swiss cheese", 7.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 9.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 11.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 13.5, 13.5)
 
         # veggie aisle
-        self.set_shelf(None, "images/food/garlic.png", "garlic", 5.5, 16.5)
-        self.set_shelf(None, "images/food/leek_onion.png", "leek", 7.5, 16.5)
-        self.set_shelf(None, "images/food/bell_pepper_red.png", "red bell pepper", 9.5, 16.5)
-        self.set_shelf(None, "images/food/carrot.png", "carrot", 11.5, 16.5)
-        self.set_shelf(None, "images/food/lettuce.png", "lettuce", 13.5, 16.5)
+        self.set_shelf(None, "images/food/garlic.png", "garlic", 5.5, 17.5)
+        self.set_shelf(None, "images/food/leek_onion.png", "leek", 7.5, 17.5)
+        self.set_shelf(None, "images/food/bell_pepper_red.png", "red bell pepper", 9.5, 17.5)
+        self.set_shelf(None, "images/food/carrot.png", "carrot", 11.5, 17.5)
+        self.set_shelf(None, "images/food/lettuce.png", "lettuce", 13.5, 17.5)
 
         # frozen? rn it's veggie
-        self.set_shelf(None, "images/food/avocado.png", "avocado", 5.5, 20.5)
-        self.set_shelf(None, "images/food/broccoli.png", "broccoli", 7.5, 20.5)
-        self.set_shelf(None, "images/food/cucumber.png", "cucumber", 9.5, 20.5)
-        self.set_shelf(None, "images/food/bell_pepper_yellow.png", "yellow bell pepper", 11.5, 20.5)
-        self.set_shelf(None, "images/food/onion.png", "onion", 13.5, 20.5)
+        self.set_shelf(None, "images/food/avocado.png", "avocado", 5.5, 21.5)
+        self.set_shelf(None, "images/food/broccoli.png", "broccoli", 7.5, 21.5)
+        self.set_shelf(None, "images/food/cucumber.png", "cucumber", 9.5, 21.5)
+        self.set_shelf(None, "images/food/bell_pepper_yellow.png", "yellow bell pepper", 11.5, 21.5)
+        self.set_shelf(None, "images/food/onion.png", "onion", 13.5, 21.5)
 
     # set register locations and add to object list
     def set_registers(self):

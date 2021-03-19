@@ -2,7 +2,7 @@ import pygame
 import config
 # import random
 from enums.cart_state import CartState
-from helper import obj_collision, can_interact_default
+from helper import obj_collision, can_interact_default, overlap
 from render_game import render_text
 from objects import InteractiveObject
 
@@ -17,18 +17,23 @@ class Counter(InteractiveObject):
         self.image = image
         self.food_image = food_image
         self.string_type = string_type
-        self.width = 0.5
-        self.height = 2
+        self.width = 1.5
+        self.height = 2.25
+
+        self.render_offset_x = -0.25
+        self.render_offset_y = -0.75
 
     def __str__(self):
         return "the {food} counter".format(food=self.string_type)
 
     def collision(self, x_position, y_position):
-        return obj_collision(self, x_position, y_position, x_margin=0.55, y_margin=0.55)
+        return overlap(self.position[0], self.position[1], self.width, self.height,
+                       x_position, y_position, 0.6, 0.4)
 
     def render(self, screen, camera):
-        screen.blit(self.image, ((self.position[0] * config.SCALE) - (camera.position[0] * config.SCALE),
-                                 (self.position[1] * config.SCALE) - (camera.position[1] * config.SCALE)))
+
+        screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
+                                 (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
 
     def interact(self, game, player):
         if not game.render_messages:

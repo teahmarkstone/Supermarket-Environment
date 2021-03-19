@@ -3,7 +3,7 @@ import config
 from enums.cart_state import CartState
 from cart import Cart
 from enums.direction import Direction
-from helper import obj_collision, can_interact_default
+from helper import obj_collision, can_interact_default, overlap
 from render_game import render_text
 from objects import InteractiveObject
 
@@ -12,19 +12,22 @@ class Carts(InteractiveObject):
     def __init__(self, x_position, y_position):
         super().__init__(num_stages=1)
         self.position = [x_position, y_position]
-        self.width = 0.1
-        self.height = 5
+        self.width = 0.7
+        self.height = 6
 
         self.image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartrack.png"),
                                             (int(1.5 * config.SCALE),
                                              6 * config.SCALE))
 
+        self.render_offset_x = -0.4
+        self.render_offset_y = -0.25
+
     def __str__(self):
         return "the cart return"
 
     def render(self, screen, camera):
-        screen.blit(self.image, ((self.position[0] * config.SCALE) - (camera.position[0] * config.SCALE),
-                                 (self.position[1] * config.SCALE) - (camera.position[1] * config.SCALE)))
+        screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
+                                 (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
 
     def can_interact(self, player):
         if player.direction == Direction.SOUTH:
@@ -32,7 +35,8 @@ class Carts(InteractiveObject):
         return False
 
     def collision(self, x_position, y_position):
-        return obj_collision(self, x_position, y_position, x_margin=0.7)
+        return overlap(self.position[0], self.position[1], self.width, self.height,
+                       x_position, y_position, 0.6, 0.4)
 
     def interact(self, game, player):
         if self.interactive_stage == 0:

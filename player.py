@@ -5,7 +5,7 @@ import pygame
 import config
 from enums.direction import Direction
 from enums.cart_state import CartState
-from helper import obj_collision
+from helper import obj_collision, overlap
 from render_game import render_text
 
 
@@ -142,8 +142,8 @@ class Player:
         # screen.fill((255,0,0), rect2)
 
     def render_food(self, screen, camera, image):
-        rect = pygame.Rect((self.position[0] - camera.position[0] + 0.35)*config.SCALE,
-                           (self.position[1] - camera.position[1] + 0.5)*config.SCALE,
+        rect = pygame.Rect((self.position[0] - camera.position[0] + 0.3*self.width)*config.SCALE,
+                           (self.position[1] - camera.position[1])*config.SCALE,
                            config.SCALE, config.SCALE)
         screen.blit(image, rect)
 
@@ -227,7 +227,8 @@ class Player:
             y_position += spacing
 
     def collision(self, x_position, y_position):
-        return obj_collision(self, x_position, y_position, x_margin=0.55, y_margin=0.55)
+        return overlap(self.position[0], self.position[1], self.width, self.height,
+                       x_position, y_position, self.width, self.height)
 
     def reset_cart(self):
         if self.curr_cart is not None:

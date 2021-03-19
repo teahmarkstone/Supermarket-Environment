@@ -58,12 +58,6 @@ class Shelf(InteractiveObject):
 
         screen.blit(self.image, rect)
 
-        x_position = (self.position[0] - camera.position[0]) * config.SCALE
-        y_position = (self.position[1] - camera.position[1]) * config.SCALE
-        rect = pygame.Rect(x_position, y_position, config.SCALE, config.SCALE)
-
-        screen.fill((255, 0, 0), rect)
-
         # add blit for type of food-- FIX: DOESN'T ADJUST FOR CONFIG SCALE
         if self.is_fridge:
             for i in range(55, 100, 33):

@@ -4,7 +4,7 @@ import pygame
 import config
 from enums.direction import Direction
 from enums.cart_state import CartState
-from helper import obj_collision, can_interact_default
+from helper import obj_collision, can_interact_default, overlap
 from render_game import render_text, render_textbox
 from objects import InteractiveObject
 
@@ -42,38 +42,93 @@ class Cart(InteractiveObject):
         self.contents = defaultdict(int)
         self.purchased_contents = defaultdict(int)
         self.capacity = capacity
+        self.set_direction(direction)
+
+    def set_direction(self, direction):
+        self.direction = direction
+        if direction == Direction.NORTH or direction == Direction.SOUTH:
+            self.render_offset_x = -0.25
+            self.render_offset_y = -0.25
+            self.width = 0.5
+            self.height = 0.75
+        else:
+            self.render_offset_x = -0.15
+            self.render_offset_y = -0.6
+            self.width = 0.75
+            self.height = 0.4
     
     def render(self, screen, camera):
         if self.state == CartState.EMPTY or self.state == CartState.PURCHASED:
             if self.direction == Direction.NORTH:
+                collision_x = self.position[0] + 0.25
+                collision_y = self.position[1] +0.25
+                collision_width = 0.5
+                collision_height = 0.75
+
+                rect = pygame.Rect((collision_x - camera.position[0]) * config.SCALE,
+                                   (collision_y - camera.position[1]) * config.SCALE,
+                                   collision_width * config.SCALE, collision_height * config.SCALE)
+
+                screen.fill((255, 0, 0), rect)
                 image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartEMPTYup.png"),
                                                (config.SCALE, config.SCALE))
 
                 rect = pygame.Rect(self.position[0] * config.SCALE - (camera.position[0] * config.SCALE),
-                                   (self.position[1] - .95) * config.SCALE - (camera.position[1] * config.SCALE),
+                                   (self.position[1]) * config.SCALE - (camera.position[1] * config.SCALE),
                                    config.SCALE, config.SCALE)
                 screen.blit(image, rect)
             elif self.direction == Direction.SOUTH:
+                collision_x = self.position[0] + 0.25
+                collision_y = self.position[1] + 0.25
+                collision_width = 0.5
+                collision_height = 0.75
+
+                rect = pygame.Rect((collision_x - camera.position[0]) * config.SCALE,
+                                   (collision_y - camera.position[1]) * config.SCALE,
+                                   collision_width * config.SCALE, collision_height * config.SCALE)
+
+                screen.fill((255, 0, 0), rect)
                 image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartEMPTYdown.png"),
                                                (config.SCALE, config.SCALE))
 
                 rect = pygame.Rect(self.position[0] * config.SCALE - (camera.position[0] * config.SCALE),
-                                   (self.position[1] + 0.75) * config.SCALE - (camera.position[1] * config.SCALE),
+                                   (self.position[1]) * config.SCALE - (camera.position[1] * config.SCALE),
                                    config.SCALE, config.SCALE)
                 screen.blit(image, rect)
             elif self.direction == Direction.EAST:
+                collision_x = self.position[0] + 0.15
+                collision_y = self.position[1] + 0.6
+                collision_width = 0.75
+                collision_height = 0.4
+
+                rect = pygame.Rect((collision_x - camera.position[0]) * config.SCALE,
+                                   (collision_y - camera.position[1]) * config.SCALE,
+                                   collision_width * config.SCALE, collision_height * config.SCALE)
+
+                screen.fill((255, 0, 0), rect)
                 image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartEMPTYright.png"),
                                                (config.SCALE, config.SCALE))
 
-                rect = pygame.Rect((self.position[0] + 0.75) * config.SCALE - (camera.position[0] * config.SCALE),
+                rect = pygame.Rect((self.position[0]) * config.SCALE - (camera.position[0] * config.SCALE),
                                    self.position[1] * config.SCALE - (camera.position[1] * config.SCALE),
                                    config.SCALE, config.SCALE)
                 screen.blit(image, rect)
+
             elif self.direction == Direction.WEST:
+                collision_x = self.position[0] + 0.15
+                collision_y = self.position[1] + 0.6
+                collision_width = 0.75
+                collision_height = 0.4
+
+                rect = pygame.Rect((collision_x - camera.position[0]) * config.SCALE,
+                                   (collision_y - camera.position[1]) * config.SCALE,
+                                   collision_width * config.SCALE, collision_height * config.SCALE)
+
+                screen.fill((255, 0, 0), rect)
                 image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartEMPTYleft.png"),
                                                (config.SCALE, config.SCALE))
 
-                rect = pygame.Rect((self.position[0] - 0.75) * config.SCALE - (camera.position[0] * config.SCALE),
+                rect = pygame.Rect((self.position[0]) * config.SCALE - (camera.position[0] * config.SCALE),
                                    self.position[1] * config.SCALE - (camera.position[1] * config.SCALE),
                                    config.SCALE, config.SCALE)
                 screen.blit(image, rect)
@@ -137,23 +192,35 @@ class Cart(InteractiveObject):
         # cart stolen.
 
     def update_position(self, x_position, y_position):
-        self.position[0] = x_position
-        self.position[1] = y_position
+        if self.direction == Direction.NORTH:
+            self.position[0] = x_position-0.2
+            self.position[1] = y_position-1.1
+        elif self.direction == Direction.SOUTH:
+            self.position[0] = x_position-0.2
+            self.position[1] = y_position+0.2
+        elif self.direction == Direction.EAST:
+            self.position[0] = x_position+0.5
+            self.position[1] = y_position-0.6
+        elif self.direction == Direction.WEST:
+            self.position[0] = x_position-0.95
+            self.position[1] = y_position-0.6
 
     def collision(self, x_position, y_position):
         # These numbers are hacky, but they're what makes the collision box look decent.
-        if self.direction == Direction.NORTH:
-            return self.position[0]-0.5 <= x_position <= self.position[0] + 0.5 \
-                   and self.position[1] - 1.6 <= y_position <= self.position[1] - 0.2
-        elif self.direction == Direction.SOUTH:
-            return self.position[0]-0.5 <= x_position <= self.position[0] + 0.5 \
-                   and self.position[1] +0.2 <= y_position <= self.position[1] + 1.6
-        elif self.direction == Direction.EAST:
-            return self.position[1]-0.5 <= y_position <= self.position[1] + 0.5 \
-                   and self.position[0] +0.2 <= x_position <= self.position[0] + 1.3
-        elif self.direction == Direction.WEST:
-            return self.position[1]-0.5 <= y_position <= self.position[1] + 0.5 \
-                   and self.position[0] - 1.3 <= x_position <= self.position[0] - 0.2
+        if self.direction == Direction.NORTH or self.direction == Direction.SOUTH:
+            collision_x = self.position[0] + 0.25
+            collision_y = self.position[1] + 0.25
+            collision_width = 0.5
+            collision_height = 0.75
+            return overlap(collision_x, collision_y, collision_width, collision_height,
+                           x_position, y_position, 0.6, 0.4)
+        elif self.direction == Direction.EAST or self.direction == Direction.WEST:
+            collision_x = self.position[0] + 0.15
+            collision_y = self.position[1] + 0.6
+            collision_width = 0.75
+            collision_height = 0.4
+            return overlap(collision_x, collision_y, collision_width, collision_height,
+                           x_position, y_position, 0.6, 0.4)
         return False
 
     def can_toggle(self, x_position, y_position):
