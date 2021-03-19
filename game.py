@@ -340,11 +340,11 @@ class Game:
         self.set_shelf("images/Shelves/fridge.png", "images/food/milk_strawberry.png", "strawberry milk", 13.5, 0.5)
 
         # fruit aisle
-        self.set_shelf(None, "images/food/apples.png", "apples", 5.5, 4.5)
-        self.set_shelf(None, "images/food/oranges.png", "oranges", 7.5, 4.5)
-        self.set_shelf(None, "images/food/banana.png", "banana", 9.5, 4.5)
-        self.set_shelf(None, "images/food/strawberry.png", "strawberry", 11.5, 4.5)
-        self.set_shelf(None, "images/food/raspberry.png", "raspberry", 13.5, 4.5)
+        self.set_shelf(None, "images/food/apples.png", "apples", 5, 5)
+        self.set_shelf(None, "images/food/oranges.png", "oranges", 7, 5)
+        self.set_shelf(None, "images/food/banana.png", "banana", 9, 5)
+        self.set_shelf(None, "images/food/strawberry.png", "strawberry", 11, 5)
+        self.set_shelf(None, "images/food/raspberry.png", "raspberry", 13, 5)
 
         # meat aisle
         self.set_shelf(None, "images/food/sausage.png", "sausage", 5.5, 8.5)

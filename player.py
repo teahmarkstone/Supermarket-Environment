@@ -39,8 +39,13 @@ class Player:
         self.list_quant = []
 
         self.load_images()
-        self.width = .01
-        self.height = .01
+        self.width = .6
+        self.height = .4
+
+        self.render_offset_x = -0.2
+        self.render_offset_y = -0.6
+
+
         # The food that's in the player's hand.
         self.holding_food = None
         self.holding_food_image = None
@@ -120,10 +125,21 @@ class Player:
             image = self.west_images[self.stage[3]]
 
         image = pygame.transform.scale(image, (config.SCALE, config.SCALE))
-        rect = pygame.Rect(self.position[0] * config.SCALE - (camera.position[0] * config.SCALE),
-                           self.position[1] * config.SCALE - (camera.position[1] * config.SCALE),
+        rect = pygame.Rect((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
+                           (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE,
                            config.SCALE, config.SCALE)
         screen.blit(image, rect)
+
+        # collision_x = self.position[0] + 0.2
+        # collision_y = self.position[1] + 0.6
+        # collision_height = 0.4
+        # collision_width = 0.6
+        #
+        # rect2 = pygame.Rect((collision_x - camera.position[0])*config.SCALE, (collision_y - camera.position[1])*config.SCALE, \
+        #                     collision_width*config.SCALE, collision_height*config.SCALE)
+        #
+        # # screen.blit(image, rect2)
+        # screen.fill((255,0,0), rect2)
 
     def render_food(self, screen, camera, image):
         rect = pygame.Rect((self.position[0] - camera.position[0] + 0.35)*config.SCALE,
