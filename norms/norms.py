@@ -1,6 +1,7 @@
 import math
 from collections import defaultdict
 
+from enums.direction import Direction
 from enums.player_action import PlayerAction
 from helper import pos_collision, overlap
 from norms.norm import Norm, NormViolation
@@ -145,8 +146,8 @@ class PlayerCollisionNorm(Norm):
                         violations.add(PlayerCollisionViolation(collider=player, collidee=player2, with_cart=False))
                         self.old_collisions.add((player, player2))
                 elif 1 <= action[i] <= 4 and cart is not None and \
-                    overlap(cart.position[0], cart.position[1], cart.width, cart.height,
-                            next_positions[j][0], next_positions[j][1], player2.width, player2.height):
+                        overlap(cart.position[0], cart.position[1], cart.width, cart.height,
+                                next_positions[j][0], next_positions[j][1], player2.width, player2.height):
                     if (player, player2) not in self.old_collisions:
                         violations.add(PlayerCollisionViolation(player, player2, with_cart=True))
                         self.old_collisions.add((player, player2))
@@ -196,7 +197,8 @@ class ObjectCollisionNorm(Norm):
                     if (player, obj) not in self.old_collisions:
                         violations.add(ObjectCollisionViolation(player, obj, with_cart=False))
                         self.old_collisions.add((player, obj))
-                elif 1 <= action[i] <= 4 and cart is not None and obj.collision(cart, cart.position[0], cart.position[1]):
+                elif 1 <= action[i] <= 4 and cart is not None and obj.collision(cart, cart.position[0],
+                                                                                cart.position[1]):
                     if (player, obj) not in self.old_collisions:
                         violations.add(ObjectCollisionViolation(player, obj, with_cart=True))
                         self.old_collisions.add((player, obj))
@@ -224,7 +226,7 @@ class WallCollisionViolation(NormViolation):
 
     def as_string(self):
         with_cart_str = " with a cart" if self.with_cart else ""
-        return "{player} ran into a wall{w}".format(player=self.player,w=with_cart_str)
+        return "{player} ran into a wall{w}".format(player=self.player, w=with_cart_str)
 
 
 class WallCollisionNorm(Norm):
@@ -397,3 +399,49 @@ class OneCartOnlyNorm(Norm):
             else:
                 has_cart.add(cart.last_held)
         return violations
+
+
+class PersonalSpaceViolation(NormViolation):
+    def __init__(self, invader, invadee, dist=0.5):
+        super().__init__()
+        self.invader = invader
+        self.invadee = invadee
+        self.dist = dist
+
+    def as_string(self):
+        return "{invader} got within {dist} of {invadee}".format(invader=self.invader, invadee=self.invadee,
+                                                                 dist=self.dist)
+
+
+def moving_towards(direction, pos_1, pos_2):
+    return (direction == Direction.NORTH and pos_2[1] < pos_1[1]) or \
+           (direction == Direction.SOUTH and pos_2[1] > pos_2[1]) or \
+           (direction == Direction.WEST and pos_2[0] < pos_1[0]) or \
+           (direction == Direction.WEST and pos_2[0] > pos_1[0])
+
+
+class PersonalSpaceNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
+        for i, player in enumerate(game.players):
+            next_pos = next_positions[i]
+            center = [next_pos[0] + player.width / 2., next_pos[1] + player.height / 2.]
+            for j, player2 in enumerate(game.players):
+                if i == j:
+                    continue
+                center2 = [next_positions[j][0] + player2.width / 2., next_positions[j][1] + player2.height / 2.]
+                if 1 <= action[i] <= 4 and moving_towards(game.next_direction(player, action[i]),
+                                                          next_pos, next_positions[j]) \
+                        and math.dist(center, center2) < self.dist_threshold:
+                    if (player, player2) not in self.known_violations:
+                        violations.add(
+                            PersonalSpaceViolation(invader=player, invadee=player2, dist=self.dist_threshold))
+                        self.known_violations.add((player, player2))
+                elif math.dist(center, center2) >= self.dist_threshold and (player, player2) in self.known_violations:
+                    self.known_violations.remove((player, player2))
+        return violations
+
+    def __init__(self, dist_threshold):
+        super().__init__()
+        self.dist_threshold = dist_threshold

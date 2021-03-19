@@ -124,6 +124,7 @@ if __name__ == "__main__":
              EntranceOnlyNorm(),
              UnattendedCartNorm(),
              OneCartOnlyNorm(),
+             PersonalSpaceNorm(dist_threshold=2)
              ]
 
     env = NormWrapper(env, norms)
