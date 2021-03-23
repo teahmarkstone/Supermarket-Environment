@@ -404,12 +404,12 @@ class Game:
         image = pygame.transform.scale(pygame.image.load("images/Registers/registersA.png"),
                                        (int(2.3 * config.SCALE), int(3 * config.SCALE)))
 
-        register = Register(1, 4, image)
+        register = Register(1, 4.5, image)
         self.objects.append(register)
         image = pygame.transform.scale(pygame.image.load("images/Registers/registersB.png"),
                                        (int(2.3 * config.SCALE), int(3 * config.SCALE)))
 
-        register = Register(1, 9, image)
+        register = Register(1, 9.5, image)
         self.objects.append(register)
 
     # set counter locations and add to object list
@@ -419,7 +419,7 @@ class Game:
                                                                                            int(3.5 * config.SCALE)))
         food_image = pygame.transform.scale(pygame.image.load("images/food/prepared.png"),
                                             (int(.30 * config.SCALE), int(.30 * config.SCALE)))
-        counter = Counter(18, 4, image, food_image, name)
+        counter = Counter(18.25, 4.75, image, food_image, name)
         self.objects.append(counter)
         self.food_list.append(name)
         name = "fresh fish"
@@ -427,7 +427,7 @@ class Game:
                                                                                            int(3.5 * config.SCALE)))
         food_image = pygame.transform.scale(pygame.image.load("images/food/fresh_fish.png"),
                                             (int(.30 * config.SCALE), int(.30 * config.SCALE)))
-        counter = Counter(18, 10, image, food_image, name)
+        counter = Counter(18.25, 10.75, image, food_image, name)
         self.objects.append(counter)
         self.food_list.append(name)
 
