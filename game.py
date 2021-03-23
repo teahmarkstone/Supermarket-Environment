@@ -29,7 +29,7 @@ DIRECTION_VECTOR = {
     Direction.WEST: (-1, 0)
 }
 
-DIRECTION_TO_INT = {Direction.NORTH: 0, Direction.SOUTH: 1, Direction.EAST: 2, Direction.WEST:3}
+DIRECTION_TO_INT = {Direction.NORTH: 0, Direction.SOUTH: 1, Direction.EAST: 2, Direction.WEST: 3}
 
 
 def index_or_minus_one(item, the_list):
@@ -51,6 +51,7 @@ def get_obj_category(obj):
     elif isinstance(obj, Shelf):
         return "shelves"
     return "misc_objects"
+
 
 class Game:
 
@@ -79,7 +80,7 @@ class Game:
     def set_up(self):
         # make players
         for i in range(0, self.num_players):
-            player = Player(i+1, 15, Direction.EAST, i+1)
+            player = Player(i + 1.2, 15.6, Direction.EAST, i + 1)
             self.players.append(player)
 
         self.running = True
@@ -114,7 +115,6 @@ class Game:
             elif self.game_state == GameState.INTERACTIVE:
                 self.interactive_events()
 
-        # print(self.update_observation())
 
     def interact(self, player_index):
         if self.game_state == GameState.EXPLORATORY:
@@ -178,23 +178,19 @@ class Game:
         try:
             direction, (x1, y1), anim_to_advance = ACTION_DIRECTION[action]
             speed = self.player_speed if player.direction == direction else 0.
-            next_pos = [player.position[0] + speed * x1, player.position[1] + speed*y1]
+            next_pos = [player.position[0] + speed * x1, player.position[1] + speed * y1]
             return next_pos
         except KeyError:
             return player.position
 
+    def at_door(self, unit, x, y):
+        return (x >= 0 and self.map[round(y - 0.4)][round(x)] == "F") or (x <= 0 and self.map[round(y - 0.4)][round(x+unit.width)] == "F")
+
     def hits_wall(self, unit, x, y):
         wall_width = 0.4
-        if unit.direction == Direction.NORTH:
-            wall_width = 2
-            return y <= wall_width
-        if unit.direction == Direction.SOUTH:
-            return y + unit.height >= len(self.map) - wall_width
-        if unit.direction == Direction.EAST:
-            return x + unit.width >= len(self.map[0]) - wall_width
-        if unit.direction == Direction.WEST:
-            return x  <= wall_width
-        return False
+        return y <= 2 or y + unit.height >= len(self.map) - wall_width or \
+               x + unit.width >= len(self.map[0]) - wall_width or (x <= wall_width and
+                                                                   not self.at_door(unit, x, y))
 
     # TODO we may need to think a little more about the logic of breaking ties when two players move onto the same spot.
     def player_move(self, player_index, action):
@@ -209,12 +205,12 @@ class Game:
 
         # If the player is holding a cart, this keeps track of whether the cart would collide with something.
         if player.curr_cart is not None:
-
             prev_direction = player.direction
             cart = player.curr_cart
             cart.set_direction(direction)
-            cart.update_position(player.position[0] + current_speed*x1, player.position[1] + current_speed*y1)
-            if self.collide(cart, cart.position[0], cart.position[1]) or self.hits_wall(cart, cart.position[0], cart.position[1]):
+            cart.update_position(player.position[0] + current_speed * x1, player.position[1] + current_speed * y1)
+            if self.collide(cart, cart.position[0], cart.position[1]) or self.hits_wall(cart, cart.position[0],
+                                                                                        cart.position[1]):
                 # Undo the turning of the cart bc we're canceling the action
                 cart.set_direction(prev_direction)
                 cart.update_position(player.position[0], player.position[1])
@@ -228,7 +224,6 @@ class Game:
         # iterating the stage the player is in, for walking animation purposes
         player.iterate_stage(anim_to_advance)
         self.move_unit(player, [current_speed * x1, current_speed * y1])
-        # print(player.position)
 
     # main keyboard input
     def exploratory_events(self):
@@ -507,7 +502,7 @@ class Game:
         if render_static_objects:
             for obj in self.objects:
                 if isinstance(obj, Cart):
-                    continue # We've already added all the carts.
+                    continue  # We've already added all the carts.
                 object_data = {
                     "height": obj.height,
                     "width": obj.width,
