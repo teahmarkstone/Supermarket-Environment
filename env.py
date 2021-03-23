@@ -12,7 +12,7 @@ MOVEMENT_ACTIONS = [PlayerAction.NORTH, PlayerAction.SOUTH, PlayerAction.EAST, P
 
 class SupermarketEnv(gym.Env):
 
-    def __init__(self, num_players=1, player_speed=0.15, render_messages=False):
+    def __init__(self, num_players=1, player_speed=0.15, render_messages=True):
         pygame.init()
         super(SupermarketEnv, self).__init__()
 

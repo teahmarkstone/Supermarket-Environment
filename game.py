@@ -474,6 +474,8 @@ class Game:
             player_data = {
                 "index": player.player_number,
                 "position": player.position,
+                "width": player.width,
+                "height": player.height,
                 "direction": DIRECTION_TO_INT[player.direction],
                 "curr_cart": self.get_cart_index(player.curr_cart),
                 "shopping_list": player.shopping_list,

@@ -295,7 +295,6 @@ class BlockingExitNorm(Norm):
             if in_exit_zone(player) or in_entrance_zone(player):
                 self.time_in_exit[player] += 1
                 if self.time_in_exit[player] >= self.time_threshold and player not in self.old_violations:
-                    print(self.time_in_exit[player])
                     self.old_violations.add(player)
                     if in_entrance_zone(player):
                         violations.add(BlockingExitViolation(player, True))

@@ -6,6 +6,8 @@ import socket
 import time
 
 from env import SupermarketEnv
+from norms.norm import NormWrapper
+from norms.norms import *
 from utils import recv_socket_data
 
 ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL']
@@ -37,7 +39,7 @@ def get_action_json(action, env_, obs, reward, done, info_=None):
                    'observation': obs,
                    'step': env_.step_count,
                    'gameOver': done}
-    print(action_json)
+    # print(action_json)
     # action_json = {"hello": "world"}
     return action_json
 
@@ -66,6 +68,21 @@ if __name__ == "__main__":
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
     env = SupermarketEnv(1)
+
+    norms = [CartTheftNorm(),
+             WrongShelfNorm(),
+             ShopliftingNorm(),
+             PlayerCollisionNorm(),
+             ObjectCollisionNorm(),
+             WallCollisionNorm(),
+             BlockingExitNorm(),
+             EntranceOnlyNorm(),
+             UnattendedCartNorm(),
+             OneCartOnlyNorm(),
+             PersonalSpaceNorm(dist_threshold=1)
+             ]
+
+    env = NormWrapper(env, norms)
     # env.map_size = 32
 
     # Connect to agent
@@ -100,7 +117,7 @@ if __name__ == "__main__":
                     if command in ACTION_COMMANDS:
                         action_id = ACTION_COMMANDS.index(command)
                         action[player] = action_id
-                        print(action)
+                        # print(action)
                         obs, reward, done, info = env.step(tuple(action))
                         json_to_send = get_action_json(command, env, obs, reward, done, info)
                     else:
@@ -111,7 +128,7 @@ if __name__ == "__main__":
                     valid = all(cmd in ACTION_COMMANDS for cmd in commands)
                     if valid:
                         action = tuple(ACTION_COMMANDS.index(cmd) for cmd in commands)
-                        print(action)
+                        # print(action)
                         obs, reward, done, info = env.step(tuple(action))
                         json_to_send = get_action_json(command, env, obs, reward, done, info)
                     else:
