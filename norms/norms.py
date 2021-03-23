@@ -1,6 +1,8 @@
 import math
 from collections import defaultdict
 
+from checkout import Register
+from counters import Counter
 from enums.direction import Direction
 from enums.player_action import PlayerAction
 from helper import pos_collision, overlap
@@ -444,3 +446,27 @@ class PersonalSpaceNorm(Norm):
     def __init__(self, dist_threshold):
         super().__init__()
         self.dist_threshold = dist_threshold
+
+
+class InteractionCancellationViolation(NormViolation):
+    def __init__(self, player, obj, num_times):
+        self.player = player
+        self.obj = obj
+        self.num_times = num_times
+
+    def as_string(self):
+        return "{player} canceled interaction with {obj} {num_times} times".format(player=self.player, obj=self.obj,
+                                                                                   num_times=self.num_times)
+
+
+# TODO: add the "# times" counter
+class InteractionCancellationNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.CANCEL:
+                target = game.interaction_object(player)
+                if (isinstance(target, Register) or isinstance(target,
+                                                               Counter)) and target.interaction and target.interactive_stage == 0:
+                    violations.add(InteractionCancellationViolation(player, target, 1))
+        return violations
