@@ -15,9 +15,7 @@ class Carts(InteractiveObject):
         self.width = 0.7
         self.height = 6
 
-        self.image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartrack.png"),
-                                            (int(1.5 * config.SCALE),
-                                             6 * config.SCALE))
+        self.image = None
 
         self.render_offset_x = -0.4
         self.render_offset_y = -0.25
@@ -26,6 +24,10 @@ class Carts(InteractiveObject):
         return "the cart return"
 
     def render(self, screen, camera):
+        if self.image is None:
+            self.image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartrack.png"),
+                                   (int(1.5 * config.SCALE),
+                                    6 * config.SCALE))
         screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
                                  (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
 

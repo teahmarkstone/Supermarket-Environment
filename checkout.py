@@ -1,10 +1,7 @@
-import pygame
 import config
-from enums.cart_state import CartState
-from helper import obj_collision, overlap
-from render_game import render_text
-from objects import InteractiveObject
 from helper import can_interact_default
+from helper import overlap
+from objects import InteractiveObject
 
 
 class Register(InteractiveObject):

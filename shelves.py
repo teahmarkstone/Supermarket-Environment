@@ -22,6 +22,10 @@ class Shelf(InteractiveObject):
         self.render_offset_y = -1
         self.render_offset_x = 0
 
+        self.food_image_file = food_image
+        self.shelf_image_file = shelf_image
+        self.loaded_images = False
+
 
         # self.player_inventory_limit = 12
         if shelf_image is None:
@@ -51,6 +55,9 @@ class Shelf(InteractiveObject):
         return can_interact_default(self, player)
 
     def render(self, screen, camera):
+        if not self.loaded_images:
+            self.load_images(self.food_image_file, self.shelf_image_file)
+            self.loaded_images = True
 
         x_position = (self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE
         y_position = (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE

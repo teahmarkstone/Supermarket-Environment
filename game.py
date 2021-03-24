@@ -55,7 +55,8 @@ def get_obj_category(obj):
 
 class Game:
 
-    def __init__(self, screen, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False):
+    def __init__(self, screen, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False,
+                 headless=False):
         self.screen = screen
         self.objects = []
         self.carts = []
@@ -76,6 +77,7 @@ class Game:
 
         self.keyboard_input = keyboard_input
         self.render_messages = render_messages
+        self.headless = headless
 
     def set_up(self):
         # make players
@@ -99,21 +101,22 @@ class Game:
     # called in while running loop, handles events, renders, etc
     def update(self):
         # rendering
-        self.screen.fill(config.WHITE)
+        if not self.headless:
+            self.screen.fill(config.WHITE)
 
-        render.render_map(self.screen, self.camera, self.players[self.curr_player], self.map)
-        render.render_decor(self.screen, self.camera)
-        render.render_objects_and_players(self.screen, self.camera, self.objects, self.players, self.carts)
-        # render.render_objects(self.screen, self.camera, self.objects)
-        # render.render_players(self.screen, self.camera, self.players, self.carts)
-        render.render_interactions(self, self.screen, self.objects)
+            render.render_map(self.screen, self.camera, self.players[self.curr_player], self.map)
+            render.render_decor(self.screen, self.camera)
+            render.render_objects_and_players(self.screen, self.camera, self.objects, self.players, self.carts)
+            # render.render_objects(self.screen, self.camera, self.objects)
+            # render.render_players(self.screen, self.camera, self.players, self.carts)
+            render.render_interactions(self, self.screen, self.objects)
 
-        # checking keyboard input/events for either exploratory or interactive
-        if self.keyboard_input:
-            if self.game_state == GameState.EXPLORATORY:
-                self.exploratory_events()
-            elif self.game_state == GameState.INTERACTIVE:
-                self.interactive_events()
+            # checking keyboard input/events for either exploratory or interactive
+            if self.keyboard_input:
+                if self.game_state == GameState.EXPLORATORY:
+                    self.exploratory_events()
+                elif self.game_state == GameState.INTERACTIVE:
+                    self.interactive_events()
 
 
     def interact(self, player_index):
@@ -224,8 +227,6 @@ class Game:
         # iterating the stage the player is in, for walking animation purposes
         player.iterate_stage(anim_to_advance)
         self.move_unit(player, [current_speed * x1, current_speed * y1])
-
-        print(player.position)
 
     # main keyboard input
     def exploratory_events(self):
@@ -398,32 +399,44 @@ class Game:
 
     # set register locations and add to object list
     def set_registers(self):
-        image = pygame.transform.scale(pygame.image.load("images/Registers/registersA.png"),
+        if not self.headless:
+            image = pygame.transform.scale(pygame.image.load("images/Registers/registersA.png"),
                                        (int(2.3 * config.SCALE), int(3 * config.SCALE)))
-
+        else:
+            image = None
         register = Register(1, 4.5, image)
         self.objects.append(register)
-        image = pygame.transform.scale(pygame.image.load("images/Registers/registersB.png"),
+        if not self.headless:
+            image = pygame.transform.scale(pygame.image.load("images/Registers/registersB.png"),
                                        (int(2.3 * config.SCALE), int(3 * config.SCALE)))
-
+        else:
+            image = None
         register = Register(1, 9.5, image)
         self.objects.append(register)
 
     # set counter locations and add to object list
     def set_counters(self):
         name = "prepared foods"
-        image = pygame.transform.scale(pygame.image.load("images/counters/counterA.png"), (int(1.6 * config.SCALE),
+        if not self.headless:
+            image = pygame.transform.scale(pygame.image.load("images/counters/counterA.png"), (int(1.6 * config.SCALE),
                                                                                            int(3.5 * config.SCALE)))
-        food_image = pygame.transform.scale(pygame.image.load("images/food/prepared.png"),
+            food_image = pygame.transform.scale(pygame.image.load("images/food/prepared.png"),
                                             (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+        else:
+            image = None
+            food_image = None
         counter = Counter(18.25, 4.75, image, food_image, name)
         self.objects.append(counter)
         self.food_list.append(name)
         name = "fresh fish"
-        image = pygame.transform.scale(pygame.image.load("images/counters/counterB.png"), (int(1.6 * config.SCALE),
+        if not self.headless:
+            image = pygame.transform.scale(pygame.image.load("images/counters/counterB.png"), (int(1.6 * config.SCALE),
                                                                                            int(3.5 * config.SCALE)))
-        food_image = pygame.transform.scale(pygame.image.load("images/food/fresh_fish.png"),
+            food_image = pygame.transform.scale(pygame.image.load("images/food/fresh_fish.png"),
                                             (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+        else:
+            image = None
+            food_image = None
         counter = Counter(18.25, 10.75, image, food_image, name)
         self.objects.append(counter)
         self.food_list.append(name)
@@ -452,10 +465,12 @@ class Game:
 
     def set_shelf(self, shelf_filename, food_filename, string_name, x_position, y_position):
         shelf_image = None
-        if shelf_filename is not None:
-            shelf_image = pygame.transform.scale(pygame.image.load(shelf_filename),
+        food_image = None
+        if not self.headless:
+            if shelf_filename is not None:
+                shelf_image = pygame.transform.scale(pygame.image.load(shelf_filename),
                                                  (int(2 * config.SCALE), int(2 * config.SCALE)))
-        food = pygame.transform.scale(pygame.image.load(food_filename),
+            food = pygame.transform.scale(pygame.image.load(food_filename),
                                       (int(.30 * config.SCALE), int(.30 * config.SCALE)))
         shelf = Shelf(x_position, y_position, shelf_image, food, string_name)
         self.objects.append(shelf)

@@ -38,7 +38,7 @@ class Player:
         # quantities for foods, indices correspond to indices of shopping_list list
         self.list_quant = []
 
-        self.load_images()
+        self.images_loaded = False
         self.width = .6
         self.height = .4
 
@@ -148,6 +148,9 @@ class Player:
         screen.blit(image, rect)
 
     def render(self, screen, camera, carts):
+        if not self.images_loaded:
+            self.load_images()
+            self.images_loaded = True
         self.render_player(screen, camera)
         if self.holding_food is not None:
             self.render_food(screen, camera, self.holding_food_image)

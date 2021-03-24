@@ -12,13 +12,14 @@ MOVEMENT_ACTIONS = [PlayerAction.NORTH, PlayerAction.SOUTH, PlayerAction.EAST, P
 
 class SupermarketEnv(gym.Env):
 
-    def __init__(self, num_players=1, player_speed=0.15, render_messages=True):
-        pygame.init()
+    def __init__(self, num_players=1, player_speed=0.15, render_messages=True, headless=False):
+
         super(SupermarketEnv, self).__init__()
+        if not headless:
+            pygame.init()
+            pygame.display.set_caption("Supermarket Environment")
+            self.clock = pygame.time.Clock()
 
-        pygame.display.set_caption("Supermarket Environment")
-
-        self.clock = pygame.time.Clock()
         self.step_count = 0
         self.render_messages = render_messages
 
@@ -28,6 +29,7 @@ class SupermarketEnv(gym.Env):
 
         self.action_space = gym.spaces.MultiDiscrete([len(PlayerAction)]*self.num_players)
         self.observation_space = gym.spaces.Dict()
+        self.headless = headless
 
     def step(self, action):
         done = False
@@ -49,8 +51,12 @@ class SupermarketEnv(gym.Env):
         return observation, 0., done, None
 
     def reset(self):
-        screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
-        self.game = Game(screen, self.num_players, self.player_speed, render_messages=self.render_messages)
+        if not self.headless:
+            screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+        else:
+            screen = None
+        self.game = Game(screen, self.num_players, self.player_speed, render_messages=self.render_messages,
+                         headless=self.headless)
         self.game.set_up()
         self.step_count = 0
         return self.game.update_observation()
