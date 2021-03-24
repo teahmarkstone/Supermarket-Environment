@@ -44,7 +44,7 @@ class SupermarketEnv(gym.Env):
                 self.game.toggle_cart(i)
             elif player_action == PlayerAction.CANCEL:
                 self.game.cancel_interaction(i)
-        observation = self.game.update_observation()
+        observation = self.game.observation()
         self.step_count += 1
         if not self.game.running:
             done = True
@@ -59,15 +59,18 @@ class SupermarketEnv(gym.Env):
                          headless=self.headless)
         self.game.set_up()
         self.step_count = 0
-        return self.game.update_observation()
+        return self.game.observation()
 
     def render(self, mode='human'):
-        self.clock.tick(120)
-        if self.game.running:
-            self.game.update()
-            pygame.display.flip()
+        if mode.lower() == 'human' and not self.headless:
+            self.clock.tick(120)
+            if self.game.running:
+                self.game.update()
+                pygame.display.flip()
+            else:
+                pygame.quit()
         else:
-            pygame.quit()
+            print(self.game.observation(True))
 
 
 if __name__ == "__main__":

@@ -465,7 +465,7 @@ class Game:
 
     def set_shelf(self, shelf_filename, food_filename, string_name, x_position, y_position):
         shelf_image = None
-        food_image = None
+        food = None
         if not self.headless:
             if shelf_filename is not None:
                 shelf_image = pygame.transform.scale(pygame.image.load(shelf_filename),
@@ -483,7 +483,7 @@ class Game:
         else:
             return {"interactive_stage": -1, "total_stages": 0}
 
-    def update_observation(self, render_static_objects=True):
+    def observation(self, render_static_objects=True):
         obs = {"players": [], "carts": []}
         obs.update(self.get_interactivity_data())
 
@@ -541,26 +541,3 @@ class Game:
     def get_cart_index(self, cart):
         return index_or_minus_one(cart, self.carts)
 
-    # def add_player_info(self):
-    #     new_player = {"index": None,
-    #                   "position": [],
-    #                   "direction": None,
-    #                   "curr_cart": None,
-    #                   "shopping_list": [],
-    #                   "list_quant": [],
-    #                   "holding_food": None,
-    #                   "bought_holding_food": None
-    #                   }
-    #     supermarket_obs["player"].append(new_player)
-
-    # def add_cart_info(self):
-    #     new_cart = {"position": None,
-    #                 "owner": None,
-    #                 "state": None,
-    #                 "direction": None,
-    #                 "being_held": None,
-    #                 "last_held": None,
-    #                 "contents": None,
-    #                 "purchased_contents": None
-    #                 }
-    #     supermarket_obs["cart"].append(new_cart)
