@@ -117,14 +117,6 @@ class Game:
             self.num_players = len(self.players)
 
     def set_up(self):
-        # make players
-        if self.initial_state_filename is not None:
-            self.load_from_file(self.initial_state_filename)
-        else:
-            for i in range(0, self.num_players):
-                player = Player(i + 1.2, 15.6, Direction.EAST, i + 1)
-                player.set_shopping_list(self.food_list)
-                self.players.append(player)        # randomly generates 12 item shopping list from list of food in store
 
         self.running = True
         self.game_state = GameState.EXPLORATORY
@@ -135,6 +127,15 @@ class Game:
         self.set_registers()
         self.set_counters()
         self.set_carts()
+
+        # make players
+        if self.initial_state_filename is not None:
+            self.load_from_file(self.initial_state_filename)
+        else:
+            for i in range(0, self.num_players):
+                player = Player(i + 1.2, 15.6, Direction.EAST, i + 1)
+                player.set_shopping_list(self.food_list)
+                self.players.append(player)        # randomly generates 12 item shopping list from list of food in store
 
     def save_state(self, filename):
         with open(filename, "w") as f:
