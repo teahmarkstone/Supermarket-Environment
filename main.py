@@ -60,6 +60,12 @@ class SupermarketEventHandler:
                 elif event.key == pygame.K_c:
                     self.env.step(self.single_player_action(PlayerAction.TOGGLE))
 
+                elif event.key == pygame.K_s:
+
+                    filename = input("Please enter a filename for saving the state.\n>>> ")
+                    self.env.game.save_state(filename)
+                    print("State saved to {filename}.".format(filename=filename))
+
             # player stands still if not moving, player stops holding cart if c button released
             if event.type == pygame.KEYUP:
                 self.env.step(self.single_player_action(PlayerAction.NOP))

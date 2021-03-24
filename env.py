@@ -70,7 +70,7 @@ class SupermarketEnv(gym.Env):
             if self.game.running:
                 self.game.update()
                 pygame.display.flip()
-                print(self.game.observation(False))
+                # print(self.game.observation(False))
             else:
                 pygame.quit()
         else:
