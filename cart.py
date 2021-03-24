@@ -29,12 +29,12 @@ class Cart(InteractiveObject):
     def __str__(self):
         return "a shopping cart"
 
-    def __init__(self, x_position, y_position, owner, direction, cart_state, capacity=12):
+    def __init__(self, x_position, y_position, owner, direction, capacity=12):
         super().__init__(num_stages=1)
         self.position = [x_position, y_position]
         self.owner = owner
         self.last_held = owner
-        self.state = cart_state
+        self.state = CartState.EMPTY
         self.direction = direction
         self.width = .01
         self.height = .01

@@ -6,6 +6,7 @@ from env import SupermarketEnv
 from game import Game
 from norms.norm import NormWrapper
 from norms.norms import *
+import argparse
 
 
 class SupermarketEventHandler:
@@ -109,10 +110,19 @@ class SupermarketEventHandler:
         self.running = self.env.game.running
         self.env.render()
 
-
 if __name__ == "__main__":
 
-    env = SupermarketEnv(num_players=2, player_speed=0.07, render_messages=True)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--file',
+        help="location of the initial state to read in",
+        default=None
+    )
+
+    args = parser.parse_args()
+
+    env = SupermarketEnv(num_players=2, player_speed=0.07, render_messages=True, initial_state_filename=args.file)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),

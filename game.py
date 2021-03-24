@@ -30,6 +30,7 @@ DIRECTION_VECTOR = {
 }
 
 DIRECTION_TO_INT = {Direction.NORTH: 0, Direction.SOUTH: 1, Direction.EAST: 2, Direction.WEST: 3}
+DIRECTIONS = [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]
 
 
 def index_or_minus_one(item, the_list):
@@ -56,13 +57,15 @@ def get_obj_category(obj):
 class Game:
 
     def __init__(self, screen, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False,
-                 headless=False):
+                 headless=False, initial_state_filename=None):
         self.screen = screen
         self.objects = []
         self.carts = []
         self.running = False
         self.map = []
         self.camera = Camera()
+
+        self.initial_state_filename = initial_state_filename
 
         self.game_state = GameState.NONE
 
@@ -79,11 +82,49 @@ class Game:
         self.render_messages = render_messages
         self.headless = headless
 
+    def load_from_file(self, file_path):
+        from ast import literal_eval
+        with open(file_path, "r") as file:
+            contents = file.read()
+            obs = literal_eval(contents)
+
+            for player_dict in obs['players']:
+                pos = player_dict['position']
+                player = Player(pos[0], pos[1], DIRECTIONS[player_dict['direction']], player_dict['index'])
+                player.shopping_list = player_dict['shopping_list']
+                player.list_quant = player_dict['list_quant']
+                player.holding_food = player_dict['holding_food']
+                player.bought_holding_food = player_dict['bought_holding_food']
+                self.players.append(player)
+
+            for cart_dict in obs['carts']:
+                pos = cart_dict['position']
+                cart = Cart(pos[0], pos[1], self.players[cart_dict["owner"]], DIRECTIONS[cart_dict["direction"]],
+                cart_dict["capacity"])
+                last_held = cart_dict["last_held"]
+                cart.last_held = self.players[last_held] if last_held != -1 else None
+                for i, string in enumerate(cart_dict["contents"]):
+                    cart.contents[string] = cart_dict["contents_quant"]
+                for i, string in enumerate(cart_dict["purchased_contents"]):
+                    cart.purchased_contents[string] = cart_dict["purchased_quant"]
+                self.carts.append(cart)
+                self.objects.append(cart)
+
+            for i, player in enumerate(self.players):
+                cart_num = obs['players'][i]["curr_cart"]
+                player.curr_cart = self.carts[cart_num] if cart_num != -1 else None
+
+            self.num_players = len(self.players)
+
     def set_up(self):
         # make players
-        for i in range(0, self.num_players):
-            player = Player(i + 1.2, 15.6, Direction.EAST, i + 1)
-            self.players.append(player)
+        if self.initial_state_filename is not None:
+            self.load_from_file(self.initial_state_filename)
+        else:
+            for i in range(0, self.num_players):
+                player = Player(i + 1.2, 15.6, Direction.EAST, i + 1)
+                player.set_shopping_list(self.food_list)
+                self.players.append(player)        # randomly generates 12 item shopping list from list of food in store
 
         self.running = True
         self.game_state = GameState.EXPLORATORY
@@ -95,8 +136,9 @@ class Game:
         self.set_counters()
         self.set_carts()
 
-        # randomly generates 12 item shopping list from list of food in store
-        self.players[self.curr_player].set_shopping_list(self.food_list)
+    def save_state(self, filename):
+        with open(filename, "w") as f:
+            f.write(str(self.observation(False)))
 
     # called in while running loop, handles events, renders, etc
     def update(self):
@@ -227,6 +269,7 @@ class Game:
         # iterating the stage the player is in, for walking animation purposes
         player.iterate_stage(anim_to_advance)
         self.move_unit(player, [current_speed * x1, current_speed * y1])
+
 
     # main keyboard input
     def exploratory_events(self):
