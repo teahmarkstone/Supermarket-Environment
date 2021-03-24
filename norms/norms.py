@@ -267,11 +267,11 @@ class WallCollisionNorm(Norm):
 
 # TODO need a version of collision norm for when the player is holding a shopping cart
 def in_exit_zone(player):
-    return player.position[0] <= 1.1 and (6.5 <= player.position[1] <= 7.5 or 2.5 <= player.position[1] <= 3.5)
+    return player.position[0] <= 1 and (7 <= player.position[1] <= 7.8 or 3 <= player.position[1] <= 3.8)
 
 
 def in_entrance_zone(player):
-    return player.position[0] <= 1.1 and 14.5 <= player.position[1] <= 15.5
+    return player.position[0] <= 1 and 15 <= player.position[1] <= 15.8
 
 
 class BlockingExitViolation(NormViolation):
