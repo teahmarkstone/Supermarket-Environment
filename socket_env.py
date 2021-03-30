@@ -1,6 +1,6 @@
 # Author: Gyan Tatiya
 # Email: Gyan.Tatiya@tufts.edu
-
+import argparse
 import json
 import socket
 import time
@@ -62,12 +62,23 @@ def get_commands(command_):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--num_players',
+        type=int,
+        help="location of the initial state to read in",
+        default=1
+    )
+
+    args = parser.parse_args()
+
     # np.random.seed(0)
 
     # Make the env
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
-    env = SupermarketEnv(1)
+    env = SupermarketEnv(args.num_players, render_messages=False)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),
