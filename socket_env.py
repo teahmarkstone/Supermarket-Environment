@@ -71,6 +71,24 @@ if __name__ == "__main__":
         default=1
     )
 
+    parser.add_argument(
+        '--port',
+        type=int,
+        help="Which port to bind",
+        default=9000
+    )
+
+    parser.add_argument(
+        '--headless',
+        action='store_true'
+    )
+
+    parser.add_argument(
+        '--file',
+        help="location of the initial state to read in",
+        default=None
+    )
+
     args = parser.parse_args()
 
     # np.random.seed(0)
@@ -78,7 +96,7 @@ if __name__ == "__main__":
     # Make the env
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
-    env = SupermarketEnv(args.num_players, render_messages=False)
+    env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),
@@ -99,7 +117,7 @@ if __name__ == "__main__":
 
     # Connect to agent
     HOST = '127.0.0.1'
-    PORT = 9000
+    PORT = args.port
     sock_agent = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock_agent.bind((HOST, PORT))
     sock_agent.listen()
