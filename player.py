@@ -3,6 +3,7 @@ from random import randint
 
 import pygame
 import config
+import sprite_builder
 from enums.direction import Direction
 from enums.cart_state import CartState
 from helper import obj_collision, overlap
@@ -240,10 +241,23 @@ class Player:
                 cart.state = CartState.EMPTY
 
     def load_images(self):
-        self.load_north()
-        self.load_south()
-        self.load_east()
-        self.load_west()
+        sprites = sprite_builder.build_sprites()
+        for i in range(0, 6):
+            self.east_images.append(sprites[i])
+        print("length of east images: ", len(self.east_images))
+        for i in range(6, 12):
+            self.north_images.append(sprites[i])
+        self.north_images.append(sprites[11])
+        for i in range (12, 18):
+            self.west_images.append(sprites[i])
+        for i in range(18, 23):
+            self.south_images.append(sprites[i])
+        self.south_images.append(sprites[22])
+        self.south_images.append(sprites[22])
+        # self.load_north()
+        # self.load_south()
+        # self.load_east()
+        # self.load_west()
 
     def load_north(self):
         # right now I only have images for two players
