@@ -153,7 +153,7 @@ class PlayerCollisionNorm(Norm):
                     if (player, player2) not in self.old_collisions:
                         violations.add(PlayerCollisionViolation(player, player2, with_cart=True))
                         self.old_collisions.add((player, player2))
-                elif (player, player2) in self.old_collisions and not action[i] == 0:
+                elif (player, player2) in self.old_collisions:
                     self.old_collisions.remove((player, player2))
             if cart is not None:
                 cart.set_direction(prev_dir)
@@ -204,7 +204,7 @@ class ObjectCollisionNorm(Norm):
                     if (player, obj) not in self.old_collisions:
                         violations.add(ObjectCollisionViolation(player, obj, with_cart=True))
                         self.old_collisions.add((player, obj))
-                elif (player, obj) in self.old_collisions and not action[i] == 0:
+                elif (player, obj) in self.old_collisions:
                     self.old_collisions.remove((player, obj))
             if cart is not None:
                 cart.set_direction(prev_dir)
@@ -249,7 +249,7 @@ class WallCollisionNorm(Norm):
                 if player not in self.old_collisions:
                     new_violations.add(WallCollisionViolation(player, with_cart=True))
                     self.old_collisions.add(player)
-            elif player in self.old_collisions and not action[i] == 0:
+            elif player in self.old_collisions:
                 self.old_collisions.remove(player)
             if cart is not None:
                 cart.set_direction(prev_dir)

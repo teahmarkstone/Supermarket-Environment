@@ -1,6 +1,6 @@
 # Author: Gyan Tatiya
 # Email: Gyan.Tatiya@tufts.edu
-import argparse
+
 import json
 import socket
 import time
@@ -62,41 +62,12 @@ def get_commands(command_):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        '--num_players',
-        type=int,
-        help="location of the initial state to read in",
-        default=1
-    )
-
-    parser.add_argument(
-        '--port',
-        type=int,
-        help="Which port to bind",
-        default=9000
-    )
-
-    parser.add_argument(
-        '--headless',
-        action='store_true'
-    )
-
-    parser.add_argument(
-        '--file',
-        help="location of the initial state to read in",
-        default=None
-    )
-
-    args = parser.parse_args()
-
     # np.random.seed(0)
 
     # Make the env
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
-    env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless)
+    env = SupermarketEnv(1)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),
@@ -117,7 +88,7 @@ if __name__ == "__main__":
 
     # Connect to agent
     HOST = '127.0.0.1'
-    PORT = args.port
+    PORT = 9000
     sock_agent = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock_agent.bind((HOST, PORT))
     sock_agent.listen()

@@ -49,7 +49,8 @@ class Carts(InteractiveObject):
                     new_cart = Cart(0,
                                     0,
                                     player,
-                                    Direction.SOUTH)
+                                    Direction.SOUTH,
+                                    CartState.EMPTY)
                     new_cart.update_position(player.position[0], player.position[1])
                     game.carts.append(new_cart)
                     game.objects.append(new_cart)
