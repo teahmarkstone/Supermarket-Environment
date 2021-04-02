@@ -47,13 +47,13 @@ class Cart(InteractiveObject):
     def set_direction(self, direction):
         self.direction = direction
         if direction == Direction.NORTH or direction == Direction.SOUTH:
-            self.render_offset_x = -0.25
+            self.render_offset_x = -0.37
             self.render_offset_y = -0.25
             self.width = 0.5
             self.height = 0.75
         else:
-            self.render_offset_x = -0.15
-            self.render_offset_y = -0.6
+            self.render_offset_x = -0.20
+            self.render_offset_y = -0.47
             self.width = 0.75
             self.height = 0.4
     

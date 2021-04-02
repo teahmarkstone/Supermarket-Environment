@@ -125,7 +125,6 @@ class Player:
 
             image = self.west_images[self.stage[3]]
 
-        image = pygame.transform.scale(image, (config.SCALE, config.SCALE))
         rect = pygame.Rect((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
                            (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE,
                            config.SCALE, config.SCALE)
@@ -241,7 +240,7 @@ class Player:
                 cart.state = CartState.EMPTY
 
     def load_images(self):
-        sprites = sprite_builder.build_sprites()
+        sprites = sprite_builder.build_sprites(self.player_number)
         for i in range(0, 6):
             self.east_images.append(sprites[i])
         print("length of east images: ", len(self.east_images))
