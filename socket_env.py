@@ -170,7 +170,6 @@ if __name__ == "__main__":
                     else:
                         info = {'result': False, 'step_cost': 0.0, 'message': 'Invalid Command'}
                         json_to_send = get_action_json(command, env, None, 0., False, info)
-                print(str.encode(json.dumps(json_to_send)))
                 # send JSON to agent
                 conn_agent.sendall(str.encode(json.dumps(json_to_send) + "\n"))
                 env.render()
