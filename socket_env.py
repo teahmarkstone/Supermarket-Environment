@@ -1,6 +1,6 @@
 # Author: Gyan Tatiya
 # Email: Gyan.Tatiya@tufts.edu
-
+import argparse
 import json
 import socket
 import time
@@ -11,6 +11,7 @@ from norms.norms import *
 from utils import recv_socket_data
 
 ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL']
+
 
 # def get_goal(env_):
 #     goal = {'goalType': 'ITEM'}
@@ -62,12 +63,41 @@ def get_commands(command_):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--num_players',
+        type=int,
+        help="location of the initial state to read in",
+        default=1
+    )
+
+    parser.add_argument(
+        '--port',
+        type=int,
+        help="Which port to bind",
+        default=9000
+    )
+
+    parser.add_argument(
+        '--headless',
+        action='store_true'
+    )
+
+    parser.add_argument(
+        '--file',
+        help="location of the initial state to read in",
+        default=None
+    )
+
+    args = parser.parse_args()
+
     # np.random.seed(0)
 
     # Make the env
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
-    env = SupermarketEnv(1)
+    env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),
@@ -88,7 +118,7 @@ if __name__ == "__main__":
 
     # Connect to agent
     HOST = '127.0.0.1'
-    PORT = 9000
+    PORT = args.port
     sock_agent = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock_agent.bind((HOST, PORT))
     sock_agent.listen()
@@ -113,12 +143,13 @@ if __name__ == "__main__":
                 if command.startswith("SET"):
                     obs = command[4:]
                     from json import loads
+
                     env.reset(obs=loads(obs))
                 if is_single_player(command):
                     player, command = get_player_and_command(command)
                     player = int(player)
 
-                    action = [0]*env.num_players
+                    action = [0] * env.num_players
                     if command in ACTION_COMMANDS:
                         action_id = ACTION_COMMANDS.index(command)
                         action[player] = action_id
