@@ -139,6 +139,10 @@ if __name__ == "__main__":
             try:
                 output = recv_socket_data(conn_agent)
                 command = output.decode().strip()
+                if command.startswith("SET"):
+                    obs = command[4:]
+                    from json import loads
+                    env.reset(obs=loads(obs))
                 if is_single_player(command):
                     player, command = get_player_and_command(command)
                     player = int(player)
@@ -164,7 +168,7 @@ if __name__ == "__main__":
                     else:
                         info = {'result': False, 'step_cost': 0.0, 'message': 'Invalid Command'}
                         json_to_send = get_action_json(command, env, None, 0., False, info)
-
+                print(str.encode(json.dumps(json_to_send)))
                 # send JSON to agent
                 conn_agent.sendall(str.encode(json.dumps(json_to_send) + "\n"))
                 env.render()

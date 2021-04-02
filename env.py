@@ -53,7 +53,7 @@ class SupermarketEnv(gym.Env):
             done = True
         return observation, 0., done, None
 
-    def reset(self):
+    def reset(self, obs=None):
         if not self.headless:
             screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
         else:
@@ -61,6 +61,8 @@ class SupermarketEnv(gym.Env):
         self.game = Game(screen, self.num_players, self.player_speed, render_messages=self.render_messages,
                          headless=self.headless, initial_state_filename=self.initial_state_filename)
         self.game.set_up()
+        if obs is not None:
+            self.game.set_observation(obs)
         self.step_count = 0
         return self.game.observation()
 

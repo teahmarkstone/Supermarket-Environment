@@ -52,7 +52,7 @@ class NormWrapper(gym.Wrapper):
             print(violation)
         self.violations = set()
 
-    def reset(self):
-        super(NormWrapper, self).reset()
+    def reset(self, **kwargs):
+        super(NormWrapper, self).reset(**kwargs)
         for norm in self.norms:
             norm.reset()

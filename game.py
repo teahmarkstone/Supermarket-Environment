@@ -82,39 +82,43 @@ class Game:
         self.render_messages = render_messages
         self.headless = headless
 
+    def set_observation(self, obs):
+        self.players = []
+        self.carts = []
+        for player_dict in obs['players']:
+            pos = player_dict['position']
+            player = Player(pos[0], pos[1], DIRECTIONS[player_dict['direction']], player_dict['index'])
+            player.shopping_list = player_dict['shopping_list']
+            player.list_quant = player_dict['list_quant']
+            player.holding_food = player_dict['holding_food']
+            player.bought_holding_food = player_dict['bought_holding_food']
+            self.players.append(player)
+
+        for cart_dict in obs['carts']:
+            pos = cart_dict['position']
+            cart = Cart(pos[0], pos[1], self.players[cart_dict["owner"]], DIRECTIONS[cart_dict["direction"]],
+                        cart_dict["capacity"])
+            last_held = cart_dict["last_held"]
+            cart.last_held = self.players[last_held] if last_held != -1 else None
+            for i, string in enumerate(cart_dict["contents"]):
+                cart.contents[string] = cart_dict["contents_quant"]
+            for i, string in enumerate(cart_dict["purchased_contents"]):
+                cart.purchased_contents[string] = cart_dict["purchased_quant"]
+            self.carts.append(cart)
+            self.objects.append(cart)
+
+        for i, player in enumerate(self.players):
+            cart_num = obs['players'][i]["curr_cart"]
+            player.curr_cart = self.carts[cart_num] if cart_num != -1 else None
+
+        self.num_players = len(self.players)
+
     def load_from_file(self, file_path):
         from ast import literal_eval
         with open(file_path, "r") as file:
             contents = file.read()
             obs = literal_eval(contents)
-
-            for player_dict in obs['players']:
-                pos = player_dict['position']
-                player = Player(pos[0], pos[1], DIRECTIONS[player_dict['direction']], player_dict['index'])
-                player.shopping_list = player_dict['shopping_list']
-                player.list_quant = player_dict['list_quant']
-                player.holding_food = player_dict['holding_food']
-                player.bought_holding_food = player_dict['bought_holding_food']
-                self.players.append(player)
-
-            for cart_dict in obs['carts']:
-                pos = cart_dict['position']
-                cart = Cart(pos[0], pos[1], self.players[cart_dict["owner"]], DIRECTIONS[cart_dict["direction"]],
-                cart_dict["capacity"])
-                last_held = cart_dict["last_held"]
-                cart.last_held = self.players[last_held] if last_held != -1 else None
-                for i, string in enumerate(cart_dict["contents"]):
-                    cart.contents[string] = cart_dict["contents_quant"]
-                for i, string in enumerate(cart_dict["purchased_contents"]):
-                    cart.purchased_contents[string] = cart_dict["purchased_quant"]
-                self.carts.append(cart)
-                self.objects.append(cart)
-
-            for i, player in enumerate(self.players):
-                cart_num = obs['players'][i]["curr_cart"]
-                player.curr_cart = self.carts[cart_num] if cart_num != -1 else None
-
-            self.num_players = len(self.players)
+            self.set_observation(obs)
 
     def set_up(self):
 
