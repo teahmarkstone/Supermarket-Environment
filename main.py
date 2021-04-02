@@ -126,9 +126,16 @@ if __name__ == "__main__":
         default=None
     )
 
+    parser.add_argument(
+        '--num_players',
+        help="Number of players",
+        type=int,
+        default=2
+    )
+
     args = parser.parse_args()
 
-    env = SupermarketEnv(num_players=2, player_speed=0.07, render_messages=True, initial_state_filename=args.file)
+    env = SupermarketEnv(num_players=args.num_players, player_speed=0.07, render_messages=True, initial_state_filename=args.file)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),
