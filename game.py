@@ -164,6 +164,8 @@ class Game:
                     self.exploratory_events()
                 elif self.game_state == GameState.INTERACTIVE:
                     self.interactive_events()
+            else:
+                pygame.event.pump()
 
 
     def interact(self, player_index):
