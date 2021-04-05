@@ -91,9 +91,10 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        '--whole_store',
-        help="See the whole store",
-        action='store_true'
+        '--follow',
+        help="which agent to follow",
+        type=int,
+        default=None
     )
 
     args = parser.parse_args()
@@ -103,7 +104,10 @@ if __name__ == "__main__":
     # Make the env
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
-    env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless, whole_store=args.whole_store)
+    env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless,
+                         whole_store=(args.follow is None or args.follow == -1) and args.num_players > 1,
+                         follow_player=args.follow if args.num_players > 1 else 0
+                         )
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),
