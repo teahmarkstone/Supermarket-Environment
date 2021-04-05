@@ -528,7 +528,7 @@ class Game:
 
     def get_interactivity_data(self):
         obj = self.interaction_object(self.players[self.curr_player])
-        if self.game_state == GameState.INTERACTIVE:
+        if self.game_state == GameState.INTERACTIVE and obj is not None:
             return {"interactive_stage": obj.interactive_stage, "total_stages": obj.num_stages}
         else:
             return {"interactive_stage": -1, "total_stages": 0}
