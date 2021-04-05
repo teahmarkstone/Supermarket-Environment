@@ -133,9 +133,16 @@ if __name__ == "__main__":
         default=2
     )
 
+    parser.add_argument(
+        '--whole_store',
+        help="See the whole store",
+        action='store_true'
+    )
+
     args = parser.parse_args()
 
-    env = SupermarketEnv(num_players=args.num_players, player_speed=0.07, render_messages=True, initial_state_filename=args.file)
+    env = SupermarketEnv(num_players=args.num_players, player_speed=0.07, render_messages=True, initial_state_filename=args.file,
+                         whole_store=args.whole_store)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),

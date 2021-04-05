@@ -13,7 +13,7 @@ MOVEMENT_ACTIONS = [PlayerAction.NORTH, PlayerAction.SOUTH, PlayerAction.EAST, P
 class SupermarketEnv(gym.Env):
 
     def __init__(self, num_players=1, player_speed=0.15, render_messages=True, headless=False,
-                 initial_state_filename=None):
+                 initial_state_filename=None, whole_store=False, follow_player=0):
 
         super(SupermarketEnv, self).__init__()
         if not headless:
@@ -23,6 +23,13 @@ class SupermarketEnv(gym.Env):
 
         self.step_count = 0
         self.render_messages = render_messages
+
+        self.whole_store = whole_store
+        self.follow_player = follow_player if not self.whole_store else -1
+        if whole_store:
+            config.SCALE = 32
+            config.SCREEN_HEIGHT = 800
+            config.SCREEN_WIDTH = 640
 
         self.num_players = num_players
         self.player_speed = player_speed

@@ -90,6 +90,12 @@ if __name__ == "__main__":
         default=None
     )
 
+    parser.add_argument(
+        '--whole_store',
+        help="See the whole store",
+        action='store_true'
+    )
+
     args = parser.parse_args()
 
     # np.random.seed(0)
@@ -97,7 +103,7 @@ if __name__ == "__main__":
     # Make the env
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
-    env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless)
+    env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless, whole_store=args.whole_store)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),

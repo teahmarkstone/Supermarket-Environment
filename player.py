@@ -159,11 +159,13 @@ class Player:
     def render_list(self, screen, carts):
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
                                          (int(430), int(460)))
-        screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
+        x_pos = int((config.SCREEN_WIDTH - 430) / 2)
+        y_pos = int((config.SCREEN_HEIGHT - 450) / 2)
+        screen.blit(textbox, (x_pos, y_pos))
         text = render_text("Shopping List: ", True, (0, 0, 0))
-        screen.blit(text, (200, 50))
+        screen.blit(text, (x_pos + 100, y_pos + 37))
         spacing = 30
-        y_position = 50 + spacing
+        y_position = y_pos + 37 + spacing
 
         counter = 0
         inventory = self.get_inventory(carts)
@@ -212,16 +214,19 @@ class Player:
     def render_items(self, screen, carts):
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
                                          (int(430), int(450)))
-        screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
+        x_pos=int((config.SCREEN_WIDTH-430)/2)
+        y_pos=int((config.SCREEN_HEIGHT-450)/2)
+        screen.blit(textbox, (x_pos, y_pos))
+        # screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
         text = render_text("Inventory: ", True, (0, 0, 0))
-        screen.blit(text, (230, 50))
+        screen.blit(text, (x_pos + 130, y_pos + 37))
         spacing = 30
-        y_position = 50 + spacing
+        y_position = y_pos + 37 + spacing
         inventory = self.get_inventory(carts)
         for food in inventory.keys():
             # if not food in rendered_food:
             text = render_text(food, False, (0, 0, 0))
-            screen.blit(text, (155, y_position))
+            screen.blit(text, (x_pos + 53, y_position))
 
             unpurchased = render_text(str(inventory[food]["unpurchased"]), False, (250, 0, 0))
             purchased = render_text(str(inventory[food]["purchased"]), False, (0, 250, 0))

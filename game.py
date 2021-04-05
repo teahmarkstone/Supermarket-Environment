@@ -75,7 +75,7 @@ class Game:
         # players
         self.num_players = num_players
         self.players = []
-        self.curr_player = 0 if self.num_players == 1 else follow_player
+        self.curr_player = 0 if self.num_players == 1 and follow_player != -1 else follow_player
         self.player_speed = player_speed
 
         self.keyboard_input = keyboard_input
