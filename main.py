@@ -134,15 +134,18 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        '--whole_store',
-        help="See the whole store",
-        action='store_true'
+        '--follow',
+        help="which agent to follow",
+        type=int,
+        default=-1
     )
 
     args = parser.parse_args()
 
-    env = SupermarketEnv(num_players=args.num_players, player_speed=0.07, render_messages=True, initial_state_filename=args.file,
-                         whole_store=args.whole_store)
+    env = SupermarketEnv(num_players=args.num_players, player_speed=0.07,
+                         render_messages=args.num_players == 1 or args.follow >= 0,
+                         initial_state_filename=args.file,
+                         follow_player=args.follow if args.num_players > 1 else 0)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),

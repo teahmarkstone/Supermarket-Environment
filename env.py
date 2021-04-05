@@ -1,9 +1,6 @@
 import time
 
 import gym
-import pygame
-
-import config
 from enums.player_action import PlayerAction
 from game import Game
 
@@ -13,23 +10,14 @@ MOVEMENT_ACTIONS = [PlayerAction.NORTH, PlayerAction.SOUTH, PlayerAction.EAST, P
 class SupermarketEnv(gym.Env):
 
     def __init__(self, num_players=1, player_speed=0.15, render_messages=True, headless=False,
-                 initial_state_filename=None, whole_store=False, follow_player=0):
+                 initial_state_filename=None, follow_player=-1):
 
         super(SupermarketEnv, self).__init__()
-        if not headless:
-            pygame.init()
-            pygame.display.set_caption("Supermarket Environment")
-            self.clock = pygame.time.Clock()
 
         self.step_count = 0
         self.render_messages = render_messages
 
-        self.whole_store = whole_store
-        self.follow_player = follow_player if not self.whole_store else -1
-        if whole_store:
-            config.SCALE = 32
-            config.SCREEN_HEIGHT = 800
-            config.SCREEN_WIDTH = 640
+        self.follow_player = follow_player
 
         self.num_players = num_players
         self.player_speed = player_speed
@@ -61,12 +49,9 @@ class SupermarketEnv(gym.Env):
         return observation, 0., done, None
 
     def reset(self, obs=None):
-        if not self.headless:
-            screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
-        else:
-            screen = None
-        self.game = Game(screen, self.num_players, self.player_speed, render_messages=self.render_messages,
-                         headless=self.headless, initial_state_filename=self.initial_state_filename)
+        self.game = Game(self.num_players, self.player_speed, render_messages=self.render_messages,
+                         headless=self.headless, initial_state_filename=self.initial_state_filename,
+                         follow_player=self.follow_player)
         self.game.set_up()
         if obs is not None:
             self.game.set_observation(obs)
@@ -75,13 +60,7 @@ class SupermarketEnv(gym.Env):
 
     def render(self, mode='human'):
         if mode.lower() == 'human' and not self.headless:
-            self.clock.tick(120)
-            if self.game.running:
-                self.game.update()
-                pygame.display.flip()
-                # print(self.game.observation(False))
-            else:
-                pygame.quit()
+            self.game.update()
         else:
             print(self.game.observation(True))
 

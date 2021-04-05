@@ -56,27 +56,43 @@ def get_obj_category(obj):
 
 class Game:
 
-    def __init__(self, screen, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False,
-                 headless=False, initial_state_filename=None, follow_player=0):
-        self.screen = screen
+    def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False,
+                 headless=False, initial_state_filename=None, follow_player=-1):
+
+        self.screen = None
+        self.clock = None
+
+        if not headless:
+            if follow_player == -1:
+                config.SCALE = 32
+                config.SCREEN_HEIGHT = 800
+                config.SCREEN_WIDTH = 640
+            pygame.init()
+            pygame.display.set_caption("Supermarket Environment")
+            self.screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+            self.clock = pygame.time.Clock()
+
         self.objects = []
         self.carts = []
         self.running = False
         self.map = []
         self.camera = Camera()
 
-        self.initial_state_filename = initial_state_filename
-
+        self.num_players = num_players
         self.game_state = GameState.NONE
+        self.players = []
+
+        if initial_state_filename is not None:
+            self.load_from_file(initial_state_filename)
 
         # list of all food items in game, built when shelves are made
         self.food_list = []
 
         # players
-        self.num_players = num_players
-        self.players = []
-        self.curr_player = 0 if self.num_players == 1 and follow_player != -1 else follow_player
+
         self.player_speed = player_speed
+
+        self.curr_player = follow_player
 
         self.keyboard_input = keyboard_input
         self.render_messages = render_messages
@@ -131,15 +147,13 @@ class Game:
         self.set_registers()
         self.set_counters()
         self.set_carts()
-
         # make players
-        if self.initial_state_filename is not None:
-            self.load_from_file(self.initial_state_filename)
-        else:
+
+        if len(self.players) == 0:
             for i in range(0, self.num_players):
                 player = Player(i + 1.2, 15.6, Direction.EAST, i + 1)
                 player.set_shopping_list(self.food_list)
-                self.players.append(player)        # randomly generates 12 item shopping list from list of food in store
+                self.players.append(player)  # randomly generates 12 item shopping list from list of food in store
 
     def save_state(self, filename):
         with open(filename, "w") as f:
@@ -149,6 +163,10 @@ class Game:
     def update(self):
         # rendering
         if not self.headless:
+            self.clock.tick(120)
+            if not self.running:
+                pygame.quit()
+                return
             self.screen.fill(config.WHITE)
 
             render.render_map(self.screen, self.camera, self.players[self.curr_player], self.map)
@@ -166,7 +184,7 @@ class Game:
                     self.interactive_events()
             else:
                 pygame.event.pump()
-
+            pygame.display.flip()
 
     def interact(self, player_index):
         if self.game_state == GameState.EXPLORATORY:

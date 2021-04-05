@@ -94,7 +94,7 @@ if __name__ == "__main__":
         '--follow',
         help="which agent to follow",
         type=int,
-        default=None
+        default=-1
     )
 
     args = parser.parse_args()
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
     env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless,
-                         whole_store=(args.follow is None or args.follow == -1) and args.num_players > 1,
+                         initial_state_filename=args.file,
                          follow_player=args.follow if args.num_players > 1 else 0
                          )
 
