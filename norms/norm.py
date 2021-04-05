@@ -49,7 +49,7 @@ class NormWrapper(gym.Wrapper):
     def render(self, mode='human', **kwargs):
         self.env.render(mode, **kwargs)
         for violation in self.violations:
-            print(violation)
+            print("NORM: " + str(violation))
         self.violations = set()
 
     def reset(self, **kwargs):
