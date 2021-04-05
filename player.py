@@ -143,6 +143,9 @@ class Player:
         # screen.fill((255,0,0), rect2)
 
     def render_food(self, screen, camera, image):
+        if isinstance(image, str):
+            image = pygame.transform.scale(pygame.image.load(image),
+                                   (int(.30 * config.SCALE), int(.30 * config.SCALE)))
         rect = pygame.Rect((self.position[0] - camera.position[0] + 0.3*self.width)*config.SCALE,
                            (self.position[1] - camera.position[1])*config.SCALE,
                            config.SCALE, config.SCALE)

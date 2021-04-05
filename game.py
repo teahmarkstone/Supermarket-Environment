@@ -6,6 +6,7 @@ from camera import Camera
 from cart import Cart
 from checkout import Register
 from counters import Counter
+from enums.cart_state import CartState
 from enums.direction import Direction
 from enums.game_state import GameState
 from enums.player_action import PlayerAction
@@ -32,6 +33,44 @@ DIRECTION_VECTOR = {
 DIRECTION_TO_INT = {Direction.NORTH: 0, Direction.SOUTH: 1, Direction.EAST: 2, Direction.WEST: 3}
 DIRECTIONS = [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]
 
+# milk aisle
+FOOD_IMAGES = {
+    "milk": "images/food/milk.png",
+    "chocolate milk": "images/food/milk_chocolate.png",
+    "strawberry milk": "images/food/milk_strawberry.png",
+
+    # fruit aisle
+    "apples": "images/food/apples.png",
+    "oranges": "images/food/oranges.png",
+    "banana": "images/food/banana.png",
+    "strawberry": "images/food/strawberry.png",
+    "raspberry": "images/food/raspberry.png",
+
+    # meat aisle
+    "sausage": "images/food/sausage.png",
+    "steak": "images/food/meat_01.png",
+    "chicken": "images/food/meat_03.png",
+    "ham": "images/food/ham.png",
+
+    # cheese aisle
+    "brie cheese": "images/food/cheese_01.png",
+    "swiss cheese": "images/food/cheese_02.png",
+    "cheese wheel": "images/food/cheese_03.png",
+
+    # veggie aisle
+    "garlic": "images/food/garlic.png",
+    "leek": "images/food/leek_onion.png",
+    "red bell pepper": "images/food/bell_pepper_red.png",
+    "carrot": "images/food/carrot.png",
+    "lettuce": "images/food/lettuce.png",
+
+    # frozen? rn it's veggie
+    "avocado": "images/food/avocado.png",
+    "broccoli": "images/food/broccoli.png",
+    "cucumber": "images/food/cucumber.png",
+    "yellow bell pepper": "images/food/bell_pepper_yellow.png",
+    "onion": "images/food/onion.png"
+}
 
 def index_or_minus_one(item, the_list):
     if item is None:
@@ -107,6 +146,8 @@ class Game:
             player.shopping_list = player_dict['shopping_list']
             player.list_quant = player_dict['list_quant']
             player.holding_food = player_dict['holding_food']
+            if player.holding_food is not None:
+                player.holding_food_image = FOOD_IMAGES[player.holding_food]
             player.bought_holding_food = player_dict['bought_holding_food']
             self.players.append(player)
 
@@ -116,6 +157,8 @@ class Game:
                         cart_dict["capacity"])
             last_held = cart_dict["last_held"]
             cart.last_held = self.players[last_held] if last_held != -1 else None
+            if sum(cart_dict["contents_quant"]) + sum(cart_dict["purchased_quant"]) > 0:
+                cart.state = CartState.FULL
             for i, string in enumerate(cart_dict["contents"]):
                 cart.contents[string] = cart_dict["contents_quant"]
             for i, string in enumerate(cart_dict["purchased_contents"]):
