@@ -57,7 +57,7 @@ def get_obj_category(obj):
 class Game:
 
     def __init__(self, screen, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False,
-                 headless=False, initial_state_filename=None):
+                 headless=False, initial_state_filename=None, follow_player=0):
         self.screen = screen
         self.objects = []
         self.carts = []
@@ -75,7 +75,7 @@ class Game:
         # players
         self.num_players = num_players
         self.players = []
-        self.curr_player = 0
+        self.curr_player = 0 if self.num_players == 1 else follow_player
         self.player_speed = player_speed
 
         self.keyboard_input = keyboard_input

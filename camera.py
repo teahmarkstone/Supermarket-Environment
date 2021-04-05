@@ -7,6 +7,9 @@ class Camera:
         self.position = [0, 0]
 
     def determine_camera(self, player, map_txt):
+        if player == -1:
+            return
+
         max_y_position = len(map_txt) - config.SCREEN_HEIGHT / config.SCALE
         y_position = player.position[1] - math.ceil(round(config.SCREEN_HEIGHT / config.SCALE / 2))
 

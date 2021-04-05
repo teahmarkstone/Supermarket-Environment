@@ -67,19 +67,19 @@ class Shelf(InteractiveObject):
 
         # add blit for type of food-- FIX: DOESN'T ADJUST FOR CONFIG SCALE
         if self.is_fridge:
-            for i in range(55, 100, 33):
-                for j in range(13, 42, 18):
-                    rect = pygame.Rect(x_position + j, y_position + i, config.SCALE, config.SCALE)
+            for i in [0.9, 1.4]:
+                for j in [0.2, 0.5]:
+                    rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
                     screen.blit(self.food_image, rect)
-            for i in range(55, 100, 33):
-                for j in range(77, 100, 18):
-                    rect = pygame.Rect(x_position + j, y_position + i, config.SCALE, config.SCALE)
+            for i in [0.9, 1.4]:
+                for j in [1.2, 1.5]:
+                    rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
                     screen.blit(self.food_image, rect)
 
         else:
-            for i in range(57, 100, 33):
-                for j in range(19, 100, 18):
-                    rect = pygame.Rect(x_position + j, y_position + i, config.SCALE, config.SCALE)
+            for i in [0.9, 1.4]:
+                for j in [0.3, 0.6, 0.9, 1.2, 1.5]:
+                    rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
                     screen.blit(self.food_image, rect)
 
     def interact(self, game, player):

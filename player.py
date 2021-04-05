@@ -128,6 +128,7 @@ class Player:
         rect = pygame.Rect((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
                            (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE,
                            config.SCALE, config.SCALE)
+        image = pygame.transform.scale(image, (int(0.75*config.SCALE), int(1.125*config.SCALE)))
         screen.blit(image, rect)
 
         # collision_x = self.position[0] + 0.2
