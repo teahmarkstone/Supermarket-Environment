@@ -4,7 +4,7 @@ import config
 # right now the rendering functions aren't part of a class, not sure if that goes against python etiquette :/
 
 
-def render_objects_and_players(screen, camera, objects, players, carts):
+def render_objects_and_players(screen, camera, objects, players, carts, baskets):
     to_render = sorted(players + objects, key=lambda x: x.position[1])
     for obj in to_render:
         if obj in players:

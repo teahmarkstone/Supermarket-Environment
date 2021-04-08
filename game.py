@@ -4,6 +4,7 @@ import config
 import render_game as render
 from camera import Camera
 from cart import Cart
+from basket import Basket
 from checkout import Register
 from counters import Counter
 from enums.cart_state import CartState
@@ -13,6 +14,7 @@ from enums.player_action import PlayerAction
 from player import Player
 from shelves import Shelf
 from shoppingcarts import Carts
+from baskets import Baskets
 
 # from cart_state import CartState
 
@@ -88,6 +90,8 @@ def get_obj_category(obj):
         return "counters"
     elif isinstance(obj, Carts):
         return "cartReturns"
+    elif isinstance(obj, Baskets):
+        return "basketReturns"
     elif isinstance(obj, Shelf):
         return "shelves"
     return "misc_objects"
@@ -113,6 +117,7 @@ class Game:
 
         self.objects = []
         self.carts = []
+        self.baskets = []
         self.running = False
         self.map = []
         self.camera = Camera()
@@ -140,6 +145,7 @@ class Game:
     def set_observation(self, obs):
         self.players = []
         self.carts = []
+        self.baskets = []
         for player_dict in obs['players']:
             pos = player_dict['position']
             player = Player(pos[0], pos[1], DIRECTIONS[player_dict['direction']], player_dict['index'])
@@ -165,7 +171,7 @@ class Game:
                 cart.purchased_contents[string] = cart_dict["purchased_quant"]
             self.carts.append(cart)
             self.objects.append(cart)
-
+        # ADD BASKET OBS
         for i, player in enumerate(self.players):
             cart_num = obs['players'][i]["curr_cart"]
             player.curr_cart = self.carts[cart_num] if cart_num != -1 else None
@@ -190,6 +196,7 @@ class Game:
         self.set_registers()
         self.set_counters()
         self.set_carts()
+        self.set_baskets()
         # make players
 
         if len(self.players) == 0:
@@ -214,7 +221,8 @@ class Game:
 
             render.render_map(self.screen, self.camera, self.players[self.curr_player], self.map)
             render.render_decor(self.screen, self.camera)
-            render.render_objects_and_players(self.screen, self.camera, self.objects, self.players, self.carts)
+            render.render_objects_and_players(self.screen, self.camera, self.objects, self.players, self.carts,
+                                              self.baskets)
             # render.render_objects(self.screen, self.camera, self.objects)
             # render.render_players(self.screen, self.camera, self.players, self.carts)
             render.render_interactions(self, self.screen, self.objects)
@@ -277,6 +285,23 @@ class Game:
                         cart.being_held = True
                         break
 
+    def toggle_basket(self, player_index):
+        player = self.players[player_index]
+        if player.curr_basket is not None:
+            player.curr_basket.being_held = False
+            player.curr_basket = None
+        else:
+            # Player can't pick up the cart if they're holding food
+            if player.holding_food is None:
+                # check if player is holding onto cart (should prob restructure bc this is ugly)
+                for basket in self.baskets:
+                    if basket.can_toggle(player) and not basket.being_held:
+                        # Ensure you can't pick up a cart someone else is currently holding
+                        player.curr_basket = basket
+                        basket.last_held = player
+                        basket.being_held = True
+                        break
+
     def nop(self, player):
         self.players[player].stand_still()
 
@@ -333,6 +358,9 @@ class Game:
         cart = player.curr_cart
         if cart is not None:
             cart.set_direction(direction)
+        basket = player.curr_basket
+        if basket is not None:
+            basket.set_direction(direction)
 
         # iterating the stage the player is in, for walking animation purposes
         player.iterate_stage(anim_to_advance)
@@ -371,6 +399,8 @@ class Game:
 
                 elif event.key == pygame.K_c:
                     self.toggle_cart(self.curr_player)
+                elif event.key == pygame.K_b:
+                    self.toggle_basket(self.curr_player)
 
             # player stands still if not moving, player stops holding cart if c button released
             if event.type == pygame.KEYUP:
@@ -558,6 +588,10 @@ class Game:
         shopping_carts = Carts(2, 18.5)
         self.objects.append(shopping_carts)
 
+    def set_baskets(self):
+        baskets = Baskets(2, 12)
+        self.objects.append(baskets)
+
     # checking if a player is facing an object
     # TODO maybe alter so that shopping carts have slightly different interaction zones?
     def interaction_object(self, player):
@@ -595,6 +629,7 @@ class Game:
             return {"interactive_stage": -1, "total_stages": 0}
 
     def observation(self, render_static_objects=True):
+        # TODO: Basket obs
         obs = {"players": [], "carts": []}
         obs.update(self.get_interactivity_data())
 
