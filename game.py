@@ -1,3 +1,5 @@
+from random import uniform, choice
+
 import pygame
 
 import config
@@ -96,7 +98,7 @@ def get_obj_category(obj):
 class Game:
 
     def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False,
-                 headless=False, initial_state_filename=None, follow_player=-1):
+                 headless=False, initial_state_filename=None, follow_player=-1, random_start=False):
 
         self.screen = None
         self.clock = None
@@ -136,6 +138,7 @@ class Game:
         self.keyboard_input = keyboard_input
         self.render_messages = render_messages
         self.headless = headless
+        self.random_start = random_start
 
     def set_observation(self, obs):
         self.players = []
@@ -195,8 +198,19 @@ class Game:
         if len(self.players) == 0:
             for i in range(0, self.num_players):
                 player = Player(i + 1.2, 15.6, Direction.EAST, i + 1)
+                if self.random_start:
+                    self.randomize_position(player)
                 player.set_shopping_list(self.food_list)
                 self.players.append(player)  # randomly generates 12 item shopping list from list of food in store
+
+    def randomize_position(self, player):
+        player.direction = choice(DIRECTIONS)
+        x = 0
+        y = 0
+        while self.collide(player, x, y) or self.hits_wall(player, x, y):
+            x = uniform(0, 20)
+            y = uniform(0, 25)
+        player.position = [x, y]
 
     def save_state(self, filename):
         with open(filename, "w") as f:

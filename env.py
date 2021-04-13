@@ -10,7 +10,7 @@ MOVEMENT_ACTIONS = [PlayerAction.NORTH, PlayerAction.SOUTH, PlayerAction.EAST, P
 class SupermarketEnv(gym.Env):
 
     def __init__(self, num_players=1, player_speed=0.15, render_messages=True, headless=False,
-                 initial_state_filename=None, follow_player=-1):
+                 initial_state_filename=None, follow_player=-1, random_start=False):
 
         super(SupermarketEnv, self).__init__()
 
@@ -28,6 +28,7 @@ class SupermarketEnv(gym.Env):
         self.action_space = gym.spaces.MultiDiscrete([len(PlayerAction)]*self.num_players)
         self.observation_space = gym.spaces.Dict()
         self.headless = headless
+        self.random_start = random_start
 
     def step(self, action):
         done = False
@@ -51,7 +52,7 @@ class SupermarketEnv(gym.Env):
     def reset(self, obs=None):
         self.game = Game(self.num_players, self.player_speed, render_messages=self.render_messages,
                          headless=self.headless, initial_state_filename=self.initial_state_filename,
-                         follow_player=self.follow_player)
+                         follow_player=self.follow_player, random_start=self.random_start)
         self.game.set_up()
         if obs is not None:
             self.game.set_observation(obs)
