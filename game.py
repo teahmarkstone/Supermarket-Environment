@@ -140,8 +140,7 @@ class Game:
         self.curr_player = follow_player
 
         self.keyboard_input = keyboard_input
-        # self.render_messages = render_messages
-        self.render_messages = True
+        self.render_messages = render_messages
         self.headless = headless
 
     def set_observation(self, obs):
@@ -228,7 +227,8 @@ class Game:
             # render.render_objects(self.screen, self.camera, self.objects)
             # render.render_players(self.screen, self.camera, self.players, self.carts)
             render.render_interactions(self, self.screen, self.objects)
-            render.render_money(self.screen, self.camera, self.players[self.curr_player])
+            if self.render_messages:
+                render.render_money(self.screen, self.camera, self.players[self.curr_player])
             # checking keyboard input/events for either exploratory or interactive
             if self.keyboard_input:
                 if self.game_state == GameState.EXPLORATORY:
