@@ -15,16 +15,17 @@ class Basket(InteractiveObject):
         return sum(self.contents.values()) >= self.capacity
 
     def interact(self, game, player):
-        self.last_held = player
-        if player.holding_food is not None:
-            if not self.hit_limit():
-                self.add_food(player.holding_food, player.bought_holding_food)
-                self.interaction_message = "You put " + player.holding_food + " into your basket."
-                player.take_food()
-            else:
-                self.interaction_message = "The basket is full! The food won't fit."
-        else:
-            self.interaction_message = "Just as I thought! It's a basket!"
+        # self.last_held = player
+        # if player.holding_food is not None:
+        #     if not self.hit_limit():
+        #         self.add_food(player.holding_food, player.bought_holding_food)
+        #         self.interaction_message = "You put " + player.holding_food + " into your basket."
+        #         player.take_food()
+        #     else:
+        #         self.interaction_message = "The basket is full! The food won't fit."
+        # else:
+        #     self.interaction_message = "Just as I thought! It's a basket!"
+        pass
 
     def __str__(self):
         return "a basket"
@@ -43,6 +44,8 @@ class Basket(InteractiveObject):
         self.purchased_contents = defaultdict(int)
         self.capacity = capacity
         self.set_direction(direction)
+        self.render_offset_x = 0
+        self.render_offset_y = 0
 
     def set_direction(self, direction):
         self.direction = direction
@@ -63,11 +66,14 @@ class Basket(InteractiveObject):
                                                (int(.5 * config.SCALE), int(.5 * config.SCALE)))
         elif self.state == CartState.FULL:
             image = pygame.transform.scale(pygame.image.load("images/baskets/grocery_basket_full.png"),
-                                               (config.SCALE, config.SCALE))
-        rect = pygame.Rect(
-            (self.position[0]) * config.SCALE - (camera.position[0]),
-            (self.position[1]) * config.SCALE - (camera.position[1]),
-            config.SCALE, config.SCALE)
+                                               (int(.5 * config.SCALE), int(.5 * config.SCALE)))
+        # rect = pygame.Rect(
+        #     (self.position[0]) * config.SCALE - (camera.position[0]),
+        #     (self.position[1]) * config.SCALE - (camera.position[1]),
+        #     config.SCALE, config.SCALE)
+        rect = pygame.Rect((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
+                           (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE,
+                           config.SCALE, config.SCALE)
         screen.blit(image, rect)
 
     def can_interact(self, player):
@@ -94,16 +100,16 @@ class Basket(InteractiveObject):
 
     def update_position(self, x_position, y_position):
         if self.direction == Direction.NORTH:
-            self.position[0] = x_position + 0.05
-            self.position[1] = y_position - 0.85
+            self.position[0] = x_position
+            self.position[1] = y_position
         elif self.direction == Direction.SOUTH:
-            self.position[0] = x_position + 0.05
-            self.position[1] = y_position + 0.45
+            self.position[0] = x_position
+            self.position[1] = y_position
         elif self.direction == Direction.EAST:
-            self.position[0] = x_position + 0.65
+            self.position[0] = x_position
             self.position[1] = y_position
         elif self.direction == Direction.WEST:
-            self.position[0] = x_position - 0.8
+            self.position[0] = x_position
             self.position[1] = y_position
 
     def collision(self, obj, x_position, y_position):

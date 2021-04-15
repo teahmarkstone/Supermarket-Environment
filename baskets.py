@@ -12,8 +12,8 @@ class Baskets(InteractiveObject):
     def __init__(self, x_position, y_position):
         super().__init__(num_stages=1)
         self.position = [x_position, y_position]
-        self.width = 0.7
-        self.height = 0.7
+        self.width = 0.3
+        self.height = 0.2
 
         self.image = None
 
@@ -26,13 +26,13 @@ class Baskets(InteractiveObject):
     def render(self, screen, camera):
         if self.image is None:
             self.image = pygame.transform.scale(pygame.image.load("images/baskets/baskets.png"),
-                                   (config.SCALE, config.SCALE))
+                                   (int(.6 * config.SCALE), int(.75 * config.SCALE)))
         screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
                                  (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
 
     def can_interact(self, player):
-        if player.direction == Direction.NORTH:
-            range = 1.5 if player.curr_basket is not None or self.interaction else 0.5
+        if player.direction == Direction.SOUTH:
+            range = .5 if player.curr_basket is not None or self.interaction else 0.5
             return can_interact_default(self, player, range=range)
         return False
 
@@ -41,6 +41,7 @@ class Baskets(InteractiveObject):
                        x_position, y_position, obj.width, obj.height)
 
     def interact(self, game, player):
+        print("interacting")
         if self.interactive_stage == 0:
             # Player is not holding a basket
             if player.curr_basket is None:
@@ -54,7 +55,7 @@ class Baskets(InteractiveObject):
                     game.objects.append(new_basket)
                     player.curr_basket = new_basket
                     new_basket.being_held = True
-                    self.interaction_message = "You picked up basket. Press c to let go and pick up."
+                    self.interaction_message = "You picked up basket."
                 else:
                     self.interaction_message = "Can't pick up a basket while holding food!"
                 # Player is holding a basket; return it

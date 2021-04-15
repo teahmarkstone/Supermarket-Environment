@@ -81,9 +81,9 @@ def render_map(screen, camera, player, tile_map):
 def render_interactions(game, screen, objects):
     for player in game.players:
         if player.render_inventory:
-            player.render_items(screen, game.carts)
+            player.render_items(screen, game.carts, game.baskets)
         if player.render_shopping_list:
-            player.render_list(screen, game.carts)
+            player.render_list(screen, game.carts, game.baskets)
 
     for object in objects:
         object.render_interaction(game, screen)

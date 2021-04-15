@@ -112,6 +112,7 @@ class Player:
         self.stage_counter += 1
 
     def render_player(self, screen, camera):
+
         direction = self.direction
         image = None
         if direction == Direction.NORTH:
@@ -276,7 +277,6 @@ class Player:
         sprites = sprite_builder.build_sprites(self.player_number)
         for i in range(0, 6):
             self.east_images.append(sprites[i])
-        print("length of east images: ", len(self.east_images))
         for i in range(6, 12):
             self.north_images.append(sprites[i])
         self.north_images.append(sprites[11])

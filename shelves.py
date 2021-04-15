@@ -83,7 +83,8 @@ class Shelf(InteractiveObject):
                     screen.blit(self.food_image, rect)
 
     def interact(self, game, player):
-        if player.curr_cart is None:
+        if player.curr_cart is None and player.curr_basket is None:
+            print("here")
             if player.holding_food is not None:
                 self.interaction_message = "You put " + player.holding_food + " back on the shelf."
                 player.holding_food = None
@@ -92,5 +93,9 @@ class Shelf(InteractiveObject):
                 player.holding_food = self.string_type
                 player.holding_food_image = self.food_image
                 self.interaction_message = "You picked up " + self.string_type + "."
-        else:
+        elif player.curr_basket is None:
             self.interaction_message = "Let go of your cart to pick up food!"
+        else:
+            self.interaction_message = "You put " + self.string_type + " in your basket."
+            player.curr_basket.state = CartState.FULL
+            player.curr_basket.add_food(self.string_type, False)

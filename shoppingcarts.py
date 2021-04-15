@@ -45,19 +45,22 @@ class Carts(InteractiveObject):
         if self.interactive_stage == 0:
             # Player is not holding a cart
             if player.curr_cart is None:
-                if player.holding_food is None:
-                    new_cart = Cart(0,
-                                    0,
-                                    player,
-                                    Direction.SOUTH)
-                    new_cart.update_position(player.position[0], player.position[1])
-                    game.carts.append(new_cart)
-                    game.objects.append(new_cart)
-                    player.curr_cart = new_cart
-                    new_cart.being_held = True
-                    self.interaction_message = "You picked up shopping cart. Press c to let go and pick up."
+                if player.curr_basket is None:
+                    if player.holding_food is None:
+                        new_cart = Cart(0,
+                                        0,
+                                        player,
+                                        Direction.SOUTH)
+                        new_cart.update_position(player.position[0], player.position[1])
+                        game.carts.append(new_cart)
+                        game.objects.append(new_cart)
+                        player.curr_cart = new_cart
+                        new_cart.being_held = True
+                        self.interaction_message = "You picked up shopping cart. Press c to let go and pick up."
+                    else:
+                        self.interaction_message = "Can't pick up a cart while holding food!"
                 else:
-                    self.interaction_message = "Can't pick up a cart while holding food!"
+                    self.interaction_message = "Can't pick up a cart while holding a basket!"
                 # Player is holding a cart; return it
             else:
                 self.interaction_message = "You put the shopping cart back."

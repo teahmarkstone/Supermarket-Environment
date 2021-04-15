@@ -50,6 +50,9 @@ class Register(InteractiveObject):
                     if sum(cart.contents.values()) > 0:
                         cart.buy()
                         has_items = True
+            if player.curr_basket is not None:
+                player.curr_basket.buy()
+                has_items = True
             if has_items:
                 self.interaction_message = "Thank you for shopping with us!"
             else:

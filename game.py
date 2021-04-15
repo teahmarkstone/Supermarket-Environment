@@ -139,7 +139,8 @@ class Game:
         self.curr_player = follow_player
 
         self.keyboard_input = keyboard_input
-        self.render_messages = render_messages
+        # self.render_messages = render_messages
+        self.render_messages = True
         self.headless = headless
 
     def set_observation(self, obs):
@@ -241,7 +242,8 @@ class Game:
         if self.game_state == GameState.EXPLORATORY:
             player = self.players[player_index]
             obj = self.interaction_object(player)
-
+            if isinstance(obj, Baskets):
+                print("basket interaction")
             if obj is not None:
                 obj.interaction = True
                 obj.interact(self, player)
@@ -399,8 +401,8 @@ class Game:
 
                 elif event.key == pygame.K_c:
                     self.toggle_cart(self.curr_player)
-                elif event.key == pygame.K_b:
-                    self.toggle_basket(self.curr_player)
+                # elif event.key == pygame.K_b:
+                #     self.toggle_basket(self.curr_player)
 
             # player stands still if not moving, player stops holding cart if c button released
             if event.type == pygame.KEYUP:
@@ -589,7 +591,7 @@ class Game:
         self.objects.append(shopping_carts)
 
     def set_baskets(self):
-        baskets = Baskets(2, 12)
+        baskets = Baskets(3.5, 18.5)
         self.objects.append(baskets)
 
     # checking if a player is facing an object
@@ -597,6 +599,8 @@ class Game:
     def interaction_object(self, player):
         for obj in self.objects:
             if obj.can_interact(player):
+                if isinstance(obj, Baskets):
+                    print("again, basket interaction")
                 return obj
         return None
 
