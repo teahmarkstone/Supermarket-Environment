@@ -53,6 +53,9 @@ class Player:
         self.holding_food_image = None
         self.bought_holding_food = False
 
+        # money -- should be passed in prob
+        self.budget = 12
+
     def update_position(self, new_position):
         self.position[0] = new_position[0]
         self.position[1] = new_position[1]
@@ -135,6 +138,8 @@ class Player:
                            config.SCALE, config.SCALE)
         image = pygame.transform.scale(image, (int(0.75*config.SCALE), int(1.125*config.SCALE)))
         screen.blit(image, rect)
+
+
 
         # collision_x = self.position[0] + 0.2
         # collision_y = self.position[1] + 0.6

@@ -1,10 +1,10 @@
 import pygame
-
 import config
 import render_game as render
 from camera import Camera
 from cart import Cart
 from basket import Basket
+from collections import defaultdict
 from checkout import Register
 from counters import Counter
 from enums.cart_state import CartState
@@ -121,6 +121,7 @@ class Game:
         self.running = False
         self.map = []
         self.camera = Camera()
+        self.food_directory = defaultdict(int)
 
         self.num_players = num_players
         self.game_state = GameState.NONE
@@ -194,8 +195,8 @@ class Game:
         self.load_map("01")
 
         self.set_shelves()
-        self.set_registers()
         self.set_counters()
+        self.set_registers()
         self.set_carts()
         self.set_baskets()
         # make players
@@ -227,7 +228,7 @@ class Game:
             # render.render_objects(self.screen, self.camera, self.objects)
             # render.render_players(self.screen, self.camera, self.players, self.carts)
             render.render_interactions(self, self.screen, self.objects)
-
+            render.render_money(self.screen, self.camera, self.players[self.curr_player])
             # checking keyboard input/events for either exploratory or interactive
             if self.keyboard_input:
                 if self.game_state == GameState.EXPLORATORY:
@@ -242,8 +243,6 @@ class Game:
         if self.game_state == GameState.EXPLORATORY:
             player = self.players[player_index]
             obj = self.interaction_object(player)
-            if isinstance(obj, Baskets):
-                print("basket interaction")
             if obj is not None:
                 obj.interaction = True
                 obj.interact(self, player)
@@ -496,49 +495,51 @@ class Game:
         return False
 
     # set shelf locations and add to object list
+    # TODO: set food directory
     def set_shelves(self):
 
         # milk aisle
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 5.5, 1.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 7.5, 1.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 9.5, 1.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 11.5, 1.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_strawberry.png", "strawberry milk", 13.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 2, 5.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 2, 7.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 2, 9.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 2, 11.5, 1.5)
+        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_strawberry.png", "strawberry milk", 2, 13.5, 1.5)
+
 
         # fruit aisle
-        self.set_shelf(None, "images/food/apples.png", "apples", 5.5, 5.5)
-        self.set_shelf(None, "images/food/oranges.png", "oranges", 7.5, 5.5)
-        self.set_shelf(None, "images/food/banana.png", "banana", 9.5, 5.5)
-        self.set_shelf(None, "images/food/strawberry.png", "strawberry", 11.5, 5.5)
-        self.set_shelf(None, "images/food/raspberry.png", "raspberry", 13.5, 5.5)
+        self.set_shelf(None, "images/food/apples.png", "apples", 5, 5.5, 5.5)
+        self.set_shelf(None, "images/food/oranges.png", "oranges", 5, 7.5, 5.5)
+        self.set_shelf(None, "images/food/banana.png", "banana", 1, 9.5, 5.5)
+        self.set_shelf(None, "images/food/strawberry.png", "strawberry", 1, 11.5, 5.5)
+        self.set_shelf(None, "images/food/raspberry.png", "raspberry", 1, 13.5, 5.5)
 
         # meat aisle
-        self.set_shelf(None, "images/food/sausage.png", "sausage", 5.5, 9.5)
-        self.set_shelf(None, "images/food/meat_01.png", "steak", 7.5, 9.5)
-        self.set_shelf(None, "images/food/meat_02.png", "steak", 9.5, 9.5)
-        self.set_shelf(None, "images/food/meat_03.png", "chicken", 11.5, 9.5)
-        self.set_shelf(None, "images/food/ham.png", "ham", 13.5, 9.5)
+        self.set_shelf(None, "images/food/sausage.png", "sausage", 4, 5.5, 9.5)
+        self.set_shelf(None, "images/food/meat_01.png", "steak", 5, 7.5, 9.5)
+        self.set_shelf(None, "images/food/meat_02.png", "steak", 5, 9.5, 9.5)
+        self.set_shelf(None, "images/food/meat_03.png", "chicken", 6, 11.5, 9.5)
+        self.set_shelf(None, "images/food/ham.png", "ham", 6, 13.5, 9.5)
 
         # cheese aisle
-        self.set_shelf(None, "images/food/cheese_01.png", "brie cheese", 5.5, 13.5)
-        self.set_shelf(None, "images/food/cheese_02.png", "swiss cheese", 7.5, 13.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 9.5, 13.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 11.5, 13.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 13.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_01.png", "brie cheese", 5, 5.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_02.png", "swiss cheese", 5, 7.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 15, 9.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 15, 11.5, 13.5)
+        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 15, 13.5, 13.5)
 
         # veggie aisle
-        self.set_shelf(None, "images/food/garlic.png", "garlic", 5.5, 17.5)
-        self.set_shelf(None, "images/food/leek_onion.png", "leek", 7.5, 17.5)
-        self.set_shelf(None, "images/food/bell_pepper_red.png", "red bell pepper", 9.5, 17.5)
-        self.set_shelf(None, "images/food/carrot.png", "carrot", 11.5, 17.5)
-        self.set_shelf(None, "images/food/lettuce.png", "lettuce", 13.5, 17.5)
+        self.set_shelf(None, "images/food/garlic.png", "garlic", 2, 5.5, 17.5)
+        self.set_shelf(None, "images/food/leek_onion.png", "leek", 1, 7.5, 17.5)
+        self.set_shelf(None, "images/food/bell_pepper_red.png", "red bell pepper", 2, 9.5, 17.5)
+        self.set_shelf(None, "images/food/carrot.png", "carrot", 1, 11.5, 17.5)
+        self.set_shelf(None, "images/food/lettuce.png", "lettuce", 2, 13.5, 17.5)
 
         # frozen? rn it's veggie
-        self.set_shelf(None, "images/food/avocado.png", "avocado", 5.5, 21.5)
-        self.set_shelf(None, "images/food/broccoli.png", "broccoli", 7.5, 21.5)
-        self.set_shelf(None, "images/food/cucumber.png", "cucumber", 9.5, 21.5)
-        self.set_shelf(None, "images/food/bell_pepper_yellow.png", "yellow bell pepper", 11.5, 21.5)
-        self.set_shelf(None, "images/food/onion.png", "onion", 13.5, 21.5)
+        self.set_shelf(None, "images/food/avocado.png", "avocado", 2, 5.5, 21.5)
+        self.set_shelf(None, "images/food/broccoli.png", "broccoli", 1, 7.5, 21.5)
+        self.set_shelf(None, "images/food/cucumber.png", "cucumber", 2, 9.5, 21.5)
+        self.set_shelf(None, "images/food/bell_pepper_yellow.png", "yellow bell pepper", 2, 11.5, 21.5)
+        self.set_shelf(None, "images/food/onion.png", "onion", 2, 13.5, 21.5)
 
     # set register locations and add to object list
     def set_registers(self):
@@ -547,14 +548,14 @@ class Game:
                                        (int(2.3 * config.SCALE), int(3 * config.SCALE)))
         else:
             image = None
-        register = Register(1, 4.5, image)
+        register = Register(1, 4.5, image, self.food_directory)
         self.objects.append(register)
         if not self.headless:
             image = pygame.transform.scale(pygame.image.load("images/Registers/registersB.png"),
                                        (int(2.3 * config.SCALE), int(3 * config.SCALE)))
         else:
             image = None
-        register = Register(1, 9.5, image)
+        register = Register(1, 9.5, image, self.food_directory)
         self.objects.append(register)
 
     # set counter locations and add to object list
@@ -571,6 +572,7 @@ class Game:
         counter = Counter(18.25, 4.75, image, food_image, name)
         self.objects.append(counter)
         self.food_list.append(name)
+        self.food_directory[name] = 15
         name = "fresh fish"
         if not self.headless:
             image = pygame.transform.scale(pygame.image.load("images/counters/counterB.png"), (int(1.6 * config.SCALE),
@@ -583,6 +585,7 @@ class Game:
         counter = Counter(18.25, 10.75, image, food_image, name)
         self.objects.append(counter)
         self.food_list.append(name)
+        self.food_directory[name] = 15
 
     def set_carts(self):
         shopping_carts = Carts(1, 18.5)
@@ -599,8 +602,6 @@ class Game:
     def interaction_object(self, player):
         for obj in self.objects:
             if obj.can_interact(player):
-                if isinstance(obj, Baskets):
-                    print("again, basket interaction")
                 return obj
         return None
 
@@ -612,7 +613,7 @@ class Game:
 
         return None
 
-    def set_shelf(self, shelf_filename, food_filename, string_name, x_position, y_position):
+    def set_shelf(self, shelf_filename, food_filename, string_name, food_price, x_position, y_position):
         shelf_image = None
         food = None
         if not self.headless:
@@ -622,6 +623,7 @@ class Game:
             food = pygame.transform.scale(pygame.image.load(food_filename),
                                       (int(.30 * config.SCALE), int(.30 * config.SCALE)))
         shelf = Shelf(x_position, y_position, shelf_image, food, string_name)
+        self.food_directory[string_name] = food_price
         self.objects.append(shelf)
         self.food_list.append(string_name)
 

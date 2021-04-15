@@ -3,6 +3,12 @@ import config
 
 # right now the rendering functions aren't part of a class, not sure if that goes against python etiquette :/
 
+def render_money(screen, camera, player):
+    textbox = pygame.transform.scale(pygame.image.load("text/textboxsmall.png"),
+                                     (int(100), int(60)))
+    screen.blit(textbox, (int(525), int(0)))
+    text = render_text("$" + str(player.budget), False, (0, 0, 0))
+    screen.blit(text, (540, 23))
 
 def render_objects_and_players(screen, camera, objects, players, carts, baskets):
     to_render = sorted(players + objects, key=lambda x: x.position[1])

@@ -41,7 +41,6 @@ class Baskets(InteractiveObject):
                        x_position, y_position, obj.width, obj.height)
 
     def interact(self, game, player):
-        print("interacting")
         if self.interactive_stage == 0:
             # Player is not holding a basket
             if player.curr_basket is None:
@@ -65,3 +64,5 @@ class Baskets(InteractiveObject):
                 player.curr_basket = None
                 game.baskets.remove(basket)
                 game.objects.remove(basket)
+
+
