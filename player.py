@@ -54,7 +54,7 @@ class Player:
         self.bought_holding_food = False
 
         # money -- should be passed in prob
-        self.budget = 12
+        self.budget = 100
 
     def update_position(self, new_position):
         self.position[0] = new_position[0]
