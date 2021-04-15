@@ -140,12 +140,18 @@ if __name__ == "__main__":
         default=-1
     )
 
+    parser.add_argument(
+        '--random_start',
+        action='store_true',
+    )
+
     args = parser.parse_args()
 
     env = SupermarketEnv(num_players=args.num_players, player_speed=0.07,
                          render_messages=args.num_players == 1 or args.follow >= 0,
                          initial_state_filename=args.file,
-                         follow_player=args.follow if args.num_players > 1 else 0)
+                         follow_player=args.follow if args.num_players > 1 else 0,
+                         random_start=args.random_start)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),
