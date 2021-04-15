@@ -47,9 +47,12 @@ class Counter(InteractiveObject):
                     player.hold_food(self.string_type, self.food_image)
                     self.interaction_message = "You picked up your order."
                 else:
-                    self.interaction_message = "You put " + self.string_type + " in your basket."
-                    player.curr_basket.state = CartState.FULL
-                    player.curr_basket.add_food(self.string_type, False)
+                    if not player.curr_basket.hit_limit():
+                        self.interaction_message = "You put " + self.string_type + " in your basket."
+                        player.curr_basket.state = CartState.FULL
+                        player.curr_basket.add_food(self.string_type, False)
+                    else:
+                        self.interaction_message = "The basket is full! The food won't fit."
             elif player.holding_food is not None:
                 self.interaction_message = "Let go of the food you're holding to pick up food here!"
             else:
