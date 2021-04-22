@@ -161,6 +161,17 @@ class Game:
             player.bought_holding_food = player_dict['bought_holding_food']
             self.players.append(player)
 
+            basket_dict = obs['baskets']
+            pos = basket_dict['position']
+            basket = Basket(pos[0], pos[1], player, DIRECTIONS[basket_dict["direction"]], basket_dict["capacity"])
+            if sum(basket_dict["contents_quant"]) + sum(basket_dict["purchased_quant"]) > 0:
+                basket.state = CartState.FULL
+            for i, string in enumerate(basket_dict["contents"]):
+                basket.contents[string] = basket_dict["contents_quant"]
+            for i, string in enumerate(basket_dict["purchased_contents"]):
+                basket.purchased_contents[string] = basket_dict["purchased_quant"]
+            self.objects.append(basket)
+
         for cart_dict in obs['carts']:
             pos = cart_dict['position']
             cart = Cart(pos[0], pos[1], self.players[cart_dict["owner"]], DIRECTIONS[cart_dict["direction"]],
@@ -300,6 +311,7 @@ class Game:
                         cart.being_held = True
                         break
 
+    # TODO: not working currently, not sure if player should be able to put basket down
     def toggle_basket(self, player_index):
         player = self.players[player_index]
         if player.curr_basket is not None:
@@ -650,7 +662,7 @@ class Game:
 
     def observation(self, render_static_objects=True):
         # TODO: Basket obs
-        obs = {"players": [], "carts": []}
+        obs = {"players": [], "carts": [], "baskets": []}
         obs.update(self.get_interactivity_data())
 
         for i, player in enumerate(self.players):
@@ -667,6 +679,23 @@ class Game:
                 "bought_holding_food": player.bought_holding_food
             }
             obs["players"].append(player_data)
+
+            basket = player.curr_basket
+            if basket is not None:
+                basket_data = {
+                    "position": basket.position,
+                    "direction": DIRECTION_TO_INT[basket.direction],
+                    "capacity": basket.capacity,
+                    "owner": self.get_player_index(basket.owner),
+                    "last_held": self.get_player_index(basket.last_held),
+                    "contents": [food for food in basket.contents],
+                    "contents_quant": [basket.contents[food] for food in basket.contents],
+                    "purchased_contents": [food for food in basket.purchased_contents],
+                    "purchased_quant": [basket.purchased_contents[food] for food in basket.purchased_contents],
+                    "width": basket.width,
+                    "height": basket.height,
+                }
+                obs["baskets"].append(basket_data)
 
         for i, cart in enumerate(self.carts):
             cart_data = {
@@ -686,8 +715,8 @@ class Game:
 
         if render_static_objects:
             for obj in self.objects:
-                if isinstance(obj, Cart):
-                    continue  # We've already added all the carts.
+                if isinstance(obj, Cart) or isinstance(obj, Basket):
+                    continue  # We've already added all the carts and baskets.
                 object_data = {
                     "height": obj.height,
                     "width": obj.width,
