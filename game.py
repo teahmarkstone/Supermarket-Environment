@@ -269,6 +269,8 @@ class Game:
             pygame.display.flip()
 
     def interact(self, player_index):
+        if self.players[player_index].left_store:
+            return
         if self.game_state == GameState.EXPLORATORY:
             player = self.players[player_index]
             obj = self.interaction_object(player)
@@ -292,6 +294,8 @@ class Game:
                     obj.interact(self, self.players[player_index])
 
     def cancel_interaction(self, i):
+        if self.players[i].left_store:
+            return
         if self.game_state == GameState.INTERACTIVE:
             obj = self.check_interactions()
             if obj is not None:
@@ -300,6 +304,8 @@ class Game:
 
     def toggle_cart(self, player_index):
         player = self.players[player_index]
+        if player.left_store:
+            return
         if player.curr_cart is not None:
             player.curr_cart.being_held = False
             player.curr_cart = None
@@ -318,6 +324,8 @@ class Game:
     # TODO: not working currently, not sure if player should be able to put basket down
     def toggle_basket(self, player_index):
         player = self.players[player_index]
+        if player.left_store:
+            return
         if player.curr_basket is not None:
             player.curr_basket.being_held = False
             player.curr_basket = None
@@ -365,6 +373,9 @@ class Game:
     def player_move(self, player_index, action):
 
         player = self.players[player_index]
+        if player.left_store:
+            return
+
         current_speed = self.player_speed  # TODO make this a property of the player
 
         direction, (x1, y1), anim_to_advance = ACTION_DIRECTION[action]
@@ -508,6 +519,9 @@ class Game:
         # TODO stop rendering and disable actions for players who have left the store.
 
         unit.update_position(new_position)
+        if self.out_of_bounds(unit):
+            unit.left_store = True
+
         if all(self.out_of_bounds(player) for player in self.players) or \
             (self.curr_player >= 0 and self.out_of_bounds(self.players[self.curr_player])):
             self.running = False

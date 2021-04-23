@@ -47,6 +47,8 @@ class Player:
         self.render_offset_x = -0.2
         self.render_offset_y = -0.6
 
+        self.left_store = False
+
 
         # The food that's in the player's hand.
         self.holding_food = None
@@ -162,6 +164,8 @@ class Player:
         screen.blit(image, rect)
 
     def render(self, screen, camera, carts):
+        if self.left_store:
+            return
         if not self.images_loaded:
             self.load_images()
             self.images_loaded = True

@@ -294,7 +294,7 @@ class BlockingExitNorm(Norm):
     def post_monitor(self, game, action):
         violations = set()
         for player in game.players:
-            if in_exit_zone(player) or in_entrance_zone(player):
+            if (in_exit_zone(player) or in_entrance_zone(player)) and not player.left_store:
                 self.time_in_exit[player] += 1
                 if self.time_in_exit[player] >= self.time_threshold and player not in self.old_violations:
                     self.old_violations.add(player)
@@ -328,7 +328,9 @@ class EntranceOnlyNorm(Norm):
         violations = set()
         for player in game.players:
             if player.position[0] < 0 and in_entrance_zone(player):
-                violations.add(EntranceOnlyViolation(player))
+                if player not in self.known_violations:
+                    violations.add(EntranceOnlyViolation(player))
+                    self.known_violations.add(player)
         return violations
 
 
