@@ -1,16 +1,18 @@
-# Author: Gyan Tatiya
-# Email: Gyan.Tatiya@tufts.edu
+# Author: Daniel Kasenberg (adapted from Gyan Tatiya's Minecraft socket)
 import argparse
 import json
 import socket
-import time
+import selectors
+import types
 
-from env import SupermarketEnv
+from enums.game_state import GameState
+from env import SupermarketEnv, SinglePlayerSupermarketEnv
 from norms.norm import NormWrapper
 from norms.norms import *
 from utils import recv_socket_data
 
 ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL']
+import pygame
 
 
 # def get_goal(env_):
@@ -21,6 +23,114 @@ ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_
 #         goal['goalAchieved'] = False
 #
 #     return goal
+
+class SupermarketEventHandler:
+    def __init__(self, env):
+        self.curr_player = 0
+        self.env = env
+        env.reset()
+        self.running = True
+
+    def single_player_action(self, action):
+        return self.curr_player, action
+        # full_action = [PlayerAction.NOP]*self.env.num_players
+        # full_action[self.curr_player] = action
+        # return full_action
+
+    def handle_events(self):
+        if self.env.game.game_state == GameState.EXPLORATORY:
+            self.handle_exploratory_events()
+        else:
+            self.handle_interactive_events()
+
+    def handle_exploratory_events(self):
+        # print("DID THIS")
+        # print(self.env.game.update_observation())
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.env.game.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.env.game.running = False
+                elif event.key == pygame.K_RETURN:
+                    self.env.step(self.single_player_action(PlayerAction.INTERACT))
+                # i key shows inventory
+                elif event.key == pygame.K_i:
+                    self.env.game.players[self.curr_player].render_shopping_list = False
+                    self.env.game.players[self.curr_player].render_inventory = True
+                    self.env.game.game_state = GameState.INTERACTIVE
+                # l key shows shopping list
+                elif event.key == pygame.K_l:
+                    self.env.game.players[self.curr_player].render_inventory = False
+                    self.env.game.players[self.curr_player].render_shopping_list = True
+                    self.env.game.game_state = GameState.INTERACTIVE
+
+                # switch players
+                elif event.key == pygame.K_1:
+                    self.curr_player = 0
+                    self.env.game.curr_player = 0
+                elif event.key == pygame.K_2:
+                    self.curr_player = 1
+                    self.env.game.curr_player = 1
+
+                elif event.key == pygame.K_c:
+                    self.env.step(self.single_player_action(PlayerAction.TOGGLE))
+
+                elif event.key == pygame.K_s:
+
+                    filename = input("Please enter a filename for saving the state.\n>>> ")
+                    self.env.game.save_state(filename)
+                    print("State saved to {filename}.".format(filename=filename))
+
+            # player stands still if not moving, player stops holding cart if c button released
+            if event.type == pygame.KEYUP:
+                self.env.step(self.single_player_action(PlayerAction.NOP))
+
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_UP]:  # up
+            self.env.step(self.single_player_action(PlayerAction.NORTH))
+        elif keys[pygame.K_DOWN]:  # down
+            self.env.step(self.single_player_action(PlayerAction.SOUTH))
+
+        elif keys[pygame.K_LEFT]:  # left
+            self.env.step(self.single_player_action(PlayerAction.WEST))
+
+        elif keys[pygame.K_RIGHT]:  # right
+            self.env.step(self.single_player_action(PlayerAction.EAST))
+
+        self.running = self.env.game.running
+        self.env.render()
+
+    def handle_interactive_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.env.game.running = False
+
+            if event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_ESCAPE:
+                    self.env.game.running = False
+
+                # b key cancels interaction
+                elif event.key == pygame.K_b:
+                    self.env.step(self.single_player_action(PlayerAction.CANCEL))
+
+                # return key continues interaction
+                elif event.key == pygame.K_RETURN:
+                    self.env.step(self.single_player_action(PlayerAction.INTERACT))
+                # i key turns off inventory rendering
+                elif event.key == pygame.K_i:
+                    if self.env.game.players[self.curr_player].render_inventory:
+                        self.env.game.players[self.curr_player].render_inventory = False
+                        self.env.game.game_state = GameState.EXPLORATORY
+                # l key turns off shopping list rendering
+                elif event.key == pygame.K_l:
+                    if self.env.game.players[self.curr_player].render_shopping_list:
+                        self.env.game.players[self.curr_player].render_shopping_list = False
+                        self.env.game.game_state = GameState.EXPLORATORY
+        self.running = self.env.game.running
+        # self.env.render()
 
 
 def get_action_json(action, env_, obs, reward, done, info_=None):
@@ -59,6 +169,15 @@ def get_player_and_command(command_):
 def get_commands(command_):
     split_command = [cmd.strip() for cmd in command_.split(',')]
     return split_command
+
+
+def accept_wrapper(sock):
+    conn, addr = sock.accept()  # Should be ready to read
+    print('accepted connection from', addr)
+    conn.setblocking(False)
+    data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
+    events = selectors.EVENT_READ | selectors.EVENT_WRITE
+    sel.register(conn, events, data=data)
 
 
 if __name__ == "__main__":
@@ -102,6 +221,11 @@ if __name__ == "__main__":
         action='store_true',
     )
 
+    parser.add_argument(
+        '--keyboard_input',
+        action='store_true'
+    )
+
     args = parser.parse_args()
 
     # np.random.seed(0)
@@ -112,6 +236,7 @@ if __name__ == "__main__":
     env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless,
                          initial_state_filename=args.file,
                          follow_player=args.follow if args.num_players > 1 else 0,
+                         keyboard_input=args.keyboard_input,
                          random_start=args.random_start
                          )
 
@@ -129,8 +254,11 @@ if __name__ == "__main__":
              InteractionCancellationNorm(),
              ]
 
+    handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms))
     env = NormWrapper(env, norms)
     # env.map_size = 32
+
+    sel = selectors.DefaultSelector()
 
     # Connect to agent
     HOST = '127.0.0.1'
@@ -138,59 +266,63 @@ if __name__ == "__main__":
     sock_agent = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock_agent.bind((HOST, PORT))
     sock_agent.listen()
-    conn_agent, addr = sock_agent.accept()
-    print('Connected with agent: ', addr)
+    print('Listening on', (HOST, PORT))
+    sock_agent.setblocking(False)
 
-    TRIALS = 1
-    MAX_STEPS = 1000
+    sel.register(sock_agent, selectors.EVENT_READ, data=None)
+    env.reset()
+    env.render()
+    done = False
 
-    for trial_num in range(1, TRIALS + 1):
-
-        env.reset()
-        start_time = time.time()
-        step_count = 0
-        planning_time = 0
-        done = False
-        while not done:
-            # get command from agent
-            try:
-                output = recv_socket_data(conn_agent)
-                command = output.decode().strip()
-                if command.startswith("SET"):
-                    obs = command[4:]
-                    from json import loads
-
-                    env.reset(obs=loads(obs))
-                if is_single_player(command):
-                    player, command = get_player_and_command(command)
-                    player = int(player)
-
-                    action = [0] * env.num_players
-                    if command in ACTION_COMMANDS:
-                        action_id = ACTION_COMMANDS.index(command)
-                        action[player] = action_id
-                        # print(action)
-                        obs, reward, done, info = env.step(tuple(action))
-                        json_to_send = get_action_json(command, env, obs, reward, done, info)
+    while env.game.running:
+        events = sel.select(timeout=0)
+        should_perform_action = False
+        curr_action = [0] * env.num_players
+        e = []
+        handler.handle_events()
+        for key, mask in events:
+            if key.data is None:
+                accept_wrapper(key.fileobj)
+            else:
+                sock = key.fileobj
+                data = key.data
+                if mask & selectors.EVENT_READ:
+                    recv_data = sock.recv(4096)  # Should be ready to read
+                    if recv_data:
+                        data.inb += recv_data
+                        if len(recv_data) < 4096:
+                            #  We've hit the end of the input stream; now we process the input
+                            command = data.inb.decode().strip()
+                            data.inb = b''
+                            if command.startswith("SET"):
+                                obs = command[4:]
+                                from json import loads
+                                env.reset(obs=loads(obs))
+                            if is_single_player(command):
+                                player, command = get_player_and_command(command)
+                                e.append((key, mask, command))
+                                player = int(player)
+                                if command in ACTION_COMMANDS:
+                                    action_id = ACTION_COMMANDS.index(command)
+                                    curr_action[player] = action_id
+                                    should_perform_action = True
+                                    # print(action)
+                                else:
+                                    info = {'result': False, 'step_cost': 0.0, 'message': 'Invalid Command'}
+                                    json_to_send = get_action_json(command, env, None, 0., False, info)
+                                    data.outb = str.encode(json.dumps(json_to_send) + "\n")
                     else:
-                        info = {'result': False, 'step_cost': 0.0, 'message': 'Invalid Command'}
-                        json_to_send = get_action_json(command, env, None, 0., False, info)
-                else:
-                    commands = get_commands(command)
-                    valid = all(cmd in ACTION_COMMANDS for cmd in commands)
-                    if valid:
-                        action = tuple(ACTION_COMMANDS.index(cmd) for cmd in commands)
-                        # print(action)
-                        obs, reward, done, info = env.step(tuple(action))
-                        json_to_send = get_action_json(command, env, obs, reward, done, info)
-                    else:
-                        info = {'result': False, 'step_cost': 0.0, 'message': 'Invalid Command'}
-                        json_to_send = get_action_json(command, env, None, 0., False, info)
-                # send JSON to agent
-                conn_agent.sendall(str.encode(json.dumps(json_to_send) + "\n"))
-                env.render()
-            except (OSError, ValueError):
-                sock_agent.close()
-
-            step_count += 1
-        sock_agent.close()
+                        print('closing connection to', data.addr)
+                        sel.unregister(sock)
+                        sock.close()
+                if mask & selectors.EVENT_WRITE:
+                    if data.outb:
+                        sent = sock.send(data.outb)  # Should be ready to write
+                        data.outb = data.outb[sent:]
+        if should_perform_action:
+            obs, reward, done, info = env.step(tuple(curr_action))
+            for key, mask, command in e:
+                json_to_send = get_action_json(command, env, obs, reward, done, info)
+                data = key.data
+                data.outb = str.encode(json.dumps(json_to_send) + "\n")
+        env.render()

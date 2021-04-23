@@ -244,28 +244,34 @@ class Game:
             if not self.running:
                 pygame.quit()
                 return
+
+            if self.keyboard_input:
+                pass
+                # if self.game_state == GameState.EXPLORATORY:
+                #     self.exploratory_events()
+                # elif self.game_state == GameState.INTERACTIVE:
+                #     self.interactive_events()
+            else:
+                pygame.event.pump()
+
             self.screen.fill(config.WHITE)
 
-            render.render_map(self.screen, self.camera, self.players[self.curr_player], self.map)
+            render.render_map(self.screen, self.camera,
+                              self.players[self.curr_player] if self.curr_player >= 0 else None,
+                              self.map)
             render.render_decor(self.screen, self.camera)
             render.render_objects_and_players(self.screen, self.camera, self.objects, self.players, self.carts,
                                               self.baskets)
-            # render.render_objects(self.screen, self.camera, self.objects)
-            # render.render_players(self.screen, self.camera, self.players, self.carts)
             render.render_interactions(self, self.screen, self.objects)
+
             if self.render_messages:
                 render.render_money(self.screen, self.camera, self.players[self.curr_player])
             # checking keyboard input/events for either exploratory or interactive
-            if self.keyboard_input:
-                if self.game_state == GameState.EXPLORATORY:
-                    self.exploratory_events()
-                elif self.game_state == GameState.INTERACTIVE:
-                    self.interactive_events()
-            else:
-                pygame.event.pump()
             pygame.display.flip()
 
     def interact(self, player_index):
+        if self.players[player_index].left_store:
+            return
         if self.game_state == GameState.EXPLORATORY:
             player = self.players[player_index]
             obj = self.interaction_object(player)
@@ -289,6 +295,8 @@ class Game:
                     obj.interact(self, self.players[player_index])
 
     def cancel_interaction(self, i):
+        if self.players[i].left_store:
+            return
         if self.game_state == GameState.INTERACTIVE:
             obj = self.check_interactions()
             if obj is not None:
@@ -297,6 +305,8 @@ class Game:
 
     def toggle_cart(self, player_index):
         player = self.players[player_index]
+        if player.left_store:
+            return
         if player.curr_cart is not None:
             player.curr_cart.being_held = False
             player.curr_cart = None
@@ -315,6 +325,8 @@ class Game:
     # TODO: not working currently, not sure if player should be able to put basket down
     def toggle_basket(self, player_index):
         player = self.players[player_index]
+        if player.left_store:
+            return
         if player.curr_basket is not None:
             player.curr_basket.being_held = False
             player.curr_basket = None
@@ -362,12 +374,18 @@ class Game:
     def player_move(self, player_index, action):
 
         player = self.players[player_index]
+        if player.left_store:
+            return
+
         current_speed = self.player_speed  # TODO make this a property of the player
 
         direction, (x1, y1), anim_to_advance = ACTION_DIRECTION[action]
 
         if direction != player.direction:
             current_speed = 0  # The initial move just turns the player, doesn't move them.
+        else:
+            # iterating the stage the player is in, for walking animation purposes
+            player.iterate_stage(anim_to_advance)
 
         # If the player is holding a cart, this keeps track of whether the cart would collide with something.
         if player.curr_cart is not None:
@@ -390,8 +408,6 @@ class Game:
         if basket is not None:
             basket.set_direction(direction)
 
-        # iterating the stage the player is in, for walking animation purposes
-        player.iterate_stage(anim_to_advance)
         self.move_unit(player, [current_speed * x1, current_speed * y1])
 
 
@@ -487,15 +503,13 @@ class Game:
                     tiles.append(line[i])
                 self.map.append(tiles)
 
+    def out_of_bounds(self, player):
+        return player.position[0] < 0 or player.position[0] > len(self.map[0]) \
+               or player.position[1] < 0 or player.position[1] > len(self.map)
+
     # moves player
     def move_unit(self, unit, position_change):
         new_position = [unit.position[0] + position_change[0], unit.position[1] + position_change[1]]
-
-        if new_position[0] < 0 or new_position[0] > len(self.map[0]):
-            self.running = False
-
-        if new_position[1] < 0 or new_position[1] > len(self.map):
-            self.running = False
 
         if self.collide(unit, new_position[0], new_position[1]):
             return
@@ -503,7 +517,15 @@ class Game:
         if self.hits_wall(unit, new_position[0], new_position[1]):
             return
 
+        # TODO stop rendering and disable actions for players who have left the store.
+
         unit.update_position(new_position)
+        if self.out_of_bounds(unit):
+            unit.left_store = True
+
+        if all(self.out_of_bounds(player) for player in self.players) or \
+            (self.curr_player >= 0 and self.out_of_bounds(self.players[self.curr_player])):
+            self.running = False
 
     # checks if given [x,y] collides with an object
     def collide(self, unit, x_position, y_position):
