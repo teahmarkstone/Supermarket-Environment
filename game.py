@@ -245,11 +245,11 @@ class Game:
                 return
 
             if self.keyboard_input:
-                # pass
-                if self.game_state == GameState.EXPLORATORY:
-                    self.exploratory_events()
-                elif self.game_state == GameState.INTERACTIVE:
-                    self.interactive_events()
+                pass
+                # if self.game_state == GameState.EXPLORATORY:
+                #     self.exploratory_events()
+                # elif self.game_state == GameState.INTERACTIVE:
+                #     self.interactive_events()
             else:
                 pygame.event.pump()
 
@@ -493,7 +493,7 @@ class Game:
 
     def out_of_bounds(self, player):
         return player.position[0] < 0 or player.position[0] > len(self.map[0]) \
-               or player.position[1] < 0 or player.position[1] > len(self.map[0])
+               or player.position[1] < 0 or player.position[1] > len(self.map)
 
     # moves player
     def move_unit(self, unit, position_change):

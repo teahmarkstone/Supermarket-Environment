@@ -6,7 +6,7 @@ import selectors
 import types
 
 from enums.game_state import GameState
-from env import SupermarketEnv
+from env import SupermarketEnv, SinglePlayerSupermarketEnv
 from norms.norm import NormWrapper
 from norms.norms import *
 from utils import recv_socket_data
@@ -32,9 +32,10 @@ class SupermarketEventHandler:
         self.running = True
 
     def single_player_action(self, action):
-        full_action = [PlayerAction.NOP]*self.env.num_players
-        full_action[self.curr_player] = action
-        return full_action
+        return self.curr_player, action
+        # full_action = [PlayerAction.NOP]*self.env.num_players
+        # full_action[self.curr_player] = action
+        # return full_action
 
     def handle_events(self):
         if self.env.game.game_state == GameState.EXPLORATORY:
@@ -253,6 +254,7 @@ if __name__ == "__main__":
              InteractionCancellationNorm(),
              ]
 
+    handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms))
     env = NormWrapper(env, norms)
     # env.map_size = 32
 
@@ -277,6 +279,7 @@ if __name__ == "__main__":
         should_perform_action = False
         curr_action = [0] * env.num_players
         e = []
+        handler.handle_events()
         for key, mask in events:
             if key.data is None:
                 accept_wrapper(key.fileobj)

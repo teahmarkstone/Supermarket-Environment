@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 import gym
 
+from enums.player_action import PlayerAction
+from env import SinglePlayerSupermarketEnv
+
 
 class NormViolation(ABC):
     def __init__(self):
@@ -34,13 +37,20 @@ class NormWrapper(gym.Wrapper):
         self.norms = list(norms)
         self.violations = set()
 
+    def maybe_convert(self, action):
+        # TODO this is hacky; general norm monitoring for other environments would need to do something different
+        if isinstance(self.env, SinglePlayerSupermarketEnv):
+            return self.env.convert_action(action)
+        else:
+            return action
+
     def step(self, action):
         violations = set()
         for norm in self.norms:
-            violations.update(norm.pre_monitor(self.env.game, action))
+            violations.update(norm.pre_monitor(self.env.game, self.maybe_convert(action)))
         obs, reward, done, info = self.env.step(action)
         for norm in self.norms:
-            violations.update(norm.post_monitor(self.env.game, action))
+            violations.update(norm.post_monitor(self.env.game, self.maybe_convert(action)))
         self.violations = violations
         new_obs = obs
         # new_obs = {'violations': violations, 'obs': obs}

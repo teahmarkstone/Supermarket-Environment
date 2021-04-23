@@ -69,6 +69,38 @@ class SupermarketEnv(gym.Env):
             print(self.game.observation(True))
 
 
+class SinglePlayerSupermarketEnv(gym.Wrapper):
+    def __init__(self, env):
+        super(SinglePlayerSupermarketEnv, self).__init__(env)
+        self.action_space = gym.spaces.Tuple((gym.spaces.Discrete(self.num_players),
+                                              gym.spaces.Discrete(len(PlayerAction))))
+
+    def convert_action(self, player_action):
+        i, action = player_action
+        full_action = [PlayerAction.NOP]*self.num_players
+        full_action[i] = action
+        return full_action
+
+    def step(self, player_action):
+        done = False
+        i, action = player_action
+        if action in MOVEMENT_ACTIONS:
+            self.game.player_move(i, action)
+        elif action == PlayerAction.NOP:
+            self.game.nop(i)
+        elif action == PlayerAction.INTERACT:
+            self.game.interact(i)
+        elif action == PlayerAction.TOGGLE:
+            self.game.toggle_cart(i)
+        elif action == PlayerAction.CANCEL:
+            self.game.cancel_interaction(i)
+        observation = self.game.observation()
+        self.step_count += 1
+        if not self.game.running:
+            done = True
+        return observation, 0., done, None
+
+
 if __name__ == "__main__":
     env = SupermarketEnv(2)
     env.reset()
