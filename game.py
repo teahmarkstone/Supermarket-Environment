@@ -156,6 +156,7 @@ class Game:
             player.shopping_list = player_dict['shopping_list']
             player.list_quant = player_dict['list_quant']
             player.holding_food = player_dict['holding_food']
+            player.budget = player_dict['budget']
             if player.holding_food is not None:
                 player.holding_food_image = FOOD_IMAGES[player.holding_food]
             player.bought_holding_food = player_dict['bought_holding_food']
@@ -186,7 +187,7 @@ class Game:
                 cart.purchased_contents[string] = cart_dict["purchased_quant"]
             self.carts.append(cart)
             self.objects.append(cart)
-        # ADD BASKET OBS
+
         for i, player in enumerate(self.players):
             cart_num = obs['players'][i]["curr_cart"]
             player.curr_cart = self.carts[cart_num] if cart_num != -1 else None
@@ -521,7 +522,6 @@ class Game:
         return False
 
     # set shelf locations and add to object list
-    # TODO: set food directory
     def set_shelves(self):
 
         # milk aisle
@@ -610,6 +610,18 @@ class Game:
             food_image = None
         counter = Counter(18.25, 10.75, image, food_image, name)
         self.objects.append(counter)
+        name = "fresh fish"
+        if not self.headless:
+            image = pygame.transform.scale(pygame.image.load("images/counters/counterB.png"), (int(1.6 * config.SCALE),
+                                                                                           int(3.5 * config.SCALE)))
+            food_image = pygame.transform.scale(pygame.image.load("images/food/fresh_fish.png"),
+                                            (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+        else:
+            image = None
+            food_image = None
+        counter = Counter(18.25, 10.75, image, food_image, name)
+        self.objects.append(counter)
+        self.food_list.append(name)
         self.food_list.append(name)
         self.food_directory[name] = 15
 
@@ -640,6 +652,7 @@ class Game:
         return None
 
     def set_shelf(self, shelf_filename, food_filename, string_name, food_price, x_position, y_position):
+        quantity = 20
         shelf_image = None
         food = None
         if not self.headless:
@@ -648,7 +661,7 @@ class Game:
                                                  (int(2 * config.SCALE), int(2 * config.SCALE)))
             food = pygame.transform.scale(pygame.image.load(food_filename),
                                       (int(.30 * config.SCALE), int(.30 * config.SCALE)))
-        shelf = Shelf(x_position, y_position, shelf_image, food, string_name)
+        shelf = Shelf(x_position, y_position, shelf_image, food, string_name, food_price, quantity)
         self.food_directory[string_name] = food_price
         self.objects.append(shelf)
         self.food_list.append(string_name)
@@ -661,7 +674,6 @@ class Game:
             return {"interactive_stage": -1, "total_stages": 0}
 
     def observation(self, render_static_objects=True):
-        # TODO: Basket obs
         obs = {"players": [], "carts": [], "baskets": []}
         obs.update(self.get_interactivity_data())
 
@@ -676,7 +688,8 @@ class Game:
                 "shopping_list": player.shopping_list,
                 "list_quant": player.list_quant,
                 "holding_food": player.holding_food,
-                "bought_holding_food": player.bought_holding_food
+                "bought_holding_food": player.bought_holding_food,
+                "budget": player.budget,
             }
             obs["players"].append(player_data)
 
@@ -728,6 +741,9 @@ class Game:
                 if category not in obs:
                     obs[category] = []
                 obs[category].append(object_data)
+
+        # TODO: not sure if this is the right way to do this
+        obs["food_prices"] = self.food_directory
         return obs
 
     def get_player_index(self, player):

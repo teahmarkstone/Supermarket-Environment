@@ -8,7 +8,7 @@ from objects import InteractiveObject
 
 
 class Shelf(InteractiveObject):
-    def __init__(self, x_position, y_position, shelf_image, food_image, string_type):
+    def __init__(self, x_position, y_position, shelf_image, food_image, string_type, price, quantity):
 
         super().__init__(num_stages=1)
         self.position = [x_position, y_position]
@@ -18,6 +18,9 @@ class Shelf(InteractiveObject):
         self.string_type = string_type
         self.width = 2
         self.height = 1
+        self.price = price
+        self.capacity = quantity
+        self.item_quantity = quantity
 
         self.render_offset_y = -1
         self.render_offset_x = 0
@@ -64,40 +67,71 @@ class Shelf(InteractiveObject):
         rect = pygame.Rect(x_position, y_position, config.SCALE, config.SCALE)
 
         screen.blit(self.image, rect)
+        if self.item_quantity > 0:
+            # add blit for type of food-- FIX: DOESN'T ADJUST FOR CONFIG SCALE
+            if self.is_fridge:
+                for i in [0.9]:
+                    for j in [0.2, 0.5]:
+                        rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
+                        screen.blit(self.food_image, rect)
 
-        # add blit for type of food-- FIX: DOESN'T ADJUST FOR CONFIG SCALE
-        if self.is_fridge:
-            for i in [0.9, 1.4]:
-                for j in [0.2, 0.5]:
-                    rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
-                    screen.blit(self.food_image, rect)
-            for i in [0.9, 1.4]:
-                for j in [1.2, 1.5]:
-                    rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
-                    screen.blit(self.food_image, rect)
+                for i in [0.9]:
+                    for j in [1.2, 1.5]:
+                        rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
+                        screen.blit(self.food_image, rect)
 
-        else:
-            for i in [0.9, 1.4]:
-                for j in [0.3, 0.6, 0.9, 1.2, 1.5]:
-                    rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
-                    screen.blit(self.food_image, rect)
+                if self.item_quantity > self.capacity / 2:
+                    for i in [1.4]:
+                        for j in [0.2, 0.5]:
+                            rect = pygame.Rect(x_position + j * config.SCALE, y_position + i * config.SCALE,
+                                               config.SCALE, config.SCALE)
+                            screen.blit(self.food_image, rect)
+
+                    for i in [1.4]:
+                        for j in [1.2, 1.5]:
+                            rect = pygame.Rect(x_position + j * config.SCALE, y_position + i * config.SCALE,
+                                               config.SCALE, config.SCALE)
+                            screen.blit(self.food_image, rect)
+
+            else:
+                for i in [0.9]:
+                    for j in [0.3, 0.6, 0.9, 1.2, 1.5]:
+                        rect = pygame.Rect(x_position + j*config.SCALE, y_position + i*config.SCALE, config.SCALE, config.SCALE)
+                        screen.blit(self.food_image, rect)
+                if self.item_quantity > self.capacity/2:
+                    for i in [1.4]:
+                        for j in [0.3, 0.6, 0.9, 1.2, 1.5]:
+                            rect = pygame.Rect(x_position + j * config.SCALE, y_position + i * config.SCALE,
+                                               config.SCALE, config.SCALE)
+                            screen.blit(self.food_image, rect)
+
 
     def interact(self, game, player):
-        if player.curr_cart is None and player.curr_basket is None:
-            print("here")
-            if player.holding_food is not None:
-                self.interaction_message = "You put " + player.holding_food + " back on the shelf."
-                player.holding_food = None
-                # If you put the food back in the wrong place, that violates a norm
+            empty = False
+            if self.item_quantity == 0:
+                empty = True
+            if player.curr_cart is None and player.curr_basket is None:
+                if player.holding_food is not None:
+                    self.interaction_message = "You put " + player.holding_food + " back on the shelf."
+                    player.holding_food = None
+                    self.item_quantity += 1
+                    empty = False
+                    # If you put the food back in the wrong place, that violates a norm
+                else:
+                    if not empty:
+                        player.holding_food = self.string_type
+                        player.holding_food_image = self.food_image
+                        self.interaction_message = "You picked up " + self.string_type + "."
+                        self.item_quantity -= 1
+            elif player.curr_basket is None:
+                self.interaction_message = "Let go of your cart to pick up food!"
             else:
-                player.holding_food = self.string_type
-                player.holding_food_image = self.food_image
-                self.interaction_message = "You picked up " + self.string_type + "."
-        elif player.curr_basket is None:
-            self.interaction_message = "Let go of your cart to pick up food!"
-        else:
-            if not player.curr_basket.hit_limit():
-                self.interaction_message = "You put " + self.string_type + " in your basket."
-                player.curr_basket.add_food(self.string_type, False)
-            else:
-                self.interaction_message = "The basket is full! The food won't fit."
+                if not empty:
+                    if not player.curr_basket.hit_limit():
+                        self.interaction_message = "You put " + self.string_type + " in your basket."
+                        player.curr_basket.add_food(self.string_type, False)
+                        self.item_quantity -= 1
+                    else:
+                        self.interaction_message = "The basket is full! The food won't fit."
+            if empty:
+                self.interaction_message = "The shelf is empty."
