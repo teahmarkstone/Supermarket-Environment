@@ -25,9 +25,10 @@ import pygame
 #     return goal
 
 class SupermarketEventHandler:
-    def __init__(self, env):
+    def __init__(self, env, keyboard_input=False):
         self.curr_player = 0
         self.env = env
+        self.keyboard_input = keyboard_input
         env.reset()
         self.running = True
 
@@ -42,78 +43,73 @@ class SupermarketEventHandler:
             self.handle_exploratory_events()
         else:
             self.handle_interactive_events()
+        self.env.render(mode='violations')
 
     def handle_exploratory_events(self):
         # print("DID THIS")
         # print(self.env.game.update_observation())
+
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.env.game.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    self.env.game.running = False
-                elif event.key == pygame.K_RETURN:
-                    self.env.step(self.single_player_action(PlayerAction.INTERACT))
-                # i key shows inventory
-                elif event.key == pygame.K_i:
-                    self.env.game.players[self.curr_player].render_shopping_list = False
-                    self.env.game.players[self.curr_player].render_inventory = True
-                    self.env.game.game_state = GameState.INTERACTIVE
-                # l key shows shopping list
-                elif event.key == pygame.K_l:
-                    self.env.game.players[self.curr_player].render_inventory = False
-                    self.env.game.players[self.curr_player].render_shopping_list = True
-                    self.env.game.game_state = GameState.INTERACTIVE
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+                filename = input("Please enter a filename for saving the state.\n>>> ")
+                self.env.game.save_state(filename)
+                print("State saved to {filename}.".format(filename=filename))
+            elif self.keyboard_input:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        self.env.step(self.single_player_action(PlayerAction.INTERACT))
+                    # i key shows inventory
+                    elif event.key == pygame.K_i:
+                        self.env.game.players[self.curr_player].render_shopping_list = False
+                        self.env.game.players[self.curr_player].render_inventory = True
+                        self.env.game.game_state = GameState.INTERACTIVE
+                    # l key shows shopping list
+                    elif event.key == pygame.K_l:
+                        self.env.game.players[self.curr_player].render_inventory = False
+                        self.env.game.players[self.curr_player].render_shopping_list = True
+                        self.env.game.game_state = GameState.INTERACTIVE
 
-                # switch players
-                elif event.key == pygame.K_1:
-                    self.curr_player = 0
-                    self.env.game.curr_player = 0
-                elif event.key == pygame.K_2:
-                    self.curr_player = 1
-                    self.env.game.curr_player = 1
+                    # switch players
+                    elif event.key == pygame.K_1:
+                        self.curr_player = 0
+                        self.env.game.curr_player = 0
+                    elif event.key == pygame.K_2:
+                        self.curr_player = 1
+                        self.env.game.curr_player = 1
 
-                elif event.key == pygame.K_c:
-                    self.env.step(self.single_player_action(PlayerAction.TOGGLE))
+                    elif event.key == pygame.K_c:
+                        self.env.step(self.single_player_action(PlayerAction.TOGGLE))
 
-                elif event.key == pygame.K_s:
+                # player stands still if not moving
+                elif event.type == pygame.KEYUP:
+                    self.env.step(self.single_player_action(PlayerAction.NOP))
 
-                    filename = input("Please enter a filename for saving the state.\n>>> ")
-                    self.env.game.save_state(filename)
-                    print("State saved to {filename}.".format(filename=filename))
+        if self.keyboard_input:
+            keys = pygame.key.get_pressed()
 
-            # player stands still if not moving, player stops holding cart if c button released
-            if event.type == pygame.KEYUP:
-                self.env.step(self.single_player_action(PlayerAction.NOP))
+            if keys[pygame.K_UP]:  # up
+                self.env.step(self.single_player_action(PlayerAction.NORTH))
+            elif keys[pygame.K_DOWN]:  # down
+                self.env.step(self.single_player_action(PlayerAction.SOUTH))
 
-        keys = pygame.key.get_pressed()
+            elif keys[pygame.K_LEFT]:  # left
+                self.env.step(self.single_player_action(PlayerAction.WEST))
 
-        if keys[pygame.K_UP]:  # up
-            self.env.step(self.single_player_action(PlayerAction.NORTH))
-        elif keys[pygame.K_DOWN]:  # down
-            self.env.step(self.single_player_action(PlayerAction.SOUTH))
-
-        elif keys[pygame.K_LEFT]:  # left
-            self.env.step(self.single_player_action(PlayerAction.WEST))
-
-        elif keys[pygame.K_RIGHT]:  # right
-            self.env.step(self.single_player_action(PlayerAction.EAST))
+            elif keys[pygame.K_RIGHT]:  # right
+                self.env.step(self.single_player_action(PlayerAction.EAST))
 
         self.running = self.env.game.running
-        self.env.render()
 
     def handle_interactive_events(self):
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.env.game.running = False
 
-            if event.type == pygame.KEYDOWN:
-
-                if event.key == pygame.K_ESCAPE:
-                    self.env.game.running = False
-
+            if event.type == pygame.KEYDOWN and self.keyboard_input:
                 # b key cancels interaction
-                elif event.key == pygame.K_b:
+                if event.key == pygame.K_b:
                     self.env.step(self.single_player_action(PlayerAction.CANCEL))
 
                 # return key continues interaction
@@ -130,7 +126,6 @@ class SupermarketEventHandler:
                         self.env.game.players[self.curr_player].render_shopping_list = False
                         self.env.game.game_state = GameState.EXPLORATORY
         self.running = self.env.game.running
-        # self.env.render()
 
 
 def get_action_json(action, env_, obs, reward, done, info_=None):
@@ -254,7 +249,8 @@ if __name__ == "__main__":
              InteractionCancellationNorm(),
              ]
 
-    handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms))
+    handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms),
+                                      keyboard_input=args.keyboard_input)
     env = NormWrapper(env, norms)
     # env.map_size = 32
 

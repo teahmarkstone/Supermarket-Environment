@@ -245,13 +245,7 @@ class Game:
                 pygame.quit()
                 return
 
-            if self.keyboard_input:
-                pass
-                # if self.game_state == GameState.EXPLORATORY:
-                #     self.exploratory_events()
-                # elif self.game_state == GameState.INTERACTIVE:
-                #     self.interactive_events()
-            else:
+            if not self.keyboard_input:
                 pygame.event.pump()
 
             self.screen.fill(config.WHITE)

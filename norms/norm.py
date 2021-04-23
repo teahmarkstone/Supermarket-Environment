@@ -57,7 +57,8 @@ class NormWrapper(gym.Wrapper):
         return new_obs, reward, done, info
 
     def render(self, mode='human', **kwargs):
-        self.env.render(mode, **kwargs)
+        if not mode=='violations':
+            self.env.render(mode, **kwargs)
         for violation in self.violations:
             print("NORM: " + str(violation))
         self.violations = set()
