@@ -65,14 +65,14 @@ class Register(InteractiveObject):
                         and overlap(self.position[0] - x_margin, self.position[1] - y_margin, self.width + 2*x_margin,
                                     self.height + 2*y_margin, cart.position[0], cart.position[1], cart.width, cart.height):
                     if sum(cart.contents.values()) > 0:
-                        curr_money = self.can_afford(player, cart.contents)
-                        if curr_money >= 0:
+                        #curr_money = self.can_afford(player, cart.contents)
+                        #if curr_money >= 0:
                             # determine if player can afford stuff here
-                            cart.buy()
-                            has_items = True
-                            player.budget = curr_money
-                        else:
-                            can_afford = False
+                        cart.buy()
+                        has_items = True
+                        #player.budget = curr_money
+                        #else:
+                        #    can_afford = False
 
             # buying food in basket
             if player.curr_basket is not None:
