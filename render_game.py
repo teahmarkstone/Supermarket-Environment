@@ -3,8 +3,14 @@ import config
 
 # right now the rendering functions aren't part of a class, not sure if that goes against python etiquette :/
 
+def render_money(screen, camera, player):
+    textbox = pygame.transform.scale(pygame.image.load("text/textboxsmall.png"),
+                                     (int(100), int(60)))
+    screen.blit(textbox, (int(525), int(0)))
+    text = render_text("$" + str(player.budget), False, (0, 0, 0))
+    screen.blit(text, (540, 23))
 
-def render_objects_and_players(screen, camera, objects, players, carts):
+def render_objects_and_players(screen, camera, objects, players, carts, baskets):
     to_render = sorted(players + objects, key=lambda x: x.position[1])
     for obj in to_render:
         if obj in players:
@@ -81,9 +87,9 @@ def render_map(screen, camera, player, tile_map):
 def render_interactions(game, screen, objects):
     for player in game.players:
         if player.render_inventory:
-            player.render_items(screen, game.carts)
+            player.render_items(screen, game.carts, game.baskets)
         if player.render_shopping_list:
-            player.render_list(screen, game.carts)
+            player.render_list(screen, game.carts, game.baskets)
 
     for object in objects:
         object.render_interaction(game, screen)

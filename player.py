@@ -29,6 +29,7 @@ class Player:
         self.west_images = []
 
         self.curr_cart = None
+        self.curr_basket = None
 
         # player inventory
         self.render_inventory = False
@@ -46,11 +47,16 @@ class Player:
         self.render_offset_x = -0.2
         self.render_offset_y = -0.6
 
+        self.left_store = False
+
 
         # The food that's in the player's hand.
         self.holding_food = None
         self.holding_food_image = None
         self.bought_holding_food = False
+
+        # money -- should be passed in prob
+        self.budget = 100
 
     def update_position(self, new_position):
         self.position[0] = new_position[0]
@@ -58,6 +64,9 @@ class Player:
         if self.curr_cart is not None:
             if self.curr_cart.being_held:
                 self.curr_cart.update_position(new_position[0], new_position[1])
+        if self.curr_basket is not None:
+            if self.curr_basket.being_held:
+                self.curr_basket.update_position(new_position[0], new_position[1])
 
     def __str__(self):
         return "Player {i}".format(i=self.player_number)
@@ -108,6 +117,7 @@ class Player:
         self.stage_counter += 1
 
     def render_player(self, screen, camera):
+
         direction = self.direction
         image = None
         if direction == Direction.NORTH:
@@ -131,6 +141,8 @@ class Player:
         image = pygame.transform.scale(image, (int(0.75*config.SCALE), int(1.125*config.SCALE)))
         screen.blit(image, rect)
 
+
+
         # collision_x = self.position[0] + 0.2
         # collision_y = self.position[1] + 0.6
         # collision_height = 0.4
@@ -152,6 +164,8 @@ class Player:
         screen.blit(image, rect)
 
     def render(self, screen, camera, carts):
+        if self.left_store:
+            return
         if not self.images_loaded:
             self.load_images()
             self.images_loaded = True
@@ -159,7 +173,7 @@ class Player:
         if self.holding_food is not None:
             self.render_food(screen, camera, self.holding_food_image)
 
-    def render_list(self, screen, carts):
+    def render_list(self, screen, carts, baskets):
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
                                          (int(430), int(460)))
         x_pos = int((config.SCREEN_WIDTH - 430) / 2)
@@ -171,7 +185,7 @@ class Player:
         y_position = y_pos + 37 + spacing
 
         counter = 0
-        inventory = self.get_inventory(carts)
+        inventory = self.get_inventory(carts, baskets)
         for food in self.shopping_list:
             text = render_text(food, False, (0, 0, 0))
             screen.blit(text, (155, y_position))
@@ -187,7 +201,7 @@ class Player:
             y_position += spacing
 
     # Currently includes both purchased and unpurchased items. We could potentially separate it for finer-grained info.
-    def get_inventory(self, carts):
+    def get_inventory(self, carts, baskets):
         inventory = defaultdict(defaultdict)
         if self.holding_food is not None:
             if "unpurchased" not in inventory[self.holding_food]:
@@ -212,9 +226,23 @@ class Player:
                     if "purchased" not in inventory[food]:
                         inventory[food]["purchased"] = 0
                     inventory[food]["purchased"] += quantity
+        for basket in baskets:
+            if basket.last_held == self:
+                for food, quantity in basket.contents.items():
+                    if "unpurchased" not in inventory[food]:
+                        inventory[food]["unpurchased"] = 0
+                    if "purchased" not in inventory[food]:
+                        inventory[food]["purchased"] = 0
+                    inventory[food]["unpurchased"] += quantity
+                for food, quantity in basket.purchased_contents.items():
+                    if "unpurchased" not in inventory[food]:
+                        inventory[food]["unpurchased"] = 0
+                    if "purchased" not in inventory[food]:
+                        inventory[food]["purchased"] = 0
+                    inventory[food]["purchased"] += quantity
         return inventory
 
-    def render_items(self, screen, carts):
+    def render_items(self, screen, carts, baskets):
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
                                          (int(430), int(450)))
         x_pos=int((config.SCREEN_WIDTH-430)/2)
@@ -225,7 +253,7 @@ class Player:
         screen.blit(text, (x_pos + 130, y_pos + 37))
         spacing = 30
         y_position = y_pos + 37 + spacing
-        inventory = self.get_inventory(carts)
+        inventory = self.get_inventory(carts, baskets)
         for food in inventory.keys():
             # if not food in rendered_food:
             text = render_text(food, False, (0, 0, 0))
@@ -248,11 +276,16 @@ class Player:
             if cart.state == CartState.PURCHASED:
                 cart.state = CartState.EMPTY
 
+    def reset_basket(self):
+        if self.curr_basket is not None:
+            basket = self.curr_basket
+            if basket.state == CartState.PURCHASED:
+                basket.state = CartState.EMPTY
+
     def load_images(self):
         sprites = sprite_builder.build_sprites(self.player_number)
         for i in range(0, 6):
             self.east_images.append(sprites[i])
-        print("length of east images: ", len(self.east_images))
         for i in range(6, 12):
             self.north_images.append(sprites[i])
         self.north_images.append(sprites[11])
