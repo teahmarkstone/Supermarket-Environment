@@ -198,6 +198,8 @@ class Game:
                 player.set_shopping_list(self.food_list)
                 self.players.append(player)  # randomly generates 12 item shopping list from list of food in store
 
+        self.update()
+
     def save_state(self, filename):
         with open(filename, "w") as f:
             f.write(str(self.observation(False)))
