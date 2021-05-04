@@ -10,13 +10,14 @@ MOVEMENT_ACTIONS = [PlayerAction.NORTH, PlayerAction.SOUTH, PlayerAction.EAST, P
 class SupermarketEnv(gym.Env):
 
     def __init__(self, num_players=1, player_speed=0.15, keyboard_input=False, render_messages=True, headless=False,
-                 initial_state_filename=None, follow_player=-1, random_start=False):
+                 initial_state_filename=None, follow_player=-1, random_start=False, render_number=False):
 
         super(SupermarketEnv, self).__init__()
 
         self.step_count = 0
         self.render_messages = render_messages
         self.keyboard_input = keyboard_input
+        self.render_number = render_number
 
         self.follow_player = follow_player
 
@@ -55,7 +56,8 @@ class SupermarketEnv(gym.Env):
                          keyboard_input=self.keyboard_input,
                          render_messages=self.render_messages,
                          headless=self.headless, initial_state_filename=self.initial_state_filename,
-                         follow_player=self.follow_player, random_start=self.random_start)
+                         follow_player=self.follow_player, random_start=self.random_start,
+                         render_number=self.render_number)
         self.game.set_up()
         if obs is not None:
             self.game.set_observation(obs)

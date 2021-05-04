@@ -145,13 +145,19 @@ if __name__ == "__main__":
         action='store_true',
     )
 
+    parser.add_argument(
+        '--render_number',
+        action='store_true'
+    )
+
     args = parser.parse_args()
 
     env = SupermarketEnv(num_players=args.num_players, player_speed=0.07,
                          render_messages=args.num_players == 1 or args.follow >= 0,
                          initial_state_filename=args.file,
                          follow_player=args.follow if args.num_players > 1 else 0,
-                         random_start=args.random_start)
+                         random_start=args.random_start,
+                         render_number=args.render_number)
 
     norms = [CartTheftNorm(),
              WrongShelfNorm(),

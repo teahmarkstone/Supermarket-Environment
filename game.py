@@ -102,7 +102,7 @@ def get_obj_category(obj):
 class Game:
 
     def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False,
-                 headless=False, initial_state_filename=None, follow_player=-1, random_start=False):
+                 headless=False, initial_state_filename=None, follow_player=-1, random_start=False, render_number=False):
 
         self.screen = None
         self.clock = None
@@ -143,6 +143,7 @@ class Game:
 
         self.keyboard_input = keyboard_input
         self.render_messages = render_messages
+        self.render_number = render_number
         self.headless = headless
         self.random_start = random_start
 
@@ -152,7 +153,8 @@ class Game:
         self.baskets = []
         for player_dict in obs['players']:
             pos = player_dict['position']
-            player = Player(pos[0], pos[1], DIRECTIONS[player_dict['direction']], player_dict['index'])
+            player = Player(pos[0], pos[1], DIRECTIONS[player_dict['direction']], player_dict['index'],
+                            self.render_number)
             player.shopping_list = player_dict['shopping_list']
             player.list_quant = player_dict['list_quant']
             player.holding_food = player_dict['holding_food']
@@ -217,7 +219,7 @@ class Game:
 
         if len(self.players) == 0:
             for i in range(0, self.num_players):
-                player = Player(i + 1.2, 15.6, Direction.EAST, i + 1)
+                player = Player(i + 1.2, 15.6, Direction.EAST, i, self.render_number)
                 if self.random_start:
                     self.randomize_position(player)
                 player.set_shopping_list(self.food_list)

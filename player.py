@@ -11,7 +11,7 @@ from render_game import render_text
 
 
 class Player:
-    def __init__(self, x_position, y_position, direction, player_number):
+    def __init__(self, x_position, y_position, direction, player_number, render_number=False):
         # player ID
         self.player_number = player_number
         # which way player is facing
@@ -39,6 +39,8 @@ class Player:
         self.shopping_list = []
         # quantities for foods, indices correspond to indices of shopping_list list
         self.list_quant = []
+
+        self.render_number = render_number
 
         self.images_loaded = False
         self.width = .6
@@ -141,6 +143,10 @@ class Player:
         image = pygame.transform.scale(image, (int(0.75*config.SCALE), int(1.125*config.SCALE)))
         screen.blit(image, rect)
 
+        if self.render_number:
+            number_identifier = render_text(str(self.player_number), True, (0, 0,128))
+            screen.blit(number_identifier, ((self.position[0] + self.render_offset_y - camera.position[0])*config.SCALE,
+                               (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
 
 
         # collision_x = self.position[0] + 0.2

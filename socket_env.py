@@ -221,6 +221,11 @@ if __name__ == "__main__":
         action='store_true'
     )
 
+    parser.add_argument(
+        '--render_number',
+        action='store_true'
+    )
+
     args = parser.parse_args()
 
     # np.random.seed(0)
@@ -232,7 +237,8 @@ if __name__ == "__main__":
                          initial_state_filename=args.file,
                          follow_player=args.follow if args.num_players > 1 else 0,
                          keyboard_input=args.keyboard_input,
-                         random_start=args.random_start
+                         random_start=args.random_start,
+                         render_number=args.render_number
                          )
 
     norms = [CartTheftNorm(),
