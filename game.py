@@ -129,6 +129,8 @@ class Game:
         self.game_state = GameState.NONE
         self.players = []
 
+        self.render_number = render_number
+
         if initial_state_filename is not None:
             self.load_from_file(initial_state_filename)
 
@@ -143,7 +145,6 @@ class Game:
 
         self.keyboard_input = keyboard_input
         self.render_messages = render_messages
-        self.render_number = render_number
         self.headless = headless
         self.random_start = random_start
 
@@ -164,6 +165,7 @@ class Game:
             player.bought_holding_food = player_dict['bought_holding_food']
             self.players.append(player)
 
+        for basket_dict in obs['baskets']:
             basket_dict = obs['baskets']
             pos = basket_dict['position']
             basket = Basket(pos[0], pos[1], player, DIRECTIONS[basket_dict["direction"]], basket_dict["capacity"])
@@ -761,7 +763,7 @@ class Game:
                 obs[category].append(object_data)
 
         # TODO: not sure if this is the right way to do this
-        obs["food_prices"] = self.food_directory
+        obs["food_prices"] = dict(self.food_directory)
         return obs
 
     def get_player_index(self, player):
