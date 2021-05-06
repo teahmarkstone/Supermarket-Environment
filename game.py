@@ -216,7 +216,7 @@ class Game:
         self.set_counters()
         self.set_registers()
         self.set_carts()
-        # self.set_baskets()
+        self.set_baskets()
         # make players
 
         if len(self.players) == 0:
@@ -615,7 +615,7 @@ class Game:
         else:
             image = None
             food_image = None
-        counter = Counter(18.25, 4.75, image, food_image, name)
+        counter = Counter(18.25, 4.75, image, food_image, name, 15)
         self.objects.append(counter)
         self.food_list.append(name)
         self.food_directory[name] = 15
@@ -628,7 +628,7 @@ class Game:
         else:
             image = None
             food_image = None
-        counter = Counter(18.25, 10.75, image, food_image, name)
+        counter = Counter(18.25, 10.75, image, food_image, name, 12)
         self.objects.append(counter)
         name = "fresh fish"
         if not self.headless:
@@ -639,11 +639,11 @@ class Game:
         else:
             image = None
             food_image = None
-        counter = Counter(18.25, 10.75, image, food_image, name)
+        counter = Counter(18.25, 10.75, image, food_image, name, 12)
         self.objects.append(counter)
         self.food_list.append(name)
         self.food_list.append(name)
-        self.food_directory[name] = 15
+        self.food_directory[name] = 12
 
     def set_carts(self):
         shopping_carts = Carts(1, 18.5)
@@ -672,7 +672,7 @@ class Game:
         return None
 
     def set_shelf(self, shelf_filename, food_filename, string_name, food_price, x_position, y_position):
-        quantity = 20
+        quantity = 2
         shelf_image = None
         food = None
         if not self.headless:
@@ -755,15 +755,21 @@ class Game:
                     "width": obj.width,
                     "position": obj.position,
                 }
-                if isinstance(obj, Shelf) or isinstance(obj, Counter):
+                if isinstance(obj, Shelf):
                     object_data["food"] = obj.string_type
+                    object_data["price"] = obj.price
+                    object_data["capacity"] = obj.capacity
+                    object_data["quantity"] = obj.item_quantity
+                if isinstance(obj, Counter):
+                    object_data["food"] = obj.string_type
+                    object_data["price"] = obj.price
                 category = get_obj_category(obj)
                 if category not in obs:
                     obs[category] = []
                 obs[category].append(object_data)
 
-        # TODO: not sure if this is the right way to do this
-        obs["food_prices"] = dict(self.food_directory)
+        # prices are part of shelf observation now
+        # obs["food_prices"] = dict(self.food_directory)
         return obs
 
     def get_player_index(self, player):

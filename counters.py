@@ -11,7 +11,7 @@ class Counter(InteractiveObject):
     def can_interact(self, player):
         return can_interact_default(self, player)
 
-    def __init__(self, x_position, y_position, image, food_image, string_type):
+    def __init__(self, x_position, y_position, image, food_image, string_type, price):
         super().__init__(num_stages=2)
         self.position = [x_position, y_position]
         self.image = image
@@ -19,6 +19,8 @@ class Counter(InteractiveObject):
         self.string_type = string_type
         self.width = 1.5
         self.height = 2.25
+
+        self.price = price
 
         self.render_offset_x = -0.25
         self.render_offset_y = -0.75
