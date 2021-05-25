@@ -114,10 +114,12 @@ class Shelf(InteractiveObject):
                 if player.holding_food is not None:
                     # check what kind of food...
                     self.interaction_message = "You put " + player.holding_food + " back on the shelf."
-                    player.holding_food = None
                     empty = False
-                    if player.holding_food_image == self.food_image:
+
+                    if player.holding_food == self.string_type:
+                        print("it's the same image")
                         self.item_quantity += 1
+                    player.holding_food = None
 
                     # If you put the food back in the wrong place, that violates a norm
                 else:

@@ -136,6 +136,7 @@ class Game:
 
         # list of all food items in game, built when shelves are made
         self.food_list = []
+        self.food_images = defaultdict(str)
 
         # players
 
@@ -144,9 +145,16 @@ class Game:
         self.curr_player = follow_player
 
         self.keyboard_input = keyboard_input
+        self.keyboard_input = True
+
         self.render_messages = render_messages
+        self.render_messages = True
         self.headless = headless
         self.random_start = random_start
+
+        self.item_select = False
+        self.select_up = False
+        self.select_down = False
 
     def set_observation(self, obs):
         self.players = []
@@ -416,6 +424,7 @@ class Game:
                 self.running = False
 
             if event.type == pygame.KEYDOWN:
+
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
                 elif event.key == pygame.K_RETURN:
@@ -423,6 +432,7 @@ class Game:
 
                 # i key shows inventory
                 elif event.key == pygame.K_i:
+
                     self.players[self.curr_player].render_shopping_list = False
                     self.players[self.curr_player].render_inventory = True
                     self.game_state = GameState.INTERACTIVE
@@ -462,8 +472,9 @@ class Game:
         elif keys[pygame.K_RIGHT]:  # right
             self.player_move(self.curr_player, PlayerAction.EAST)
 
-    # keyboard input when player is interacting with an object
+    # NOT BEING USED keyboard input when player is interacting with an object
     def interactive_events(self):
+
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -685,6 +696,7 @@ class Game:
         self.food_directory[string_name] = food_price
         self.objects.append(shelf)
         self.food_list.append(string_name)
+        self.food_images[string_name] = food_filename
 
     def get_interactivity_data(self):
         obj = self.interaction_object(self.players[self.curr_player])

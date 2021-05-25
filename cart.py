@@ -7,6 +7,7 @@ from enums.cart_state import CartState
 from enums.direction import Direction
 from helper import can_interact_default, overlap
 from objects import InteractiveObject
+from render_game import render_text
 
 
 class Cart(InteractiveObject):
@@ -24,7 +25,9 @@ class Cart(InteractiveObject):
             else:
                 self.interaction_message = "The cart is full! The food won't fit."
         else:
-            self.interaction_message = "Just as I thought! It's a shopping cart!"
+            self.checking_contents = True
+            game.item_select = True
+            self.interaction_message = None
 
     def __str__(self):
         return "a shopping cart"
@@ -43,6 +46,31 @@ class Cart(InteractiveObject):
         self.purchased_contents = defaultdict(int)
         self.capacity = capacity
         self.set_direction(direction)
+        self.checking_contents = False
+        self.select_index = 0
+        self.menu_length = 0
+        self.selected_food = None
+        self.selected_food_image = None
+        self.pickup_item = False
+
+    def render_interaction(self, game, screen):
+        self.menu_length = self.get_menu_length()
+        super().render_interaction(game, screen)
+        if self.interaction is not None:
+            if self.checking_contents:
+                if game.select_up:
+                    game.select_up = False
+                    if self.select_index != 0:
+                        self.select_index -= 1
+
+                if game.select_down:
+                    game.select_down = False
+                    if self.select_index < self.menu_length:
+                        self.select_index += 1
+                self.render_contents(screen)
+                if self.selected_food is not None:
+                    self.selected_food_image = pygame.transform.scale(pygame.image.load(game.food_images[self.selected_food]),
+                                        (int(.30 * config.SCALE), int(.30 * config.SCALE)))
 
     def set_direction(self, direction):
         self.direction = direction
@@ -58,6 +86,15 @@ class Cart(InteractiveObject):
             self.height = 0.4
     
     def render(self, screen, camera):
+        if not self.interaction:
+            self.checking_contents = False
+            self.select_index = 0
+            # this is messy but like whatevs
+            if self.pickup_item:
+                self.pickup(self.selected_food, self.last_held, self.selected_food_image)
+                self.pickup_item = False
+            # remove food from cart and give to player
+
         if self.state == CartState.EMPTY or self.state == CartState.PURCHASED:
             if self.direction == Direction.NORTH:
                 image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartEMPTYup.png"),
@@ -132,3 +169,93 @@ class Cart(InteractiveObject):
 
     def can_toggle(self, player):
         return player.direction == self.direction and can_interact_default(self, player, 0.3)
+
+    def get_items(self):
+        food_items = defaultdict(defaultdict)
+        for food, quantity in self.contents.items():
+            if "unpurchased" not in food_items[food]:
+                food_items[food]["unpurchased"] = 0
+            if "purchased" not in food_items[food]:
+                food_items[food]["purchased"] = 0
+            food_items[food]["unpurchased"] += quantity
+        for food, quantity in self.purchased_contents.items():
+            if "unpurchased" not in food_items[food]:
+                food_items[food]["unpurchased"] = 0
+            if "purchased" not in food_items[food]:
+                food_items[food]["purchased"] = 0
+            food_items[food]["purchased"] += quantity
+        return food_items
+
+    def render_contents(self, screen):
+
+        textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
+                                         (int(450), int(480)))
+        select_arrow = pygame.transform.scale(pygame.image.load("text/arrow.png"), (int(20), int(20)))
+        x_pos = int((config.SCREEN_WIDTH - 430) / 2)
+        y_pos = int((config.SCREEN_HEIGHT - 450) / 2)
+        screen.blit(textbox, (x_pos, y_pos))
+        # screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
+        text = render_text("Item Select", True, (0, 0, 0))
+        screen.blit(text, (x_pos + 120, y_pos + 37))
+        spacing = 30
+        y_position = y_pos + 37 + spacing
+        food_items = self.get_items()
+        selected_food = None
+        counter = 0
+        for food in food_items.keys():
+            if counter == self.select_index:
+                selected_food = food
+
+            # if not food in rendered_food:
+            text = render_text(food, False, (0, 0, 0))
+
+            screen.blit(text, (x_pos + 53, y_position))
+
+            unpurchased = render_text(str(food_items[food]["unpurchased"]), False, (250, 0, 0))
+            purchased = render_text(str(food_items[food]["purchased"]), False, (0, 250, 0))
+
+            screen.blit(unpurchased, (380, y_position))
+            screen.blit(purchased, (420, y_position))
+            if food == selected_food:
+                screen.blit(select_arrow, (x_pos + 355, y_position - 4))
+            y_position += spacing
+            counter += 1
+
+        text = render_text("Exit", True, (0, 0, 0))
+        screen.blit(text, (x_pos + 53, y_position))
+
+        if self.select_index == counter:
+            screen.blit(select_arrow, (x_pos + 355, y_position - 4))
+        self.selected_food = selected_food
+        self.pickup_item = True
+
+    def get_menu_length(self):
+        counter = len(self.contents.items()) + len(self.purchased_contents.items())
+        return counter
+
+    def pickup(self, food, player, food_image):
+        # take out of cart
+        if food in self.contents:
+            self.contents[food] -= 1
+            if self.contents[food] == 0:
+                self.contents.pop(food)
+            print("removing one unpurchased item")
+        elif food in self.purchased_contents:
+            self.purchased_contents[food] -= 1
+            if self.purchased_contents[food] == 0:
+                self.purchased_contents.pop(food)
+
+        # give to player
+        player.holding_food = food
+        # okay the problem is how do I get the food image lol
+        player.holding_food_image = food_image
+
+        # reset cart state
+        if len(self.contents) == 0 and len(self.purchased_contents) == 0:
+            self.state = CartState.EMPTY
+
+
+
+
+
+

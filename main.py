@@ -30,6 +30,8 @@ class SupermarketEventHandler:
     def handle_exploratory_events(self):
         # print("DID THIS")
         # print(self.env.game.update_observation())
+        if self.env.game.item_select:
+            self.env.game.item_select = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.env.game.running = False
@@ -98,6 +100,8 @@ class SupermarketEventHandler:
 
                 # b key cancels interaction
                 elif event.key == pygame.K_b:
+                    if self.env.game.item_select:
+                        self.env.game.item_select = False
                     self.env.step(self.single_player_action(PlayerAction.CANCEL))
 
                 # return key continues interaction
@@ -113,6 +117,12 @@ class SupermarketEventHandler:
                     if self.env.game.players[self.curr_player].render_shopping_list:
                         self.env.game.players[self.curr_player].render_shopping_list = False
                         self.env.game.game_state = GameState.EXPLORATORY
+                if self.env.game.item_select:
+                    if event.key == pygame.K_UP:
+                        self.env.game.select_up = True
+                    elif event.key == pygame.K_DOWN:
+                        self.env.game.select_down = True
+
         self.running = self.env.game.running
         self.env.render()
 
