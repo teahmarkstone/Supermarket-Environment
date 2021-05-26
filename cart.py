@@ -55,23 +55,25 @@ class Cart(InteractiveObject):
         self.pickup_item = False
 
     def render_interaction(self, game, screen):
-        self.menu_length = self.get_menu_length()
         super().render_interaction(game, screen)
-        if self.interaction is not None:
-            if self.checking_contents:
-                if game.select_up:
-                    game.select_up = False
-                    if self.select_index != 0:
-                        self.select_index -= 1
+        if game.render_messages:
+            self.menu_length = self.get_menu_length()
+            if self.interaction is not None:
+                if self.checking_contents:
+                    if game.select_up:
+                        game.select_up = False
+                        if self.select_index != 0:
+                            self.select_index -= 1
 
-                if game.select_down:
-                    game.select_down = False
-                    if self.select_index < self.menu_length:
-                        self.select_index += 1
-                self.render_contents(screen)
-                if self.selected_food is not None:
-                    self.selected_food_image = pygame.transform.scale(pygame.image.load(game.food_images[self.selected_food]),
-                                        (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+                    if game.select_down:
+                        game.select_down = False
+                        if self.select_index < self.menu_length:
+                            self.select_index += 1
+                    self.render_contents(screen)
+                    if self.selected_food is not None:
+                        self.selected_food_image = pygame.transform.scale(
+                            pygame.image.load(game.food_images[self.selected_food]),
+                            (int(.30 * config.SCALE), int(.30 * config.SCALE)))
 
     def set_direction(self, direction):
         self.direction = direction
