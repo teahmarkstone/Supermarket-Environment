@@ -117,6 +117,8 @@ class SupermarketEventHandler:
                     if self.env.game.players[self.curr_player].render_shopping_list:
                         self.env.game.players[self.curr_player].render_shopping_list = False
                         self.env.game.game_state = GameState.EXPLORATORY
+
+                # use up and down arrows to navigate item select menu
                 if self.env.game.item_select:
                     if event.key == pygame.K_UP:
                         self.env.game.select_up = True

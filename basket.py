@@ -15,16 +15,16 @@ class Basket(InteractiveObject):
         return sum(self.contents.values()) >= self.capacity
 
     def interact(self, game, player):
-        # self.last_held = player
-        # if player.holding_food is not None:
-        #     if not self.hit_limit():
-        #         self.add_food(player.holding_food, player.bought_holding_food)
-        #         self.interaction_message = "You put " + player.holding_food + " into your basket."
-        #         player.take_food()
-        #     else:
-        #         self.interaction_message = "The basket is full! The food won't fit."
-        # else:
-        #     self.interaction_message = "Just as I thought! It's a basket!"
+        self.last_held = player
+        if player.holding_food is not None:
+            if not self.hit_limit():
+                self.add_food(player.holding_food, player.bought_holding_food)
+                self.interaction_message = "You put " + player.holding_food + " into your basket."
+                player.take_food()
+            else:
+                self.interaction_message = "The basket is full! The food won't fit."
+        else:
+            self.interaction_message = "Just as I thought! It's a basket!"
         pass
 
     def __str__(self):
@@ -49,31 +49,30 @@ class Basket(InteractiveObject):
 
     def set_direction(self, direction):
         self.direction = direction
-        # if direction == Direction.NORTH or direction == Direction.SOUTH:
-        #     self.render_offset_x = 0
-        #     self.render_offset_y = 0
-        #     self.width = 0
-        #     self.height = 0
-        # else:
-        #     self.render_offset_x = 0
-        #     self.render_offset_y = 0
-        #     self.width = 0
-        #     self.height = 0
+        if direction == Direction.NORTH or direction == Direction.SOUTH:
+            self.render_offset_x = -0.37
+            self.render_offset_y = -0.25
+            self.width = 0.15
+            self.height = 0.15
+        else:
+            self.render_offset_x = -0.25
+            self.render_offset_y = -.01
+            self.width = 0.15
+            self.height = 0.15
 
     def render(self, screen, camera):
+        image = None
         if self.state == CartState.EMPTY or self.state == CartState.PURCHASED:
             image = pygame.transform.scale(pygame.image.load("images/baskets/grocery_basket_empty.png"),
                                                (int(.5 * config.SCALE), int(.5 * config.SCALE)))
         elif self.state == CartState.FULL:
             image = pygame.transform.scale(pygame.image.load("images/baskets/grocery_basket_full.png"),
                                                (int(.5 * config.SCALE), int(.5 * config.SCALE)))
-        # rect = pygame.Rect(
-        #     (self.position[0]) * config.SCALE - (camera.position[0]),
-        #     (self.position[1]) * config.SCALE - (camera.position[1]),
-        #     config.SCALE, config.SCALE)
-        rect = pygame.Rect((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
-                           (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE,
-                           config.SCALE, config.SCALE)
+
+        rect = pygame.Rect(
+            (self.position[0] + self.render_offset_x) * config.SCALE - (camera.position[0] * config.SCALE),
+            (self.position[1] + self.render_offset_y) * config.SCALE - (camera.position[1] * config.SCALE),
+            config.SCALE, config.SCALE)
         screen.blit(image, rect)
 
     def can_interact(self, player):
@@ -100,22 +99,24 @@ class Basket(InteractiveObject):
 
     def update_position(self, x_position, y_position):
         if self.direction == Direction.NORTH:
-            self.position[0] = x_position
-            self.position[1] = y_position
+            self.position[0] = x_position + 0.3
+            self.position[1] = y_position - 0.80
         elif self.direction == Direction.SOUTH:
-            self.position[0] = x_position
-            self.position[1] = y_position
+            self.position[0] = x_position + 0.3
+            self.position[1] = y_position + 0.45
         elif self.direction == Direction.EAST:
-            self.position[0] = x_position
+            self.position[0] = x_position + 0.65
             self.position[1] = y_position
         elif self.direction == Direction.WEST:
-            self.position[0] = x_position
+            self.position[0] = x_position - 0.40
             self.position[1] = y_position
 
     def collision(self, obj, x_position, y_position):
-        return 0
-        # return overlap(self.position[0], self.position[1], self.width, self.height,
-        #                x_position, y_position, obj.width, obj.height)
+        if not self.being_held:
+            return overlap(self.position[0], self.position[1], self.width, self.height,
+                        x_position, y_position, obj.width, obj.height)
+        else:
+            return 0
 
     def can_toggle(self, player):
-        return player.direction == self.direction and can_interact_default(self, player, 0.3)
+        return can_interact_default(self, player, 0.3)

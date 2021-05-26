@@ -46,6 +46,7 @@ class Cart(InteractiveObject):
         self.purchased_contents = defaultdict(int)
         self.capacity = capacity
         self.set_direction(direction)
+
         self.checking_contents = False
         self.select_index = 0
         self.menu_length = 0
@@ -94,7 +95,7 @@ class Cart(InteractiveObject):
                 self.pickup(self.selected_food, self.last_held, self.selected_food_image)
                 self.pickup_item = False
             # remove food from cart and give to player
-
+        image = None
         if self.state == CartState.EMPTY or self.state == CartState.PURCHASED:
             if self.direction == Direction.NORTH:
                 image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartEMPTYup.png"),
@@ -239,7 +240,6 @@ class Cart(InteractiveObject):
             player.bought_holding_food = False
             if self.contents[food] == 0:
                 self.contents.pop(food)
-            print("removing one unpurchased item")
         elif food in self.purchased_contents:
             self.purchased_contents[food] -= 1
             player.bought_holding_food = True
@@ -248,7 +248,6 @@ class Cart(InteractiveObject):
 
         # give to player
         player.holding_food = food
-        # okay the problem is how do I get the food image lol
         player.holding_food_image = food_image
 
         # reset cart state

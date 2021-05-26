@@ -117,7 +117,6 @@ class Shelf(InteractiveObject):
                     empty = False
 
                     if player.holding_food == self.string_type:
-                        print("it's the same image")
                         self.item_quantity += 1
                     player.holding_food = None
 

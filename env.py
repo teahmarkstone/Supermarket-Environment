@@ -43,6 +43,7 @@ class SupermarketEnv(gym.Env):
                 self.game.interact(i)
             elif player_action == PlayerAction.TOGGLE:
                 self.game.toggle_cart(i)
+                self.game.toggle_basket(i)
             elif player_action == PlayerAction.CANCEL:
                 self.game.cancel_interaction(i)
         observation = self.game.observation()
