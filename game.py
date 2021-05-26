@@ -147,6 +147,9 @@ class Game:
         self.keyboard_input = keyboard_input
 
         self.render_messages = render_messages
+        self.render_messages = True
+
+        self.bagging = True
 
         self.headless = headless
         self.random_start = random_start

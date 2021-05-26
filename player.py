@@ -40,6 +40,8 @@ class Player:
         # quantities for foods, indices correspond to indices of shopping_list list
         self.list_quant = []
 
+        self.bagged_items = defaultdict(int)
+
         self.render_number = render_number
 
         self.images_loaded = False
@@ -50,7 +52,6 @@ class Player:
         self.render_offset_y = -0.6
 
         self.left_store = False
-
 
         # The food that's in the player's hand.
         self.holding_food = None
@@ -137,17 +138,17 @@ class Player:
 
             image = self.west_images[self.stage[3]]
 
-        rect = pygame.Rect((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
-                           (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE,
+        rect = pygame.Rect((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
+                           (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE,
                            config.SCALE, config.SCALE)
-        image = pygame.transform.scale(image, (int(0.75*config.SCALE), int(1.125*config.SCALE)))
+        image = pygame.transform.scale(image, (int(0.75 * config.SCALE), int(1.125 * config.SCALE)))
         screen.blit(image, rect)
 
         if self.render_number:
-            number_identifier = render_text(str(self.player_number), True, (0, 0,128))
-            screen.blit(number_identifier, ((self.position[0] + self.render_offset_y - camera.position[0])*config.SCALE,
-                               (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
-
+            number_identifier = render_text(str(self.player_number), True, (0, 0, 128))
+            screen.blit(number_identifier,
+                        ((self.position[0] + self.render_offset_y - camera.position[0]) * config.SCALE,
+                         (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE))
 
         # collision_x = self.position[0] + 0.2
         # collision_y = self.position[1] + 0.6
@@ -160,12 +161,32 @@ class Player:
         # # screen.blit(image, rect2)
         # screen.fill((255,0,0), rect2)
 
+    def render_bag(self, screen, camera):
+        image = pygame.transform.scale(pygame.image.load("images/food/shopping_bag.png"),
+                                       (int(.4 * config.SCALE), int(.4 * config.SCALE)))
+        x_pos = 0
+        y_pos = 0
+        if self.direction == Direction.NORTH:
+            return
+        elif self.direction == Direction.SOUTH:
+            x_pos = self.position[0] - camera.position[0] + 0.3 * self.width
+            y_pos = self.position[1] + .2 - camera.position[1]
+        elif self.direction == Direction.EAST:
+            x_pos = self.position[0] - camera.position[0]
+            y_pos = self.position[1] + .2 - camera.position[1]
+        elif self.direction == Direction.WEST:
+            x_pos = self.position[0] - camera.position[0]
+            y_pos = self.position[1] + .2 - camera.position[1]
+
+        rect = pygame.Rect(x_pos * config.SCALE, y_pos * config.SCALE, config.SCALE, config.SCALE)
+        screen.blit(image, rect)
+
     def render_food(self, screen, camera, image):
         if isinstance(image, str):
             image = pygame.transform.scale(pygame.image.load(image),
-                                   (int(.30 * config.SCALE), int(.30 * config.SCALE)))
-        rect = pygame.Rect((self.position[0] - camera.position[0] + 0.3*self.width)*config.SCALE,
-                           (self.position[1] - camera.position[1])*config.SCALE,
+                                           (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+        rect = pygame.Rect((self.position[0] - camera.position[0] + 0.3 * self.width) * config.SCALE,
+                           (self.position[1] - camera.position[1]) * config.SCALE,
                            config.SCALE, config.SCALE)
         screen.blit(image, rect)
 
@@ -178,6 +199,8 @@ class Player:
         self.render_player(screen, camera)
         if self.holding_food is not None:
             self.render_food(screen, camera, self.holding_food_image)
+        if len(self.bagged_items) > 0:
+            self.render_bag(screen, camera)
 
     def render_list(self, screen, carts, baskets):
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
@@ -202,7 +225,7 @@ class Player:
                 pygame.draw.line(screen, [0, 255, 0], (150, y_position + 7), (487, y_position + 7), width=2)
             elif food in inventory and self.list_quant[self.shopping_list.index(food)] <= \
                     inventory[food]["unpurchased"] + inventory[food]["purchased"]:
-                    pygame.draw.line(screen, [255, 0, 0], (150, y_position + 7), (487, y_position + 7), width=2)
+                pygame.draw.line(screen, [255, 0, 0], (150, y_position + 7), (487, y_position + 7), width=2)
             counter += 1
             y_position += spacing
 
@@ -246,13 +269,19 @@ class Player:
                     if "purchased" not in inventory[food]:
                         inventory[food]["purchased"] = 0
                     inventory[food]["purchased"] += quantity
+        for food in self.bagged_items.keys():
+            if food not in inventory:
+                inventory[food]["purchased"] = self.bagged_items[food]
+                inventory[food]["unpurchased"] = 0
+            else:
+                inventory[food]["purchased"] += self.bagged_items[food]
         return inventory
 
     def render_items(self, screen, carts, baskets):
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
                                          (int(430), int(450)))
-        x_pos=int((config.SCREEN_WIDTH-430)/2)
-        y_pos=int((config.SCREEN_HEIGHT-450)/2)
+        x_pos = int((config.SCREEN_WIDTH - 430) / 2)
+        y_pos = int((config.SCREEN_HEIGHT - 450) / 2)
         screen.blit(textbox, (x_pos, y_pos))
         # screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
         text = render_text("Inventory: ", True, (0, 0, 0))
@@ -295,82 +324,9 @@ class Player:
         for i in range(6, 12):
             self.north_images.append(sprites[i])
         self.north_images.append(sprites[11])
-        for i in range (12, 18):
+        for i in range(12, 18):
             self.west_images.append(sprites[i])
         for i in range(18, 23):
             self.south_images.append(sprites[i])
         self.south_images.append(sprites[22])
         self.south_images.append(sprites[22])
-        # self.load_north()
-        # self.load_south()
-        # self.load_east()
-        # self.load_west()
-
-    def load_north(self):
-        # right now I only have images for two players
-        if self.player_number == 1:
-            self.north_images.append(pygame.image.load("images/sprites/north/amelia_run_back1.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/amelia_run_back2.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/amelia_run_back3.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/amelia_run_back4.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/amelia_run_back5.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/amelia_run_back6.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/amelia_stand_back.png"))
-        elif self.player_number == 2:
-            self.north_images.append(pygame.image.load("images/sprites/north/edward_run_back1.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/edward_run_back2.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/edward_run_back3.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/edward_run_back4.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/edward_run_back5.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/edward_run_back6.png"))
-            self.north_images.append(pygame.image.load("images/sprites/north/edward_stand_back.png"))
-
-    def load_south(self):
-        if self.player_number == 1:
-            self.south_images.append(pygame.image.load("images/sprites/south/amelia_run_front1.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/amelia_run_front2.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/amelia_run_front3.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/amelia_run_front4.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/amelia_run_front5.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/amelia_run_front6.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/amelia_stand_front.png"))
-        elif self.player_number == 2:
-            self.south_images.append(pygame.image.load("images/sprites/south/edward_run_front1.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/edward_run_front2.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/edward_run_front3.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/edward_run_front4.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/edward_run_front5.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/edward_run_front6.png"))
-            self.south_images.append(pygame.image.load("images/sprites/south/edward_stand_front.png"))
-
-    def load_east(self):
-        if self.player_number == 1:
-            self.east_images.append(pygame.image.load("images/sprites/east/amelia_run_right1.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/amelia_run_right2.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/amelia_run_right3.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/amelia_run_right4.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/amelia_run_right5.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/amelia_run_right6.png"))
-        elif self.player_number == 2:
-            self.east_images.append(pygame.image.load("images/sprites/east/edward_run_right1.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/edward_run_right2.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/edward_run_right3.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/edward_run_right4.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/edward_run_right5.png"))
-            self.east_images.append(pygame.image.load("images/sprites/east/edward_run_right6.png"))
-
-    def load_west(self):
-        if self.player_number == 1:
-            self.west_images.append(pygame.image.load("images/sprites/west/amelia_run_left1.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/amelia_run_left2.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/amelia_run_left3.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/amelia_run_left4.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/amelia_run_left5.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/amelia_run_left6.png"))
-        elif self.player_number == 2:
-            self.west_images.append(pygame.image.load("images/sprites/west/edward_run_left1.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/edward_run_left2.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/edward_run_left3.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/edward_run_left4.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/edward_run_left5.png"))
-            self.west_images.append(pygame.image.load("images/sprites/west/edward_run_left6.png"))
