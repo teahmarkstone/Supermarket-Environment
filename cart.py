@@ -194,7 +194,6 @@ class Cart(InteractiveObject):
         x_pos = int((config.SCREEN_WIDTH - 430) / 2)
         y_pos = int((config.SCREEN_HEIGHT - 450) / 2)
         screen.blit(textbox, (x_pos, y_pos))
-        # screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
         text = render_text("Item Select", True, (0, 0, 0))
         screen.blit(text, (x_pos + 120, y_pos + 37))
         spacing = 30
@@ -237,11 +236,13 @@ class Cart(InteractiveObject):
         # take out of cart
         if food in self.contents:
             self.contents[food] -= 1
+            player.bought_holding_food = False
             if self.contents[food] == 0:
                 self.contents.pop(food)
             print("removing one unpurchased item")
         elif food in self.purchased_contents:
             self.purchased_contents[food] -= 1
+            player.bought_holding_food = True
             if self.purchased_contents[food] == 0:
                 self.purchased_contents.pop(food)
 
