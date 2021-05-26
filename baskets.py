@@ -54,7 +54,7 @@ class Baskets(InteractiveObject):
                     game.objects.append(new_basket)
                     player.curr_basket = new_basket
                     new_basket.being_held = True
-                    self.interaction_message = "You picked up basket."
+                    self.interaction_message = "You picked up basket. Press c to let go and pick up."
                 else:
                     self.interaction_message = "Can't pick up a basket while holding food!"
                 # Player is holding a basket; return it

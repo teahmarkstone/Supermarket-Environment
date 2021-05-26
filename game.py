@@ -145,10 +145,9 @@ class Game:
         self.curr_player = follow_player
 
         self.keyboard_input = keyboard_input
-        self.keyboard_input = True
 
         self.render_messages = render_messages
-        self.render_messages = True
+
         self.headless = headless
         self.random_start = random_start
 

@@ -139,7 +139,7 @@ class Basket(InteractiveObject):
             self.position[0] = x_position + 0.70
             self.position[1] = y_position
         elif self.direction == Direction.SOUTH:
-            self.position[0] = x_position - 0.3
+            self.position[0] = x_position - 0.25
             self.position[1] = y_position + 0.23
         elif self.direction == Direction.EAST:
             self.position[0] = x_position + 0.65
