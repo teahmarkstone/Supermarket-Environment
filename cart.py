@@ -192,13 +192,13 @@ class Cart(InteractiveObject):
     def render_contents(self, screen):
 
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
-                                         (int(450), int(480)))
+                                         (int(500), int(480)))
         select_arrow = pygame.transform.scale(pygame.image.load("text/arrow.png"), (int(20), int(20)))
-        x_pos = int((config.SCREEN_WIDTH - 430) / 2)
+        x_pos = int((config.SCREEN_WIDTH - 500) / 2)
         y_pos = int((config.SCREEN_HEIGHT - 450) / 2)
         screen.blit(textbox, (x_pos, y_pos))
         text = render_text("Item Select", True, (0, 0, 0))
-        screen.blit(text, (x_pos + 120, y_pos + 37))
+        screen.blit(text, (x_pos + 150, y_pos + 37))
         spacing = 30
         y_position = y_pos + 37 + spacing
         food_items = self.get_items()
@@ -216,10 +216,10 @@ class Cart(InteractiveObject):
             unpurchased = render_text(str(food_items[food]["unpurchased"]), False, (250, 0, 0))
             purchased = render_text(str(food_items[food]["purchased"]), False, (0, 250, 0))
 
-            screen.blit(unpurchased, (380, y_position))
-            screen.blit(purchased, (420, y_position))
+            screen.blit(unpurchased, (400, y_position))
+            screen.blit(purchased, (440, y_position))
             if food == selected_food:
-                screen.blit(select_arrow, (x_pos + 355, y_position - 4))
+                screen.blit(select_arrow, (x_pos + 410, y_position - 4))
             y_position += spacing
             counter += 1
 
@@ -227,7 +227,7 @@ class Cart(InteractiveObject):
         screen.blit(text, (x_pos + 53, y_position))
 
         if self.select_index == counter:
-            screen.blit(select_arrow, (x_pos + 355, y_position - 4))
+            screen.blit(select_arrow, (x_pos + 410, y_position - 4))
         self.selected_food = selected_food
         self.pickup_item = True
 
