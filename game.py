@@ -632,6 +632,8 @@ class Game:
         self.objects.append(counter)
         self.food_list.append(name)
         self.food_directory[name] = 15
+        self.food_images[name] = "images/food/prepared.png"
+
         name = "fresh fish"
         if not self.headless:
             image = pygame.transform.scale(pygame.image.load("images/counters/counterB.png"), (int(1.6 * config.SCALE),
@@ -657,6 +659,7 @@ class Game:
         self.food_list.append(name)
         self.food_list.append(name)
         self.food_directory[name] = 12
+        self.food_images[name] = "images/food/fresh_fish.png"
 
     def set_carts(self):
         shopping_carts = Carts(1, 18.5)
