@@ -4,6 +4,7 @@ from collections import defaultdict
 from helper import can_interact_default
 from helper import overlap
 from objects import InteractiveObject
+from render_game import render_text
 
 
 class Register(InteractiveObject):
@@ -26,6 +27,15 @@ class Register(InteractiveObject):
         self.food_images = defaultdict()
         self.food_quantities = defaultdict(int)
         self.num_items = 0
+        self.last_player = None
+
+        self.checking_contents = False
+        self.select_index = 0
+        self.menu_length = 0
+        self.selected_food = None
+        self.selected_food_image = None
+        self.pickup_item = False
+        self.buying = False
 
     def __str__(self):
         return "a checkout counter"
@@ -40,8 +50,8 @@ class Register(InteractiveObject):
         self.render_items(screen, camera)
 
     def render_items(self, screen, camera):
-        x_pos = self.position[0]
-        y_pos = self.position[1]
+        x_pos = self.position[0] - camera.position[0]
+        y_pos = self.position[1] - camera.position[1]
 
         food_positions = [[x_pos + 1.7, y_pos], [x_pos + 1.7, y_pos + .1], [x_pos + 1.7, y_pos + .2],
                                [x_pos + 1.7, y_pos + .3], [x_pos + 1.7, y_pos + .4], [x_pos + 1.7, y_pos + .5],
@@ -54,16 +64,94 @@ class Register(InteractiveObject):
                 if counter > 12:
                    counter = 0
 
-                rect = pygame.Rect((food_positions[counter][0] + camera.position[0]) * config.SCALE,
-                                   (food_positions[counter][1] - camera.position[1]) * config.SCALE,
+                rect = pygame.Rect(food_positions[counter][0] * config.SCALE,
+                                   food_positions[counter][1] * config.SCALE,
                                    config.SCALE, config.SCALE)
 
                 screen.blit(self.food_images[food_name], rect)
                 counter += 1
 
+    def render_interaction(self, game, screen):
+        super().render_interaction(game, screen)
+        if game.render_messages:
+            self.menu_length = self.get_menu_length()
+            if self.interaction is not None:
+                if self.checking_contents:
+                    if game.select_up:
+                        game.select_up = False
+                        if self.select_index != 0:
+                            self.select_index -= 1
+
+                    if game.select_down:
+                        game.select_down = False
+                        if self.select_index < self.menu_length:
+                            self.select_index += 1
+                    self.render_contents(screen)
+
+                    if self.selected_food == "Buy":
+                        self.selected_food_image = None
+                        self.buying = True
+                    elif self.selected_food == "Exit":
+                        self.selected_food_image = None
+                        self.buying = False
+                    else:
+                        self.selected_food_image = pygame.transform.scale(
+                            pygame.image.load(game.food_images[self.selected_food]),
+                            (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+
+    def render_contents(self, screen):
+
+        textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
+                                         (int(500), int(480)))
+        select_arrow = pygame.transform.scale(pygame.image.load("text/arrow.png"), (int(20), int(20)))
+        x_pos = int((config.SCREEN_WIDTH - 500) / 2)
+        y_pos = int((config.SCREEN_HEIGHT - 450) / 2)
+        screen.blit(textbox, (x_pos, y_pos))
+        text = render_text("Checkout Menu", True, (0, 0, 0))
+        screen.blit(text, (x_pos + 135, y_pos + 37))
+        spacing = 30
+        y_position = y_pos + 37 + spacing
+        selected_food = None
+        counter = 0
+        for food in self.food_quantities.keys():
+            if counter == self.select_index:
+                selected_food = food
+
+            # if not food in rendered_food:
+            text = render_text(food, False, (0, 0, 0))
+
+            screen.blit(text, (x_pos + 53, y_position))
+
+            quantity = render_text(str(self.food_quantities[food]), False, (0, 0, 0))
+
+            screen.blit(quantity, (440, y_position))
+            if food == selected_food:
+                screen.blit(select_arrow, (x_pos + 423, y_position - 4))
+            y_position += spacing
+            counter += 1
+
+        text = render_text("Buy", True, (0, 0, 0))
+        screen.blit(text, (x_pos + 53, y_position))
+
+        text = render_text("Exit", True, (0, 0, 0))
+        screen.blit(text, (x_pos + 53, y_position + spacing))
+
+
+        if self.select_index == counter:
+            screen.blit(select_arrow, (x_pos + 423, y_position - 4))
+            selected_food = "Buy"
+        elif self.select_index == counter + 1:
+            screen.blit(select_arrow, (x_pos + 423, (y_position - 4) + spacing))
+            selected_food = "Exit"
+        self.selected_food = selected_food
+        self.pickup_item = True
+
+    def get_menu_length(self):
+        return self.num_items + 1
 
     def interact(self, game, player):
         if game.bagging:
+            self.last_player = player
             self.long_interact(game, player)
         else:
             self.short_interact(game, player)
@@ -102,22 +190,35 @@ class Register(InteractiveObject):
             if not game.render_messages:
                 self.interactive_stage = 1
             if self.interactive_stage == 0:
-                self.interaction_message = "Ready to check out?"
+                self.checking_contents = True
+                game.item_select = True
+                self.interaction_message = None
             if self.interactive_stage == 1 or not game.render_messages:
-                curr_money = self.can_afford(player, self.food_quantities)
-                if curr_money >= 0:
-                    for food in self.food_quantities.keys():
-                        if food in player.bagged_items:
-                            player.bagged_items[food] += self.food_quantities[food]
-                        else:
-                            player.bagged_items[food] = self.food_quantities[food]
-                    self.food_quantities.clear()
-                    self.food_images.clear()
-                    self.num_items = 0
-                    player.budget = curr_money
-                    self.interaction_message = "Thank you for shopping with us!"
+                self.select_index = 0
+                self.checking_contents = False
+                if self.buying:
+                    curr_money = self.can_afford(player, self.food_quantities)
+                    if curr_money >= 0:
+                        for food in self.food_quantities.keys():
+                            if food in player.bagged_items:
+                                player.bagged_items[food] += self.food_quantities[food]
+                            else:
+                                player.bagged_items[food] = self.food_quantities[food]
+                        self.food_quantities.clear()
+                        self.food_images.clear()
+                        self.num_items = 0
+                        player.budget = curr_money
+                        self.interaction_message = "Thank you for shopping with us!"
+                        self.buying = False
+                        self.pickup_item = False
+                    else:
+                        self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
+                elif self.selected_food != "Exit":
+                    self.pickup(self.selected_food, self.last_player, self.selected_food_image)
+                    self.pickup_item = False
+                    self.interaction_message = "You took " + self.selected_food + " off the counter."
                 else:
-                    self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
+                    self.interaction_message = "Please place items on the counter."
                 # buy items on counter --> give them back to player as bought items in something.. a bag? idk
 
     def short_interact(self, game, player):
@@ -190,3 +291,17 @@ class Register(InteractiveObject):
             for i in range(0, food_list[food]):
                 curr_money -= self.food_directory[food]
         return curr_money
+
+    def pickup(self, food, player, food_image):
+        # take off of counter
+        self.food_quantities[food] -= 1
+        player.bought_holding_food = False
+        if self.food_quantities[food] == 0:
+            self.food_quantities.pop(food)
+            self.food_images.pop(food)
+
+
+        # give to player
+        player.holding_food = food
+        player.holding_food_image = food_image
+
