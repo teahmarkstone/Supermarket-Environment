@@ -183,7 +183,7 @@ class Register(InteractiveObject):
                     player.holding_food_image = None
                     self.num_items += 1
                 else:
-                    self.interaction_message = "Sorry, no more room on the counter. Buy your items first!"
+                    self.interaction_message = "Sorry, no more room on the counter."
             return
                 # place item on counter
         if not player.holding_food and self.num_items > 0:
@@ -196,8 +196,7 @@ class Register(InteractiveObject):
             if self.interactive_stage == 1 or not game.render_messages:
                 self.select_index = 0
                 self.checking_contents = False
-                if self.buying:
-                    print("buying")
+                if self.buying or not game.render_messages:
                     curr_money = self.can_afford(player, self.food_quantities)
                     if curr_money >= 0:
                         for food in self.food_quantities.keys():
