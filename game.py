@@ -101,7 +101,7 @@ def get_obj_category(obj):
 
 class Game:
 
-    def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False,
+    def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False, bagging=False,
                  headless=False, initial_state_filename=None, follow_player=-1, random_start=False, render_number=False):
 
         self.screen = None
@@ -147,9 +147,8 @@ class Game:
         self.keyboard_input = keyboard_input
 
         self.render_messages = render_messages
-        self.render_messages = True
 
-        self.bagging = True
+        self.bagging = bagging
 
         self.headless = headless
         self.random_start = random_start

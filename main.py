@@ -162,10 +162,18 @@ if __name__ == "__main__":
         action='store_true'
     )
 
+    parser.add_argument(
+        '--bagging',
+        help="individual item bagging",
+        type=bool,
+        default=False
+    )
+
     args = parser.parse_args()
 
     env = SupermarketEnv(num_players=args.num_players, player_speed=0.07,
                          render_messages=args.num_players == 1 or args.follow >= 0,
+                         bagging=args.bagging,
                          initial_state_filename=args.file,
                          follow_player=args.follow if args.num_players > 1 else 0,
                          random_start=args.random_start,
