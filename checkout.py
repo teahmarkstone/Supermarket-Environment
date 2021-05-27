@@ -197,6 +197,7 @@ class Register(InteractiveObject):
                 self.select_index = 0
                 self.checking_contents = False
                 if self.buying:
+                    print("buying")
                     curr_money = self.can_afford(player, self.food_quantities)
                     if curr_money >= 0:
                         for food in self.food_quantities.keys():
@@ -213,6 +214,7 @@ class Register(InteractiveObject):
                         self.pickup_item = False
                     else:
                         self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
+                        self.buying = False
                 elif self.selected_food != "Exit":
                     self.pickup(self.selected_food, self.last_player, self.selected_food_image)
                     self.pickup_item = False
