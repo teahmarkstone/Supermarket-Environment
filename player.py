@@ -279,26 +279,26 @@ class Player:
 
     def render_items(self, screen, carts, baskets):
         textbox = pygame.transform.scale(pygame.image.load("text/textboxvertical.png"),
-                                         (int(430), int(450)))
-        x_pos = int((config.SCREEN_WIDTH - 430) / 2)
+                                         (int(450), int(450)))
+        x_pos = int((config.SCREEN_WIDTH - 440) / 2)
         y_pos = int((config.SCREEN_HEIGHT - 450) / 2)
         screen.blit(textbox, (x_pos, y_pos))
         # screen.blit(textbox, (int(1.6 * config.SCALE), int(.2 * config.SCALE)))
         text = render_text("Inventory: ", True, (0, 0, 0))
-        screen.blit(text, (x_pos + 130, y_pos + 37))
+        screen.blit(text, (x_pos + 135, y_pos + 37))
         spacing = 30
         y_position = y_pos + 37 + spacing
         inventory = self.get_inventory(carts, baskets)
         for food in inventory.keys():
             # if not food in rendered_food:
             text = render_text(food, False, (0, 0, 0))
-            screen.blit(text, (x_pos + 53, y_position))
+            screen.blit(text, (x_pos + 45, y_position))
 
             unpurchased = render_text(str(inventory[food]["unpurchased"]), False, (250, 0, 0))
             purchased = render_text(str(inventory[food]["purchased"]), False, (0, 250, 0))
 
-            screen.blit(unpurchased, (420, y_position))
-            screen.blit(purchased, (460, y_position))
+            screen.blit(unpurchased, (460, y_position))
+            screen.blit(purchased, (487, y_position))
             y_position += spacing
 
     def collision(self, obj, x_position, y_position):

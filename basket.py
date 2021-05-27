@@ -203,10 +203,10 @@ class Basket(InteractiveObject):
             unpurchased = render_text(str(food_items[food]["unpurchased"]), False, (250, 0, 0))
             purchased = render_text(str(food_items[food]["purchased"]), False, (0, 250, 0))
 
-            screen.blit(unpurchased, (400, y_position))
-            screen.blit(purchased, (440, y_position))
+            screen.blit(unpurchased, (440, y_position))
+            screen.blit(purchased, (467, y_position))
             if food == selected_food:
-                screen.blit(select_arrow, (x_pos + 410, y_position - 4))
+                screen.blit(select_arrow, (x_pos + 423, y_position - 4))
             y_position += spacing
             counter += 1
 
@@ -214,7 +214,7 @@ class Basket(InteractiveObject):
         screen.blit(text, (x_pos + 53, y_position))
 
         if self.select_index == counter:
-            screen.blit(select_arrow, (x_pos + 410, y_position - 4))
+            screen.blit(select_arrow, (x_pos + 423, y_position - 4))
         self.selected_food = selected_food
         self.pickup_item = True
 

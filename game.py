@@ -688,7 +688,7 @@ class Game:
         return None
 
     def set_shelf(self, shelf_filename, food_filename, string_name, food_price, x_position, y_position):
-        quantity = 2
+        quantity = 12
         shelf_image = None
         food = None
         if not self.headless:
