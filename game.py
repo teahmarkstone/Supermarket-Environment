@@ -170,6 +170,7 @@ class Game:
             player.list_quant = player_dict['list_quant']
             player.holding_food = player_dict['holding_food']
             player.budget = player_dict['budget']
+            player.bagged_items = player_dict['bagged_items']
             if player.holding_food is not None:
                 player.holding_food_image = FOOD_IMAGES[player.holding_food]
             player.bought_holding_food = player_dict['bought_holding_food']
@@ -727,6 +728,7 @@ class Game:
                 "holding_food": player.holding_food,
                 "bought_holding_food": player.bought_holding_food,
                 "budget": player.budget,
+                "bagged_items": player.bagged_items,
             }
             obs["players"].append(player_data)
 
@@ -780,6 +782,11 @@ class Game:
                 if isinstance(obj, Counter):
                     object_data["food"] = obj.string_type
                     object_data["price"] = obj.price
+                if isinstance(obj, Register):
+                    object_data["num_items"] = obj.num_items
+                    object_data["food_quantities"] = obj.food_quantities
+                    object_data["food_images"] = obj.food_images
+                    object_data["capacity"] = obj.counter_capacity
                 category = get_obj_category(obj)
                 if category not in obs:
                     obs[category] = []

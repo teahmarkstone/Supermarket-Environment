@@ -21,13 +21,11 @@ class Register(InteractiveObject):
         self.render_offset_y = -0.5
         self.food_directory = food_directory
 
-        self.empty_counter = True
         self.counter_capacity = 12
 
         self.food_images = defaultdict()
         self.food_quantities = defaultdict(int)
         self.num_items = 0
-        self.food_positions = []
 
     def __str__(self):
         return "a checkout counter"
@@ -45,7 +43,7 @@ class Register(InteractiveObject):
         x_pos = self.position[0]
         y_pos = self.position[1]
 
-        self.food_positions = [[x_pos + 1.7, y_pos], [x_pos + 1.7, y_pos + .1], [x_pos + 1.7, y_pos + .2],
+        food_positions = [[x_pos + 1.7, y_pos], [x_pos + 1.7, y_pos + .1], [x_pos + 1.7, y_pos + .2],
                                [x_pos + 1.7, y_pos + .3], [x_pos + 1.7, y_pos + .4], [x_pos + 1.7, y_pos + .5],
                                [x_pos + 1.9, y_pos + 0], [x_pos + 1.9, y_pos + .1], [x_pos + 1.9, y_pos + .2],
                                [x_pos + 1.9, y_pos + .3], [x_pos + 1.9, y_pos + .4], [x_pos + 1.9, y_pos + .5]]
@@ -56,8 +54,8 @@ class Register(InteractiveObject):
                 if counter > 12:
                    counter = 0
 
-                rect = pygame.Rect((self.food_positions[counter][0] + camera.position[0]) * config.SCALE,
-                                   (self.food_positions[counter][1] - camera.position[1]) * config.SCALE,
+                rect = pygame.Rect((food_positions[counter][0] + camera.position[0]) * config.SCALE,
+                                   (food_positions[counter][1] - camera.position[1]) * config.SCALE,
                                    config.SCALE, config.SCALE)
 
                 screen.blit(self.food_images[food_name], rect)
@@ -71,7 +69,7 @@ class Register(InteractiveObject):
             self.short_interact(game, player)
 
     def long_interact(self, game, player):
-        if not player.holding_food and self.empty_counter:
+        if not player.holding_food and self.num_items == 0:
             if not game.render_messages:
                 self.interactive_stage = 1
             if self.interactive_stage == 0:
@@ -95,13 +93,12 @@ class Register(InteractiveObject):
                     self.interaction_message = "You put " + player.holding_food + " on the counter."
                     player.holding_food = None
                     player.holding_food_image = None
-                    self.empty_counter = False
                     self.num_items += 1
                 else:
                     self.interaction_message = "Sorry, no more room on the counter. Buy your items first!"
             return
                 # place item on counter
-        if not player.holding_food and not self.empty_counter:
+        if not player.holding_food and self.num_items > 0:
             if not game.render_messages:
                 self.interactive_stage = 1
             if self.interactive_stage == 0:
