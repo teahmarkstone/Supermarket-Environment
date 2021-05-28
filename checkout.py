@@ -95,6 +95,7 @@ class Register(InteractiveObject):
                         self.selected_food_image = None
                         self.buying = False
                     else:
+                        self.buying = False
                         self.selected_food_image = pygame.transform.scale(
                             pygame.image.load(game.food_images[self.selected_food]),
                             (int(.30 * config.SCALE), int(.30 * config.SCALE)))
