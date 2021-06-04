@@ -1,12 +1,10 @@
+import argparse
 import pygame
-import config
+
 from enums.game_state import GameState
-from enums.player_action import PlayerAction
 from env import SupermarketEnv
-from game import Game
 from norms.norm import NormWrapper
 from norms.norms import *
-import argparse
 
 
 class SupermarketEventHandler:
@@ -130,6 +128,7 @@ class SupermarketEventHandler:
 
 if __name__ == "__main__":
 
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -180,6 +179,7 @@ if __name__ == "__main__":
                          render_number=args.render_number)
 
     norms = [CartTheftNorm(),
+             BasketTheftNorm(),
              WrongShelfNorm(),
              ShopliftingNorm(),
              PlayerCollisionNorm(),
@@ -188,7 +188,9 @@ if __name__ == "__main__":
              BlockingExitNorm(),
              EntranceOnlyNorm(),
              UnattendedCartNorm(),
+             UnattendedBasketNorm(),
              OneCartOnlyNorm(),
+             OneBasketOnlyNorm(),
              PersonalSpaceNorm(dist_threshold=1),
              InteractionCancellationNorm(),
              ]
