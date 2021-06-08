@@ -281,7 +281,8 @@ if __name__ == "__main__":
         should_perform_action = False
         curr_action = [0] * env.num_players
         e = []
-        handler.handle_events()
+        if not args.headless:
+            handler.handle_events()
         for key, mask in events:
             if key.data is None:
                 accept_wrapper(key.fileobj)
