@@ -261,6 +261,8 @@ class PlayerCollisionNorm(Norm):
         violations = set()
         next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
         for i, player in enumerate(game.players):
+            if player.left_store:
+                continue
             cart = player.curr_cart
             prev_dir = player.direction
             next_pos = next_positions[i]
@@ -269,6 +271,8 @@ class PlayerCollisionNorm(Norm):
                 cart.update_position(next_pos[0], next_pos[1])
             for j, player2 in enumerate(game.players):
                 if i == j:
+                    continue
+                if player2.left_store:
                     continue
                 if 1 <= action[i] <= 4 and overlap(next_pos[0], next_pos[1], player.width, player.height,
                                                    next_positions[j][0], next_positions[j][1], player2.width,
@@ -627,9 +631,13 @@ class PersonalSpaceNorm(Norm):
         violations = set()
         next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
         for i, player in enumerate(game.players):
+            if player.left_store:
+                continue
             next_pos = next_positions[i]
             center = [next_pos[0] + player.width / 2., next_pos[1] + player.height / 2.]
             for j, player2 in enumerate(game.players):
+                if player2.left_store:
+                    continue
                 if i == j:
                     continue
                 center2 = [next_positions[j][0] + player2.width / 2., next_positions[j][1] + player2.height / 2.]

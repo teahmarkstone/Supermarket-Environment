@@ -549,7 +549,7 @@ class Game:
                 return True
         # checking if players are colliding
         for player in self.players:
-            if player != unit:
+            if player != unit and not player.left_store:
                 if player.collision(unit, x_position, y_position):
                     return True
         return False
