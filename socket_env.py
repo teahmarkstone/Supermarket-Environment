@@ -125,6 +125,13 @@ class SupermarketEventHandler:
                     if self.env.game.players[self.curr_player].render_shopping_list:
                         self.env.game.players[self.curr_player].render_shopping_list = False
                         self.env.game.game_state = GameState.EXPLORATORY
+
+                # use up and down arrows to navigate item select menu
+                if self.env.game.item_select:
+                    if event.key == pygame.K_UP:
+                        self.env.game.select_up = True
+                    elif event.key == pygame.K_DOWN:
+                        self.env.game.select_down = True
         self.running = self.env.game.running
 
 
@@ -226,6 +233,16 @@ if __name__ == "__main__":
         action='store_true'
     )
 
+    parser.add_argument(
+        '--render_messages',
+        action='store_true'
+    )
+
+    parser.add_argument(
+        '--bagging',
+        action='store_true'
+    )
+
     args = parser.parse_args()
 
     # np.random.seed(0)
@@ -233,8 +250,9 @@ if __name__ == "__main__":
     # Make the env
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
-    env = SupermarketEnv(args.num_players, render_messages=False, headless=args.headless,
+    env = SupermarketEnv(args.num_players, render_messages=args.render_messages, headless=args.headless,
                          initial_state_filename=args.file,
+                         bagging=args.bagging,
                          follow_player=args.follow if args.num_players > 1 else 0,
                          keyboard_input=args.keyboard_input,
                          random_start=args.random_start,
@@ -242,6 +260,7 @@ if __name__ == "__main__":
                          )
 
     norms = [CartTheftNorm(),
+             BasketTheftNorm(),
              WrongShelfNorm(),
              ShopliftingNorm(),
              PlayerCollisionNorm(),
@@ -250,9 +269,14 @@ if __name__ == "__main__":
              BlockingExitNorm(),
              EntranceOnlyNorm(),
              UnattendedCartNorm(),
+             UnattendedBasketNorm(),
              OneCartOnlyNorm(),
+             OneBasketOnlyNorm(),
              PersonalSpaceNorm(dist_threshold=1),
              InteractionCancellationNorm(),
+             LeftWithBasketNorm(),
+             ReturnBasketNorm(),
+             ReturnCartNorm(),
              ]
 
     handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms),
@@ -282,6 +306,8 @@ if __name__ == "__main__":
         curr_action = [0] * env.num_players
         e = []
         handler.handle_events()
+        if not args.headless:
+            handler.handle_events()
         for key, mask in events:
             if key.data is None:
                 accept_wrapper(key.fileobj)

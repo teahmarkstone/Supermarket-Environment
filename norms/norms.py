@@ -44,6 +44,7 @@ class CartTheftNorm(Norm):
     def reset(self):
         super(CartTheftNorm, self).reset()
 
+
 class BasketTheftViolation(NormViolation):
     def __init__(self, player, basket):
         super().__init__()
@@ -119,6 +120,100 @@ class ShopliftingNorm(Norm):
 
     def reset(self):
         super(ShopliftingNorm, self).reset()
+
+
+class LeftWithBasketViolation(NormViolation):
+    def __init__(self, thief):
+        super(LeftWithBasketViolation, self).__init__()
+        self.thief = thief
+
+    def as_string(self):
+        return "{player} took a basket out of the store".format(player=self.thief)
+
+
+class LeftWithBasketNorm(Norm):
+    def __init__(self):
+        super(LeftWithBasketNorm, self).__init__()
+
+    def post_monitor(self, game, action):
+        new_violations = set()
+        for player in game.players:
+            if player.position[0] <= 0 and player.curr_basket is not None and game.bagging:
+                violation = LeftWithBasketViolation(player)
+                if player not in self.known_violations:
+                    self.known_violations.add(player)
+                    new_violations.add(violation)
+        return new_violations
+
+    def reset(self):
+        super(LeftWithBasketNorm, self).reset()
+
+
+class ReturnBasketViolation(NormViolation):
+    def __init__(self, thief, num_baskets):
+        super(ReturnBasketViolation, self).__init__()
+        self.thief = thief
+        self.quantity = num_baskets
+
+    def as_string(self):
+        return "{player} left without returning {num_baskets} basket(s)".format(player=self.thief,
+                                                                                num_baskets=self.quantity)
+
+
+class ReturnBasketNorm(Norm):
+    def __init__(self):
+        super(ReturnBasketNorm, self).__init__()
+
+    def post_monitor(self, game, action):
+        violations = set()
+        for player in game.players:
+            abandoned_baskets = 0
+            for basket in game.baskets:
+                if basket.owner == player and not basket.being_held:
+                    abandoned_baskets += 1
+            if player.position[0] < 0 and abandoned_baskets > 0:
+                violation = ReturnBasketViolation(player, abandoned_baskets)
+                if player not in self.known_violations:
+                    violations.add(violation)
+                    self.known_violations.add(player)
+        return violations
+
+    def reset(self):
+        super(ReturnBasketNorm, self).reset()
+
+
+class ReturnCartViolation(NormViolation):
+    def __init__(self, thief, num_carts):
+        super(ReturnCartViolation, self).__init__()
+        self.thief = thief
+        self.quant = num_carts
+
+    def as_string(self):
+        return "{player} left without returning {num_carts} shopping cart(s)".format(player=self.thief,
+                                                                                     num_carts=self.quant)
+
+
+class ReturnCartNorm(Norm):
+    def __init__(self):
+        super(ReturnCartNorm, self).__init__()
+
+    def post_monitor(self, game, action):
+        violations = set()
+        for player in game.players:
+            abandoned_carts = 0
+            for cart in game.carts:
+                if cart.owner == player and not cart.being_held:
+                    abandoned_carts += 1
+            if player.position[0] < 0 and abandoned_carts > 0:
+                violation = ReturnCartViolation(player, abandoned_carts)
+                if player not in self.known_violations:
+                    violations.add(violation)
+                    self.known_violations.add(player)
+        return violations
+
+    def reset(self):
+        print("resetting")
+        super(ReturnCartNorm, self).reset()
 
 
 class WrongShelfViolation(NormViolation):
@@ -437,7 +532,7 @@ class UnattendedBasketNorm(Norm):
                     self.time_too_far_away[basket] += 1
                     if self.time_too_far_away[basket] > self.time_threshold and basket not in self.old_violations:
                         violations.add(UnattendedBasketViolation(basket, distance=self.dist_threshold,
-                                                               time=self.time_threshold))
+                                                                 time=self.time_threshold))
                         self.old_violations.add(basket)
                 else:
                     self.time_too_far_away[basket] = 0

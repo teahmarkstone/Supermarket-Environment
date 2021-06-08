@@ -193,6 +193,9 @@ if __name__ == "__main__":
              OneBasketOnlyNorm(),
              PersonalSpaceNorm(dist_threshold=1),
              InteractionCancellationNorm(),
+             LeftWithBasketNorm(),
+             ReturnBasketNorm(),
+             ReturnCartNorm(),
              ]
 
     env = NormWrapper(env, norms)
