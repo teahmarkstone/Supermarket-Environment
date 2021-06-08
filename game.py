@@ -697,7 +697,7 @@ class Game:
                                                  (int(2 * config.SCALE), int(2 * config.SCALE)))
             food = pygame.transform.scale(pygame.image.load(food_filename),
                                       (int(.30 * config.SCALE), int(.30 * config.SCALE)))
-        shelf = Shelf(x_position, y_position, shelf_image, food, string_name, food_price, quantity)
+        shelf = Shelf(x_position, y_position, shelf_image, food, string_name, food_price, quantity, not self.headless)
         self.food_directory[string_name] = food_price
         self.objects.append(shelf)
         self.food_list.append(string_name)

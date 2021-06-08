@@ -8,13 +8,14 @@ from objects import InteractiveObject
 
 
 class Shelf(InteractiveObject):
-    def __init__(self, x_position, y_position, shelf_image, food_image, string_type, price, quantity):
+    def __init__(self, x_position, y_position, shelf_image, food_image, string_type, price, quantity, load_images):
 
         super().__init__(num_stages=1)
         self.position = [x_position, y_position]
         self.image = None
         self.food_image = None
-        self.load_images(food_image, shelf_image)
+        if load_images:
+            self.load_images(food_image, shelf_image)
         self.string_type = string_type
         self.width = 2
         self.height = 1

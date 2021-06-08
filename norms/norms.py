@@ -212,7 +212,6 @@ class ReturnCartNorm(Norm):
         return violations
 
     def reset(self):
-        print("resetting")
         super(ReturnCartNorm, self).reset()
 
 
