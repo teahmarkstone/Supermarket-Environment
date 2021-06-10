@@ -27,7 +27,8 @@ class Register(InteractiveObject):
         self.food_images = defaultdict()
         self.food_quantities = defaultdict(int)
         self.num_items = 0
-        self.last_player = None
+        self.prev_player = None
+        self.curr_player = None
 
         self.checking_contents = False
         self.select_index = 0
@@ -152,12 +153,18 @@ class Register(InteractiveObject):
 
     def interact(self, game, player):
         if game.bagging:
-            self.last_player = player
+            self.prev_player = self.curr_player
+            self.curr_player = player
             self.long_interact(game, player)
         else:
             self.short_interact(game, player)
 
     def long_interact(self, game, player):
+        if self.num_items > 0 and player != self.prev_player:
+            self.interaction_message = "Please wait in line."
+            self.curr_player = self.prev_player
+            self.interactive_stage = 1
+            return
         if not player.holding_food and self.num_items == 0:
             if not game.render_messages:
                 self.interactive_stage = 1
@@ -216,7 +223,7 @@ class Register(InteractiveObject):
                         self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
                         self.buying = False
                 elif self.selected_food != "Exit":
-                    self.pickup(self.selected_food, self.last_player, self.selected_food_image)
+                    self.pickup(self.selected_food, self.curr_player, self.selected_food_image)
                     self.pickup_item = False
                     self.interaction_message = "You took " + self.selected_food + " off the counter."
                 else:

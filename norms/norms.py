@@ -678,3 +678,27 @@ class InteractionCancellationNorm(Norm):
                                                                Counter)) and target.interaction and target.interactive_stage == 0:
                     violations.add(InteractionCancellationViolation(player, target, 1))
         return violations
+
+
+class WaitForCheckoutViolation(NormViolation):
+    def __init__(self, player1):
+        super(WaitForCheckoutViolation, self).__init__()
+        self.player1 = player1
+
+    def as_string(self):
+        return "{player1} tried to check out while someone else was already bagging".format(
+            player1=self.player1)
+
+
+class WaitForCheckoutNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Register):
+                    if interaction_object.num_items > 0 and interaction_object.prev_player != player and \
+                            interaction_object.interactive_stage == 0:
+                        violations.add(WaitForCheckoutViolation(player))
+                        self.known_violations.add(player)
+        return violations
