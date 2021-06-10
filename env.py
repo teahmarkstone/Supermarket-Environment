@@ -98,6 +98,7 @@ class SinglePlayerSupermarketEnv(gym.Wrapper):
             self.game.interact(i)
         elif action == PlayerAction.TOGGLE:
             self.game.toggle_cart(i)
+            self.game.toggle_basket(i)
         elif action == PlayerAction.CANCEL:
             self.game.cancel_interaction(i)
         observation = self.game.observation()
