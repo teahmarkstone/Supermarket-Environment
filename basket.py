@@ -1,3 +1,4 @@
+import random
 from collections import defaultdict
 
 import pygame
@@ -25,6 +26,10 @@ class Basket(InteractiveObject):
             else:
                 self.interaction_message = "The basket is full! The food won't fit."
         else:
+            if not game.render_messages and len(self.contents) > 0:
+                food_list = list(self.contents.items())
+                random_item = random.choice(food_list)
+                self.pickup(random_item[0], player, game.food_images[random_item[0]])
             self.checking_contents = True
             game.item_select = True
             self.interaction_message = None
