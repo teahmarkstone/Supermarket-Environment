@@ -68,8 +68,11 @@ class Register(InteractiveObject):
                 rect = pygame.Rect(food_positions[counter][0] * config.SCALE,
                                    food_positions[counter][1] * config.SCALE,
                                    config.SCALE, config.SCALE)
-
-                screen.blit(self.food_images[food_name], rect)
+                print(self.food_images[food_name])
+                food = pygame.transform.scale(
+                            pygame.image.load(self.food_images[food_name]),
+                            (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+                screen.blit(food, rect)
                 counter += 1
 
     def render_interaction(self, game, screen):
@@ -186,7 +189,7 @@ class Register(InteractiveObject):
                     if player.holding_food in self.food_images:
                         self.food_quantities[player.holding_food] += 1
                     else:
-                        self.food_images[player.holding_food] = player.holding_food_image
+                        self.food_images[player.holding_food] = game.food_images[player.holding_food]
                         self.food_quantities[player.holding_food] = 1
                     self.interaction_message = "You put " + player.holding_food + " on the counter."
                     player.holding_food = None
