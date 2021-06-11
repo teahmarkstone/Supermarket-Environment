@@ -697,8 +697,12 @@ class WaitForCheckoutNorm(Norm):
             if action[i] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Register):
-                    if interaction_object.num_items > 0 and interaction_object.prev_player != player and \
-                            interaction_object.interactive_stage == 0:
-                        violations.add(WaitForCheckoutViolation(player))
-                        self.known_violations.add(player)
+                    if interaction_object.num_items > 0 and interaction_object.prev_player != player:
+                        if game.render_messages:
+                            if interaction_object.interactive_stage == 0:
+                                violations.add(WaitForCheckoutViolation(player))
+                                self.known_violations.add(player)
+                        else:
+                            violations.add(WaitForCheckoutViolation(player))
+                            self.known_violations.add(player)
         return violations

@@ -68,7 +68,6 @@ class Register(InteractiveObject):
                 rect = pygame.Rect(food_positions[counter][0] * config.SCALE,
                                    food_positions[counter][1] * config.SCALE,
                                    config.SCALE, config.SCALE)
-                print(self.food_images[food_name])
                 food = pygame.transform.scale(
                             pygame.image.load(self.food_images[food_name]),
                             (int(.30 * config.SCALE), int(.30 * config.SCALE)))
@@ -163,14 +162,14 @@ class Register(InteractiveObject):
             self.short_interact(game, player)
 
     def long_interact(self, game, player):
-        if not game.render_messages:
-            self.interactive_stage = 1
 
         if self.num_items > 0 and player != self.prev_player:
             self.interaction_message = "Please wait in line."
             self.curr_player = self.prev_player
             self.interactive_stage = 1
             return
+        if not game.render_messages:
+            self.interactive_stage = 1
         if not player.holding_food and self.num_items == 0:
             if self.interactive_stage == 0:
                 self.interaction_message = "Hello! Would you like to check out?"
