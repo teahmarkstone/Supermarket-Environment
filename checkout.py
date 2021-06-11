@@ -160,14 +160,15 @@ class Register(InteractiveObject):
             self.short_interact(game, player)
 
     def long_interact(self, game, player):
+        if not game.render_messages:
+            self.interactive_stage = 1
+
         if self.num_items > 0 and player != self.prev_player:
             self.interaction_message = "Please wait in line."
             self.curr_player = self.prev_player
             self.interactive_stage = 1
             return
         if not player.holding_food and self.num_items == 0:
-            if not game.render_messages:
-                self.interactive_stage = 1
             if self.interactive_stage == 0:
                 self.interaction_message = "Hello! Would you like to check out?"
                 return
@@ -181,6 +182,7 @@ class Register(InteractiveObject):
                 self.interaction_message = "Would you like to put " + player.holding_food + " on the counter?"
             if self.interactive_stage == 1:
                 if self.num_items < self.counter_capacity:
+                    # put food on counter
                     if player.holding_food in self.food_images:
                         self.food_quantities[player.holding_food] += 1
                     else:
@@ -195,13 +197,11 @@ class Register(InteractiveObject):
             return
                 # place item on counter
         if not player.holding_food and self.num_items > 0:
-            if not game.render_messages:
-                self.interactive_stage = 1
             if self.interactive_stage == 0:
                 self.checking_contents = True
                 game.item_select = True
                 self.interaction_message = None
-            if self.interactive_stage == 1 or not game.render_messages:
+            if self.interactive_stage == 1:
                 self.select_index = 0
                 self.checking_contents = False
                 if self.buying or not game.render_messages:
