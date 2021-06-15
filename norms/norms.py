@@ -4,6 +4,7 @@ from collections import defaultdict
 from checkout import Register
 from counters import Counter
 from enums.direction import Direction
+from enums.game_state import GameState
 from enums.player_action import PlayerAction
 from helper import pos_collision, overlap
 from norms.norm import Norm, NormViolation
@@ -681,13 +682,14 @@ class InteractionCancellationNorm(Norm):
 
 
 class WaitForCheckoutViolation(NormViolation):
-    def __init__(self, player1):
+    def __init__(self, player1, player2):
         super(WaitForCheckoutViolation, self).__init__()
         self.player1 = player1
+        self.player2 = player2
 
     def as_string(self):
-        return "{player1} tried to check out while someone else was already bagging".format(
-            player1=self.player1)
+        return "{player1} did not wait for {player2} to finish checking out".format(
+            player1=self.player1, player2=self.player2)
 
 
 class WaitForCheckoutNorm(Norm):
@@ -697,12 +699,25 @@ class WaitForCheckoutNorm(Norm):
             if action[i] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Register):
-                    if interaction_object.num_items > 0 and interaction_object.prev_player != player:
-                        if game.render_messages:
-                            if interaction_object.interactive_stage == 0:
-                                violations.add(WaitForCheckoutViolation(player))
+                    if game.bagging:
+                        if interaction_object.num_items > 0 and interaction_object.prev_player != player:
+                            if game.render_messages:
+                                if game.game_state == GameState.EXPLORATORY:
+                                    violations.add(WaitForCheckoutViolation(player, interaction_object.prev_player))
+                                    self.known_violations.add(player)
+                            else:
+                                violations.add(WaitForCheckoutViolation(player, interaction_object.prev_player))
                                 self.known_violations.add(player)
-                        else:
-                            violations.add(WaitForCheckoutViolation(player))
-                            self.known_violations.add(player)
+                    else:
+                        if len(interaction_object.carts_in_zone) > 0:
+                            first_player = interaction_object.carts_in_zone[0].last_held
+                            if player != first_player:
+                                if game.render_messages:
+                                    if game.game_state == GameState.EXPLORATORY:
+                                        violations.add(WaitForCheckoutViolation(player, first_player))
+                                        self.known_violations.add(player)
+                                else:
+                                    violations.add(WaitForCheckoutViolation(player, first_player))
+                                    self.known_violations.add(player)
+
         return violations
