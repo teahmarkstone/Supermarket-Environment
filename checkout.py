@@ -78,7 +78,6 @@ class Register(InteractiveObject):
 
     def render_interaction(self, game, screen):
         super().render_interaction(game, screen)
-        self.check_zones(game)
         if game.render_messages:
             self.menu_length = self.get_menu_length()
             if self.interaction is not None:
