@@ -2,7 +2,9 @@ import math
 from collections import defaultdict
 
 from checkout import Register
+from cart import Cart
 from counters import Counter
+from baskets import Basket
 from enums.direction import Direction
 from enums.game_state import GameState
 from enums.player_action import PlayerAction
@@ -719,5 +721,65 @@ class WaitForCheckoutNorm(Norm):
                                 else:
                                     violations.add(WaitForCheckoutViolation(player, first_player))
                                     self.known_violations.add(player)
+
+        return violations
+
+
+class ItemTheftFromCartViolation(NormViolation):
+    def __init__(self, player1, player2):
+        super(ItemTheftFromCartViolation, self).__init__()
+        self.player1 = player1
+        self.player2 = player2
+
+    def as_string(self):
+        return "{player1} stole an item from {player2}'s cart".format(
+            player1=self.player1, player2=self.player2)
+
+
+class ItemTheftFromCartNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Cart):
+                    if player != interaction_object.owner:
+                        if game.render_messages:
+                            if interaction_object.pickup_item:
+                                violations.add(ItemTheftFromCartViolation(player, interaction_object.owner))
+                                self.known_violations.add(player)
+                        elif not player.holding_food:
+                            violations.add(ItemTheftFromCartViolation(player, interaction_object.owner))
+                            self.known_violations.add(player)
+        return violations
+
+
+class ItemTheftFromBasketViolation(NormViolation):
+    def __init__(self, player1, player2):
+        super(ItemTheftFromBasketViolation, self).__init__()
+        self.player1 = player1
+        self.player2 = player2
+
+    def as_string(self):
+        return "{player1} stole an item from {player2}'s basket".format(
+            player1=self.player1, player2=self.player2)
+
+
+class ItemTheftFromBasketNorm(Norm):
+    def pre_monitor(self, game, action):
+
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Basket):
+                    if player != interaction_object.owner:
+                        if game.render_messages:
+                            if interaction_object.pickup_item:
+                                violations.add(ItemTheftFromBasketViolation(player, interaction_object.owner))
+                                self.known_violations.add(player)
+                        elif not player.holding_food:
+                            violations.add(ItemTheftFromBasketViolation(player, interaction_object.owner))
+                            self.known_violations.add(player)
 
         return violations
