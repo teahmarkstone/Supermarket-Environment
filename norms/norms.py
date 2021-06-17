@@ -828,7 +828,8 @@ class TookTooManyNorm(Norm):
             if action[i] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
-                    if interaction_object.string_type in player.shopping_list and not player.holding_food:
+                    if interaction_object.string_type in player.shopping_list and not player.holding_food \
+                            and game.game_state == GameState.EXPLORATORY:
                         quantity = self.calculate_quantities(interaction_object.string_type, game.carts, game.baskets,
                                                              player)
                         if quantity >= player.list_quant[player.shopping_list.index(interaction_object.string_type)]:
