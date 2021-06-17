@@ -4,6 +4,7 @@ from collections import defaultdict
 from checkout import Register
 from cart import Cart
 from counters import Counter
+from shelves import Shelf
 from baskets import Basket
 from enums.direction import Direction
 from enums.game_state import GameState
@@ -782,4 +783,28 @@ class ItemTheftFromBasketNorm(Norm):
                             violations.add(ItemTheftFromBasketViolation(player, interaction_object.owner))
                             self.known_violations.add(player)
 
+        return violations
+
+
+class AdhereToListViolation(NormViolation):
+    def __init__(self, player, food):
+        super(AdhereToListViolation, self).__init__()
+        self.player = player
+        self.food = food
+
+    def as_string(self):
+        return "{player} took an item, {food}, that is not on their shopping list".format(
+            player=self.player, food=self.food)
+
+
+class AdhereToListNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
+                    if interaction_object.string_type not in player.shopping_list and not player.holding_food:
+                        violations.add(AdhereToListViolation(player, interaction_object.string_type))
+                        self.known_violations.add(player)
         return violations
