@@ -280,7 +280,8 @@ if __name__ == "__main__":
              WaitForCheckoutNorm(),
              ItemTheftFromCartNorm(),
              ItemTheftFromBasketNorm(),
-             AdhereToListNorm()
+             AdhereToListNorm(),
+             TookTooManyNorm()
              ]
 
     handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms),

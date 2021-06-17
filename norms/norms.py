@@ -807,3 +807,49 @@ class AdhereToListNorm(Norm):
                         violations.add(AdhereToListViolation(player, interaction_object.string_type))
                         self.known_violations.add(player)
         return violations
+
+
+class TookTooManyViolation(NormViolation):
+    def __init__(self, player, food):
+        super(TookTooManyViolation, self).__init__()
+        self.player = player
+        self.food = food
+
+    def as_string(self):
+        return "{player} took more {food} than they needed".format(
+            player=self.player, food=self.food)
+
+
+class TookTooManyNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
+                    if interaction_object.string_type in player.shopping_list and not player.holding_food:
+                        quantity = self.calculate_quantities(interaction_object.string_type, game.carts, game.baskets,
+                                                             player)
+                        if quantity >= player.list_quant[player.shopping_list.index(interaction_object.string_type)]:
+                            violations.add(TookTooManyViolation(player, interaction_object.string_type))
+                            self.known_violations.add(player)
+        return violations
+
+    def calculate_quantities(self, food_item, carts, baskets, player):
+        food_quantity = 0
+        for cart in carts:
+            if cart.last_held == player:
+                if food_item in cart.contents:
+                    food_quantity += cart.contents[food_item]
+                if food_item in cart.purchased_contents:
+                    food_quantity += cart.purchased_contents[food_item]
+        for basket in baskets:
+            if basket.last_held == player:
+                if food_item in basket.contents:
+                    food_quantity += basket.contents[food_item]
+                if food_item in basket.purchased_contents:
+                    food_quantity += basket.purchased_contents[food_item]
+        if player.holding_food == food_item:
+            food_quantity += 1
+
+        return food_quantity
