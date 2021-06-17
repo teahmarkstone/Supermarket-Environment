@@ -803,7 +803,8 @@ class AdhereToListNorm(Norm):
             if action[i] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
-                    if interaction_object.string_type not in player.shopping_list and not player.holding_food:
+                    if interaction_object.string_type not in player.shopping_list and not player.holding_food \
+                            and game.game_state == GameState.EXPLORATORY:
                         violations.add(AdhereToListViolation(player, interaction_object.string_type))
                         self.known_violations.add(player)
         return violations
