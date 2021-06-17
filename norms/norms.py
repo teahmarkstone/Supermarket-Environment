@@ -4,7 +4,6 @@ from collections import defaultdict
 from checkout import Register
 from cart import Cart
 from counters import Counter
-from shelves import Shelf
 from baskets import Basket
 from enums.direction import Direction
 from enums.game_state import GameState
