@@ -912,3 +912,69 @@ class SixOrLessNorm(Norm):
                         violations.add(SixOrLessViolation(player))
                         self.known_violations.add(player)
         return violations
+
+
+class UnattendedCheckoutViolation(NormViolation):
+    def __init__(self, player, distance, time):
+        super().__init__()
+        self.player = player
+        self.time = time
+        self.distance = distance
+
+    def as_string(self):
+        return "{player} has been too far away (distance={dist}) from checkout for too long(time={time})".format(
+            player=self.player,
+            time=self.time,
+            dist=self.distance)
+
+
+class UnattendedCheckoutNorm(Norm):
+    def post_monitor(self, game, action):
+        violations = set()
+        for register in game.objects:
+            if isinstance(register, Register):
+                if not game.bagging:
+                    for i in range(0, len(register.carts_in_zone)):
+                        distance = math.dist(register.position, register.carts_in_zone[i].last_held.position)
+                        if distance > self.dist_threshold:
+                            self.time_too_far_away[register] += 1
+                            if self.time_too_far_away[register] > self.time_threshold \
+                                    and register not in self.old_violations:
+                                violations.add(UnattendedCheckoutViolation(register.carts_in_zone[i].last_held,
+                                                                           distance=self.dist_threshold,
+                                                                           time=self.time_threshold))
+
+                                self.old_violations.add(register)
+                        else:
+                            self.time_too_far_away[register] = 0
+                            if register in self.old_violations:
+                                self.old_violations.remove(register)
+                else:
+                    if register.num_items > 0:
+                        distance = math.dist(register.position, register.curr_player.position)
+                        if distance > self.dist_threshold:
+                            self.time_too_far_away[register] += 1
+                            if self.time_too_far_away[register] > self.time_threshold \
+                                    and register not in self.old_violations:
+                                violations.add(UnattendedCheckoutViolation(register.curr_player,
+                                                                           distance=self.dist_threshold,
+                                                                           time=self.time_threshold))
+
+                                self.old_violations.add(register)
+                        else:
+                            self.time_too_far_away[register] = 0
+                            if register in self.old_violations:
+                                self.old_violations.remove(register)
+        return violations
+
+    def reset(self):
+        super(UnattendedCheckoutNorm, self).reset()
+        self.time_too_far_away = defaultdict(int)
+        self.old_violations = set()
+
+    def __init__(self, dist_threshold=5, time_threshold=5):
+        super(UnattendedCheckoutNorm, self).__init__()
+        self.dist_threshold = dist_threshold
+        self.time_threshold = time_threshold
+        self.time_too_far_away = defaultdict(int)
+        self.old_violations = set()

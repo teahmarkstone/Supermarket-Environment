@@ -284,7 +284,8 @@ if __name__ == "__main__":
              AdhereToListNorm(),
              TookTooManyNorm(),
              MoreThanSixNorm(),
-             SixOrLessNorm()
+             SixOrLessNorm(),
+             UnattendedCheckoutNorm()
              ]
 
     handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms),

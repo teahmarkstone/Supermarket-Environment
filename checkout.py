@@ -157,7 +157,10 @@ class Register(InteractiveObject):
 
     def interact(self, game, player):
         if game.bagging:
-            self.prev_player = self.curr_player
+            if self.curr_player is None:
+                self.prev_player = player
+            else:
+                self.prev_player = self.curr_player
             self.curr_player = player
             self.long_interact(game, player)
         else:
