@@ -94,14 +94,6 @@ class Cart(InteractiveObject):
             self.height = 0.4
     
     def render(self, screen, camera):
-        if not self.interaction:
-            self.checking_contents = False
-            self.select_index = 0
-            # this is messy but like whatevs
-            if self.pickup_item:
-                self.pickup(self.selected_food, self.last_held, self.selected_food_image)
-                self.pickup_item = False
-            # remove food from cart and give to player
         image = None
         if self.state == CartState.EMPTY or self.state == CartState.PURCHASED:
             if self.direction == Direction.NORTH:
@@ -136,6 +128,14 @@ class Cart(InteractiveObject):
         screen.blit(image, rect)
 
     def can_interact(self, player):
+        if not self.interaction:
+            # turns off menu rendering
+            self.checking_contents = False
+            self.select_index = 0
+            # picks up food
+            if self.pickup_item:
+                self.pickup(self.selected_food, self.last_held, self.selected_food_image)
+                self.pickup_item = False
         return player.curr_cart != self and can_interact_default(self, player)
 
     def empty_cart(self):

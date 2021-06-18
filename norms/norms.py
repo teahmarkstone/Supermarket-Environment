@@ -830,28 +830,30 @@ class TookTooManyNorm(Norm):
                 if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
                     if interaction_object.string_type in player.shopping_list and not player.holding_food \
                             and game.game_state == GameState.EXPLORATORY:
-                        quantity = self.calculate_quantities(interaction_object.string_type, game.carts, game.baskets,
-                                                             player)
+                        quantity = calculate_quantities(interaction_object.string_type, game.carts, game.baskets,
+                                                        player)
                         if quantity >= player.list_quant[player.shopping_list.index(interaction_object.string_type)]:
                             violations.add(TookTooManyViolation(player, interaction_object.string_type))
                             self.known_violations.add(player)
         return violations
 
-    def calculate_quantities(self, food_item, carts, baskets, player):
-        food_quantity = 0
-        for cart in carts:
-            if cart.last_held == player:
-                if food_item in cart.contents:
-                    food_quantity += cart.contents[food_item]
-                if food_item in cart.purchased_contents:
-                    food_quantity += cart.purchased_contents[food_item]
-        for basket in baskets:
-            if basket.last_held == player:
-                if food_item in basket.contents:
-                    food_quantity += basket.contents[food_item]
-                if food_item in basket.purchased_contents:
-                    food_quantity += basket.purchased_contents[food_item]
-        if player.holding_food == food_item:
-            food_quantity += 1
 
-        return food_quantity
+def calculate_quantities(food_item, carts, baskets, player):
+    food_quantity = 0
+    for cart in carts:
+        if cart.last_held == player:
+            if food_item in cart.contents:
+                food_quantity += cart.contents[food_item]
+            if food_item in cart.purchased_contents:
+                food_quantity += cart.purchased_contents[food_item]
+    for basket in baskets:
+        if basket.last_held == player:
+            if food_item in basket.contents:
+                food_quantity += basket.contents[food_item]
+            if food_item in basket.purchased_contents:
+                food_quantity += basket.purchased_contents[food_item]
+    if player.holding_food == food_item:
+        food_quantity += 1
+
+    return food_quantity
+
