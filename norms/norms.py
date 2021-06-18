@@ -3,8 +3,10 @@ from collections import defaultdict
 
 from checkout import Register
 from cart import Cart
+from shoppingcarts import Carts
+from baskets import Baskets
 from counters import Counter
-from baskets import Basket
+from basket import Basket
 from enums.direction import Direction
 from enums.game_state import GameState
 from enums.player_action import PlayerAction
@@ -857,3 +859,56 @@ def calculate_quantities(food_item, carts, baskets, player):
 
     return food_quantity
 
+
+class MoreThanSixViolation(NormViolation):
+    def __init__(self, player):
+        super(MoreThanSixViolation, self).__init__()
+        self.player = player
+
+    def as_string(self):
+        return "{player} took a basket when they have more than 6 items on their shopping list".format(
+            player=self.player)
+
+
+class MoreThanSixNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Baskets) and player.curr_basket is None and player.curr_cart is None \
+                        and game.game_state == GameState.EXPLORATORY:
+                    num_items = 0
+                    for i in range(0, len(player.list_quant)):
+                        num_items += player.list_quant[i]
+                    if num_items > 6:
+                        violations.add(MoreThanSixViolation(player))
+                        self.known_violations.add(player)
+        return violations
+
+
+class SixOrLessViolation(NormViolation):
+    def __init__(self, player):
+        super(SixOrLessViolation, self).__init__()
+        self.player = player
+
+    def as_string(self):
+        return "{player} took a cart when they have 6 or less items on their shopping list".format(
+            player=self.player)
+
+
+class SixOrLessNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Carts) and player.curr_cart is None and player.curr_basket is None \
+                        and game.game_state == GameState.EXPLORATORY:
+                    num_items = 0
+                    for i in range(0, len(player.list_quant)):
+                        num_items += player.list_quant[i]
+                    if num_items <= 6:
+                        violations.add(SixOrLessViolation(player))
+                        self.known_violations.add(player)
+        return violations

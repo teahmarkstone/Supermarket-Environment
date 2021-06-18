@@ -282,7 +282,9 @@ if __name__ == "__main__":
              ItemTheftFromCartNorm(),
              ItemTheftFromBasketNorm(),
              AdhereToListNorm(),
-             TookTooManyNorm()
+             TookTooManyNorm(),
+             MoreThanSixNorm(),
+             SixOrLessNorm()
              ]
 
     handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms),
