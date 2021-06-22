@@ -362,3 +362,4 @@ if __name__ == "__main__":
                 data = key.data
                 data.outb = str.encode(json.dumps(json_to_send) + "\n")
         env.render()
+    sock_agent.close()

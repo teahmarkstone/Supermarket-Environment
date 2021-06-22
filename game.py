@@ -731,7 +731,8 @@ class Game:
                 "holding_food": player.holding_food,
                 "bought_holding_food": player.bought_holding_food,
                 "budget": player.budget,
-                "bagged_items": player.bagged_items,
+                "bagged_items": [food for food in player.bagged_items],
+                "bagged_quant": [player.bagged_items[food] for food in player.bagged_items],
             }
             obs["players"].append(player_data)
 
