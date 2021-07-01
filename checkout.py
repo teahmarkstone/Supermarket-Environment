@@ -232,6 +232,7 @@ class Register(InteractiveObject):
                 elif self.selected_food != "Exit":
                     self.pickup(self.selected_food, self.curr_player, self.selected_food_image)
                     self.pickup_item = False
+                    self.num_items -= 1
                     self.interaction_message = "You took " + self.selected_food + " off the counter."
                 else:
                     self.interaction_message = "Please place items on the counter."
