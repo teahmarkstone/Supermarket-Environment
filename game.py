@@ -132,9 +132,10 @@ class Game:
         self.players = []
 
         self.render_number = render_number
-
+        self.loaded = False
         if initial_state_filename is not None:
             self.load_from_file(initial_state_filename)
+            self.loaded = True
 
         # list of all food items in game, built when shelves are made
         self.food_list = []
@@ -171,7 +172,12 @@ class Game:
             player.list_quant = player_dict['list_quant']
             player.holding_food = player_dict['holding_food']
             player.budget = player_dict['budget']
-            player.bagged_items = player_dict['bagged_items']
+            # BAGGED ITEMS HERE!!
+            bagged_items = defaultdict()
+            for i, food in enumerate(player_dict['bagged_items']):
+                bagged_items[food] = player_dict['bagged_quant'][i]
+            player.bagged_items = bagged_items
+            # player.bagged_items = player_dict['bagged_items']
             if player.holding_food is not None:
                 player.holding_food_image = FOOD_IMAGES[player.holding_food]
             player.bought_holding_food = player_dict['bought_holding_food']
@@ -184,12 +190,13 @@ class Game:
             if sum(basket_dict["contents_quant"]) + sum(basket_dict["purchased_quant"]) > 0:
                 basket.state = CartState.FULL
             for i, string in enumerate(basket_dict["contents"]):
-                basket.contents[string] = basket_dict["contents_quant"]
+                basket.contents[string] = basket_dict["contents_quant"][i]
             for i, string in enumerate(basket_dict["purchased_contents"]):
-                basket.purchased_contents[string] = basket_dict["purchased_quant"]
+                basket.purchased_contents[string] = basket_dict["purchased_quant"][i]
             self.objects.append(basket)
 
         for cart_dict in obs['carts']:
+
             pos = cart_dict['position']
             cart = Cart(pos[0], pos[1], self.players[cart_dict["owner"]], DIRECTIONS[cart_dict["direction"]],
                         cart_dict["capacity"])
@@ -198,9 +205,9 @@ class Game:
             if sum(cart_dict["contents_quant"]) + sum(cart_dict["purchased_quant"]) > 0:
                 cart.state = CartState.FULL
             for i, string in enumerate(cart_dict["contents"]):
-                cart.contents[string] = cart_dict["contents_quant"]
+                cart.contents[string] = cart_dict["contents_quant"][i]
             for i, string in enumerate(cart_dict["purchased_contents"]):
-                cart.purchased_contents[string] = cart_dict["purchased_quant"]
+                cart.purchased_contents[string] = cart_dict["purchased_quant"][i]
             self.carts.append(cart)
             self.objects.append(cart)
 
@@ -209,6 +216,39 @@ class Game:
             player.curr_cart = self.carts[cart_num] if cart_num != -1 else None
 
         self.num_players = len(self.players)
+        # JUMP
+        #  object_data["num_items"] = obj.num_items
+        #                     object_data["food_quantities"] = [obj.food_quantities[food] for food in obj.food_images.keys()]
+        #                     object_data["food_images"] = [obj.food_images[food] for food in obj.food_images.keys()]
+        #                     object_data["capacity"] = obj.counter_capacity
+
+        for register_dict in obs["registers"]:
+            pos = register_dict['position']
+            image = register_dict['image']
+            register = Register(pos[0], pos[1], image, self.food_directory)
+            register.counter_capacity = register_dict["capacity"]
+            food_image_dict = defaultdict()
+            for i, image in enumerate(register_dict["food_images"]):
+                food_image_dict[register_dict["foods"][i]] = image
+                # print(image)
+            food_quant_dict = defaultdict()
+            for i, quantity in enumerate(register_dict["food_quantities"]):
+                food_quant_dict[register_dict["foods"][i]] = quantity
+            register.food_quantities = food_quant_dict
+            register.food_images = food_image_dict
+            register.num_items = register_dict["num_items"]
+            if register_dict["curr_player"] is not None:
+                register.curr_player = self.players[register_dict["curr_player"]]
+            else:
+                register.curr_player = None
+            self.objects.append(register)
+
+
+        for counter_dict in obs["counters"]:
+            pass
+
+        for shelf_dict in obs["shelves"]:
+            pass
 
     def load_from_file(self, file_path):
         from ast import literal_eval
@@ -224,9 +264,10 @@ class Game:
 
         self.load_map("01")
 
+        if not self.loaded:
+            self.set_registers()
         self.set_shelves()
         self.set_counters()
-        self.set_registers()
         self.set_carts()
         self.set_baskets()
         # make players
@@ -250,7 +291,8 @@ class Game:
 
     def save_state(self, filename):
         with open(filename, "w") as f:
-            f.write(str(self.observation(False)))
+            f.write(str(self.observation(True)))
+            # f.write(str(self.observation(False)))
 
     # called in while running loop, handles events, renders, etc
     def update(self):
@@ -607,15 +649,13 @@ class Game:
     # set register locations and add to object list
     def set_registers(self):
         if not self.headless:
-            image = pygame.transform.scale(pygame.image.load("images/Registers/registersA.png"),
-                                           (int(2.3 * config.SCALE), int(3 * config.SCALE)))
+            image = "images/Registers/registersA.png"
         else:
             image = None
         register = Register(1, 4.5, image, self.food_directory)
         self.objects.append(register)
         if not self.headless:
-            image = pygame.transform.scale(pygame.image.load("images/Registers/registersB.png"),
-                                           (int(2.3 * config.SCALE), int(3 * config.SCALE)))
+            image = "images/Registers/registersB.png"
         else:
             image = None
         register = Register(1, 9.5, image, self.food_directory)
@@ -788,13 +828,21 @@ class Game:
                     object_data["price"] = obj.price
                 if isinstance(obj, Register):
                     object_data["num_items"] = obj.num_items
-                    object_data["food_quantities"] = obj.food_quantities
-                    object_data["food_images"] = obj.food_images
+                    object_data["foods"] = list(obj.food_images.keys())
+                    object_data["food_quantities"] = [obj.food_quantities[food] for food in obj.food_images.keys()]
+                    object_data["food_images"] = [obj.food_images[food] for food in obj.food_images.keys()]
                     object_data["capacity"] = obj.counter_capacity
+                    object_data["image"] = obj.image
+                    if obj.curr_player is not None:
+                        object_data["curr_player"] = self.players.index(obj.curr_player)
+                    else:
+                        object_data["curr_player"] = None
                 category = get_obj_category(obj)
+                # JUMP
                 if category not in obs:
                     obs[category] = []
                 obs[category].append(object_data)
+                # print(obs)
 
         # prices are part of shelf observation now
         # obs["food_prices"] = dict(self.food_directory)

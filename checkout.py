@@ -48,9 +48,12 @@ class Register(InteractiveObject):
                        x_position, y_position, obj.width, obj.height)
 
     def render(self, screen, camera):
-        screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
+        if self.image is not None:
+            image = pygame.transform.scale(pygame.image.load(self.image),
+                                           (int(2.3 * config.SCALE), int(3 * config.SCALE)))
+            screen.blit(image, ((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
                                  (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE))
-        self.render_items(screen, camera)
+            self.render_items(screen, camera)
 
     def render_items(self, screen, camera):
         x_pos = self.position[0] - camera.position[0]
