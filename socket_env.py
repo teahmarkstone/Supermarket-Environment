@@ -71,16 +71,17 @@ class SupermarketEventHandler:
                         self.env.game.players[self.curr_player].render_shopping_list = True
                         self.env.game.game_state = GameState.INTERACTIVE
 
-                    # switch players
-                    elif event.key == pygame.K_1:
-                        self.curr_player = 0
-                        self.env.game.curr_player = 0
-                    elif event.key == pygame.K_2:
-                        self.curr_player = 1
-                        self.env.game.curr_player = 1
-
                     elif event.key == pygame.K_c:
                         self.env.step(self.single_player_action(PlayerAction.TOGGLE))
+
+                    # switch players (up to 9 players)
+                    else:
+                        for i in range(1, len(self.env.game.players) + 1):
+                            if i > 9:
+                                continue
+                            if event.key == pygame.key.key_code(str(i)):
+                                self.curr_player = i - 1
+                                self.env.curr_player = i - 1
 
                 # player stands still if not moving
                 elif event.type == pygame.KEYUP:
@@ -277,6 +278,14 @@ if __name__ == "__main__":
              LeftWithBasketNorm(),
              ReturnBasketNorm(),
              ReturnCartNorm(),
+             WaitForCheckoutNorm(),
+             ItemTheftFromCartNorm(),
+             ItemTheftFromBasketNorm(),
+             AdhereToListNorm(),
+             TookTooManyNorm(),
+             MoreThanSixNorm(),
+             SixOrLessNorm(),
+             UnattendedCheckoutNorm()
              ]
 
     handler = SupermarketEventHandler(NormWrapper(SinglePlayerSupermarketEnv(env), norms),
@@ -353,3 +362,4 @@ if __name__ == "__main__":
                 data = key.data
                 data.outb = str.encode(json.dumps(json_to_send) + "\n")
         env.render()
+    sock_agent.close()

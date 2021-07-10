@@ -76,6 +76,7 @@ FOOD_IMAGES = {
     "onion": "images/food/onion.png"
 }
 
+
 def index_or_minus_one(item, the_list):
     if item is None:
         return -1
@@ -102,7 +103,8 @@ def get_obj_category(obj):
 class Game:
 
     def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False, bagging=False,
-                 headless=False, initial_state_filename=None, follow_player=-1, random_start=False, render_number=False):
+                 headless=False, initial_state_filename=None, follow_player=-1, random_start=False,
+                 render_number=False):
 
         self.screen = None
         self.clock = None
@@ -131,8 +133,6 @@ class Game:
 
         self.render_number = render_number
 
-        if initial_state_filename is not None:
-            self.load_from_file(initial_state_filename)
 
         # list of all food items in game, built when shelves are made
         self.food_list = []
@@ -157,6 +157,11 @@ class Game:
         self.select_up = False
         self.select_down = False
 
+        self.loaded = False
+        if initial_state_filename is not None:
+            self.load_from_file(initial_state_filename)
+            self.loaded = True
+
     def set_observation(self, obs):
         self.players = []
         self.carts = []
@@ -169,23 +174,32 @@ class Game:
             player.list_quant = player_dict['list_quant']
             player.holding_food = player_dict['holding_food']
             player.budget = player_dict['budget']
-            player.bagged_items = player_dict['bagged_items']
+            # BAGGED ITEMS HERE!!
+            bagged_items = defaultdict()
+            for i, food in enumerate(player_dict['bagged_items']):
+                bagged_items[food] = player_dict['bagged_quant'][i]
+            player.bagged_items = bagged_items
+            # player.bagged_items = player_dict['bagged_items']
             if player.holding_food is not None:
                 player.holding_food_image = FOOD_IMAGES[player.holding_food]
             player.bought_holding_food = player_dict['bought_holding_food']
             self.players.append(player)
 
         for basket_dict in obs['baskets']:
-            basket_dict = obs['baskets']
+            # JUMP
             pos = basket_dict['position']
-            basket = Basket(pos[0], pos[1], player, DIRECTIONS[basket_dict["direction"]], basket_dict["capacity"])
+            basket = Basket(pos[0], pos[1], self.players[basket_dict['owner']], DIRECTIONS[basket_dict["direction"]], basket_dict["capacity"])
+            basket.being_held = basket_dict['being_held']
+            if basket_dict['being_held']:
+                self.players[basket_dict['last_held']].curr_basket = basket
             if sum(basket_dict["contents_quant"]) + sum(basket_dict["purchased_quant"]) > 0:
                 basket.state = CartState.FULL
             for i, string in enumerate(basket_dict["contents"]):
-                basket.contents[string] = basket_dict["contents_quant"]
+                basket.contents[string] = basket_dict["contents_quant"][i]
             for i, string in enumerate(basket_dict["purchased_contents"]):
-                basket.purchased_contents[string] = basket_dict["purchased_quant"]
+                basket.purchased_contents[string] = basket_dict["purchased_quant"][i]
             self.objects.append(basket)
+            self.baskets.append(basket)
 
         for cart_dict in obs['carts']:
             pos = cart_dict['position']
@@ -196,9 +210,9 @@ class Game:
             if sum(cart_dict["contents_quant"]) + sum(cart_dict["purchased_quant"]) > 0:
                 cart.state = CartState.FULL
             for i, string in enumerate(cart_dict["contents"]):
-                cart.contents[string] = cart_dict["contents_quant"]
+                cart.contents[string] = cart_dict["contents_quant"][i]
             for i, string in enumerate(cart_dict["purchased_contents"]):
-                cart.purchased_contents[string] = cart_dict["purchased_quant"]
+                cart.purchased_contents[string] = cart_dict["purchased_quant"][i]
             self.carts.append(cart)
             self.objects.append(cart)
 
@@ -207,6 +221,48 @@ class Game:
             player.curr_cart = self.carts[cart_num] if cart_num != -1 else None
 
         self.num_players = len(self.players)
+        for register_dict in obs["registers"]:
+            pos = register_dict['position']
+            image = register_dict['image']
+            register = Register(pos[0], pos[1], image, self.food_directory)
+            register.counter_capacity = register_dict["capacity"]
+            food_image_dict = defaultdict()
+            for i, image in enumerate(register_dict["food_images"]):
+                food_image_dict[register_dict["foods"][i]] = image
+                # print(image)
+            food_quant_dict = defaultdict()
+            for i, quantity in enumerate(register_dict["food_quantities"]):
+                food_quant_dict[register_dict["foods"][i]] = quantity
+            register.food_quantities = food_quant_dict
+            register.food_images = food_image_dict
+            register.num_items = register_dict["num_items"]
+            if register_dict["curr_player"] is not None:
+                register.curr_player = self.players[register_dict["curr_player"]]
+            else:
+                register.curr_player = None
+            self.objects.append(register)
+
+        for shelf_dict in obs["shelves"]:
+            pos = shelf_dict['position']
+            shelf_image = shelf_dict['shelf_image']
+            food_image = shelf_dict['food_image']
+            food_name = shelf_dict['food_name']
+            food_price = shelf_dict['price']
+            quantity = shelf_dict['quantity']
+            capacity = shelf_dict['capacity']
+            headless = False
+            if shelf_image is None:
+                headless = True
+            shelf = Shelf(pos[0], pos[1], shelf_image, food_image, food_name, food_price, capacity, quantity, headless)
+
+            self.food_directory[food_name] = food_price
+            self.objects.append(shelf)
+            self.food_list.append(food_name)
+            self.food_images[food_name] = food_image
+
+
+        # JUMPP
+
 
     def load_from_file(self, file_path):
         from ast import literal_eval
@@ -222,9 +278,10 @@ class Game:
 
         self.load_map("01")
 
-        self.set_shelves()
+        if not self.loaded:
+            self.set_registers()
+            self.set_shelves()
         self.set_counters()
-        self.set_registers()
         self.set_carts()
         self.set_baskets()
         # make players
@@ -248,7 +305,8 @@ class Game:
 
     def save_state(self, filename):
         with open(filename, "w") as f:
-            f.write(str(self.observation(False)))
+            f.write(str(self.observation(True)))
+            # f.write(str(self.observation(False)))
 
     # called in while running loop, handles events, renders, etc
     def update(self):
@@ -370,7 +428,8 @@ class Game:
             return player.position
 
     def at_door(self, unit, x, y):
-        return (x >= 0 and self.map[round(y - 0.4)][round(x)] == "F") or (x <= 0 and self.map[round(y - 0.4)][round(x+unit.width)] == "F")
+        return (x >= 0 and self.map[round(y - 0.4)][round(x)] == "F") or (
+                    x <= 0 and self.map[round(y - 0.4)][round(x + unit.width)] == "F")
 
     def hits_wall(self, unit, x, y):
         wall_width = 0.4
@@ -417,7 +476,6 @@ class Game:
             basket.set_direction(direction)
 
         self.move_unit(player, [current_speed * x1, current_speed * y1])
-
 
     # main keyboard input
     def exploratory_events(self):
@@ -520,6 +578,9 @@ class Game:
 
     # moves player
     def move_unit(self, unit, position_change):
+        for obj in self.objects:
+            if isinstance(obj, Register):
+                obj.check_zones(self)
         new_position = [unit.position[0] + position_change[0], unit.position[1] + position_change[1]]
 
         if self.collide(unit, new_position[0], new_position[1]):
@@ -535,7 +596,7 @@ class Game:
             unit.left_store = True
 
         if all(self.out_of_bounds(player) for player in self.players) or \
-            (self.curr_player >= 0 and self.out_of_bounds(self.players[self.curr_player])):
+                (self.curr_player >= 0 and self.out_of_bounds(self.players[self.curr_player])):
             self.running = False
 
     # checks if given [x,y] collides with an object
@@ -549,69 +610,72 @@ class Game:
                 return True
         # checking if players are colliding
         for player in self.players:
-            if player != unit:
+            if player != unit and not player.left_store:
                 if player.collision(unit, x_position, y_position):
                     return True
         return False
 
     # set shelf locations and add to object list
     def set_shelves(self):
+        if not self.headless:
+            shelf_image = "images/Shelves/shelf.png"
+            fridge_image = "images/Shelves/fridge.png"
+        else:
+            shelf_image = None
+            fridge_image = None
 
         # milk aisle
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 2, 5.5, 1.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk.png", "milk", 2, 7.5, 1.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 2, 9.5, 1.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_chocolate.png", "chocolate milk", 2, 11.5, 1.5)
-        self.set_shelf("images/Shelves/fridge.png", "images/food/milk_strawberry.png", "strawberry milk", 2, 13.5, 1.5)
-
+        self.set_shelf(fridge_image, "images/food/milk.png", "milk", 2, 5.5, 1.5)
+        self.set_shelf(fridge_image, "images/food/milk.png", "milk", 2, 7.5, 1.5)
+        self.set_shelf(fridge_image, "images/food/milk_chocolate.png", "chocolate milk", 2, 9.5, 1.5)
+        self.set_shelf(fridge_image, "images/food/milk_chocolate.png", "chocolate milk", 2, 11.5, 1.5)
+        self.set_shelf(fridge_image, "images/food/milk_strawberry.png", "strawberry milk", 2, 13.5, 1.5)
 
         # fruit aisle
-        self.set_shelf(None, "images/food/apples.png", "apples", 5, 5.5, 5.5)
-        self.set_shelf(None, "images/food/oranges.png", "oranges", 5, 7.5, 5.5)
-        self.set_shelf(None, "images/food/banana.png", "banana", 1, 9.5, 5.5)
-        self.set_shelf(None, "images/food/strawberry.png", "strawberry", 1, 11.5, 5.5)
-        self.set_shelf(None, "images/food/raspberry.png", "raspberry", 1, 13.5, 5.5)
+        self.set_shelf(shelf_image, "images/food/apples.png", "apples", 5, 5.5, 5.5)
+        self.set_shelf(shelf_image, "images/food/oranges.png", "oranges", 5, 7.5, 5.5)
+        self.set_shelf(shelf_image, "images/food/banana.png", "banana", 1, 9.5, 5.5)
+        self.set_shelf(shelf_image, "images/food/strawberry.png", "strawberry", 1, 11.5, 5.5)
+        self.set_shelf(shelf_image, "images/food/raspberry.png", "raspberry", 1, 13.5, 5.5)
 
         # meat aisle
-        self.set_shelf(None, "images/food/sausage.png", "sausage", 4, 5.5, 9.5)
-        self.set_shelf(None, "images/food/meat_01.png", "steak", 5, 7.5, 9.5)
-        self.set_shelf(None, "images/food/meat_02.png", "steak", 5, 9.5, 9.5)
-        self.set_shelf(None, "images/food/meat_03.png", "chicken", 6, 11.5, 9.5)
-        self.set_shelf(None, "images/food/ham.png", "ham", 6, 13.5, 9.5)
+        self.set_shelf(shelf_image, "images/food/sausage.png", "sausage", 4, 5.5, 9.5)
+        self.set_shelf(shelf_image, "images/food/meat_01.png", "steak", 5, 7.5, 9.5)
+        self.set_shelf(shelf_image, "images/food/meat_02.png", "steak", 5, 9.5, 9.5)
+        self.set_shelf(shelf_image, "images/food/meat_03.png", "chicken", 6, 11.5, 9.5)
+        self.set_shelf(shelf_image, "images/food/ham.png", "ham", 6, 13.5, 9.5)
 
         # cheese aisle
-        self.set_shelf(None, "images/food/cheese_01.png", "brie cheese", 5, 5.5, 13.5)
-        self.set_shelf(None, "images/food/cheese_02.png", "swiss cheese", 5, 7.5, 13.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 15, 9.5, 13.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 15, 11.5, 13.5)
-        self.set_shelf(None, "images/food/cheese_03.png", "cheese wheel", 15, 13.5, 13.5)
+        self.set_shelf(shelf_image, "images/food/cheese_01.png", "brie cheese", 5, 5.5, 13.5)
+        self.set_shelf(shelf_image, "images/food/cheese_02.png", "swiss cheese", 5, 7.5, 13.5)
+        self.set_shelf(shelf_image, "images/food/cheese_03.png", "cheese wheel", 15, 9.5, 13.5)
+        self.set_shelf(shelf_image, "images/food/cheese_03.png", "cheese wheel", 15, 11.5, 13.5)
+        self.set_shelf(shelf_image, "images/food/cheese_03.png", "cheese wheel", 15, 13.5, 13.5)
 
         # veggie aisle
-        self.set_shelf(None, "images/food/garlic.png", "garlic", 2, 5.5, 17.5)
-        self.set_shelf(None, "images/food/leek_onion.png", "leek", 1, 7.5, 17.5)
-        self.set_shelf(None, "images/food/bell_pepper_red.png", "red bell pepper", 2, 9.5, 17.5)
-        self.set_shelf(None, "images/food/carrot.png", "carrot", 1, 11.5, 17.5)
-        self.set_shelf(None, "images/food/lettuce.png", "lettuce", 2, 13.5, 17.5)
+        self.set_shelf(shelf_image, "images/food/garlic.png", "garlic", 2, 5.5, 17.5)
+        self.set_shelf(shelf_image, "images/food/leek_onion.png", "leek", 1, 7.5, 17.5)
+        self.set_shelf(shelf_image, "images/food/bell_pepper_red.png", "red bell pepper", 2, 9.5, 17.5)
+        self.set_shelf(shelf_image, "images/food/carrot.png", "carrot", 1, 11.5, 17.5)
+        self.set_shelf(shelf_image, "images/food/lettuce.png", "lettuce", 2, 13.5, 17.5)
 
         # frozen? rn it's veggie
-        self.set_shelf(None, "images/food/avocado.png", "avocado", 2, 5.5, 21.5)
-        self.set_shelf(None, "images/food/broccoli.png", "broccoli", 1, 7.5, 21.5)
-        self.set_shelf(None, "images/food/cucumber.png", "cucumber", 2, 9.5, 21.5)
-        self.set_shelf(None, "images/food/bell_pepper_yellow.png", "yellow bell pepper", 2, 11.5, 21.5)
-        self.set_shelf(None, "images/food/onion.png", "onion", 2, 13.5, 21.5)
+        self.set_shelf(shelf_image, "images/food/avocado.png", "avocado", 2, 5.5, 21.5)
+        self.set_shelf(shelf_image, "images/food/broccoli.png", "broccoli", 1, 7.5, 21.5)
+        self.set_shelf(shelf_image, "images/food/cucumber.png", "cucumber", 2, 9.5, 21.5)
+        self.set_shelf(shelf_image, "images/food/bell_pepper_yellow.png", "yellow bell pepper", 2, 11.5, 21.5)
+        self.set_shelf(shelf_image, "images/food/onion.png", "onion", 2, 13.5, 21.5)
 
     # set register locations and add to object list
     def set_registers(self):
         if not self.headless:
-            image = pygame.transform.scale(pygame.image.load("images/Registers/registersA.png"),
-                                       (int(2.3 * config.SCALE), int(3 * config.SCALE)))
+            image = "images/Registers/registersA.png"
         else:
             image = None
         register = Register(1, 4.5, image, self.food_directory)
         self.objects.append(register)
         if not self.headless:
-            image = pygame.transform.scale(pygame.image.load("images/Registers/registersB.png"),
-                                       (int(2.3 * config.SCALE), int(3 * config.SCALE)))
+            image = "images/Registers/registersB.png"
         else:
             image = None
         register = Register(1, 9.5, image, self.food_directory)
@@ -622,9 +686,9 @@ class Game:
         name = "prepared foods"
         if not self.headless:
             image = pygame.transform.scale(pygame.image.load("images/counters/counterA.png"), (int(1.6 * config.SCALE),
-                                                                                           int(3.5 * config.SCALE)))
+                                                                                               int(3.5 * config.SCALE)))
             food_image = pygame.transform.scale(pygame.image.load("images/food/prepared.png"),
-                                            (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+                                                (int(.30 * config.SCALE), int(.30 * config.SCALE)))
         else:
             image = None
             food_image = None
@@ -637,9 +701,9 @@ class Game:
         name = "fresh fish"
         if not self.headless:
             image = pygame.transform.scale(pygame.image.load("images/counters/counterB.png"), (int(1.6 * config.SCALE),
-                                                                                           int(3.5 * config.SCALE)))
+                                                                                               int(3.5 * config.SCALE)))
             food_image = pygame.transform.scale(pygame.image.load("images/food/fresh_fish.png"),
-                                            (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+                                                (int(.30 * config.SCALE), int(.30 * config.SCALE)))
         else:
             image = None
             food_image = None
@@ -648,9 +712,9 @@ class Game:
         name = "fresh fish"
         if not self.headless:
             image = pygame.transform.scale(pygame.image.load("images/counters/counterB.png"), (int(1.6 * config.SCALE),
-                                                                                           int(3.5 * config.SCALE)))
+                                                                                               int(3.5 * config.SCALE)))
             food_image = pygame.transform.scale(pygame.image.load("images/food/fresh_fish.png"),
-                                            (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+                                                (int(.30 * config.SCALE), int(.30 * config.SCALE)))
         else:
             image = None
             food_image = None
@@ -689,15 +753,11 @@ class Game:
 
     def set_shelf(self, shelf_filename, food_filename, string_name, food_price, x_position, y_position):
         quantity = 12
-        shelf_image = None
-        food = None
-        if not self.headless:
-            if shelf_filename is not None:
-                shelf_image = pygame.transform.scale(pygame.image.load(shelf_filename),
-                                                 (int(2 * config.SCALE), int(2 * config.SCALE)))
-            food = pygame.transform.scale(pygame.image.load(food_filename),
-                                      (int(.30 * config.SCALE), int(.30 * config.SCALE)))
-        shelf = Shelf(x_position, y_position, shelf_image, food, string_name, food_price, quantity)
+        food = food_filename
+        # if not self.headless:
+        #     food = pygame.transform.scale(pygame.image.load(food_filename),
+        #                                   (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+        shelf = Shelf(x_position, y_position, shelf_filename, food, string_name, food_price, quantity, quantity, not self.headless)
         self.food_directory[string_name] = food_price
         self.objects.append(shelf)
         self.food_list.append(string_name)
@@ -727,12 +787,12 @@ class Game:
                 "holding_food": player.holding_food,
                 "bought_holding_food": player.bought_holding_food,
                 "budget": player.budget,
-                "bagged_items": player.bagged_items,
+                "bagged_items": [food for food in player.bagged_items],
+                "bagged_quant": [player.bagged_items[food] for food in player.bagged_items],
             }
             obs["players"].append(player_data)
-
-            basket = player.curr_basket
-            if basket is not None:
+            # JUMP
+            for basket in self.baskets:
                 basket_data = {
                     "position": basket.position,
                     "direction": DIRECTION_TO_INT[basket.direction],
@@ -745,6 +805,7 @@ class Game:
                     "purchased_quant": [basket.purchased_contents[food] for food in basket.purchased_contents],
                     "width": basket.width,
                     "height": basket.height,
+                    "being_held": basket.being_held,
                 }
                 obs["baskets"].append(basket_data)
 
@@ -778,18 +839,28 @@ class Game:
                     object_data["price"] = obj.price
                     object_data["capacity"] = obj.capacity
                     object_data["quantity"] = obj.item_quantity
+                    object_data["food_image"] = obj.image_filenames[1]
+                    object_data["shelf_image"] = obj.image_filenames[0]
+                    object_data["food_name"] = obj.string_type
                 if isinstance(obj, Counter):
                     object_data["food"] = obj.string_type
                     object_data["price"] = obj.price
                 if isinstance(obj, Register):
                     object_data["num_items"] = obj.num_items
-                    object_data["food_quantities"] = obj.food_quantities
-                    object_data["food_images"] = obj.food_images
+                    object_data["foods"] = list(obj.food_images.keys())
+                    object_data["food_quantities"] = [obj.food_quantities[food] for food in obj.food_images.keys()]
+                    object_data["food_images"] = [obj.food_images[food] for food in obj.food_images.keys()]
                     object_data["capacity"] = obj.counter_capacity
+                    object_data["image"] = obj.image
+                    if obj.curr_player is not None:
+                        object_data["curr_player"] = self.players.index(obj.curr_player)
+                    else:
+                        object_data["curr_player"] = None
                 category = get_obj_category(obj)
                 if category not in obs:
                     obs[category] = []
                 obs[category].append(object_data)
+                # print(obs)
 
         # prices are part of shelf observation now
         # obs["food_prices"] = dict(self.food_directory)
@@ -801,3 +872,23 @@ class Game:
     def get_cart_index(self, cart):
         return index_or_minus_one(cart, self.carts)
 
+    def check_register_zones(self, register):
+        x_margin = 0.5
+        y_margin = 1
+        for cart in self.carts:
+            if register.overlap(register.position[0] - x_margin,
+                                register.position[1] - y_margin,
+                                register.width + 2 * x_margin,
+                                register.height + 2 * y_margin, cart.position[0], cart.position[1],
+                                cart.width,
+                                cart.height):
+                if cart not in register.carts_in_zone:
+                    register.carts_in_zone.append(cart)
+        for cart in register.carts_in_zone:
+            if not register.overlap(register.position[0] - x_margin,
+                                    register.position[1] - y_margin,
+                                    register.width + 2 * x_margin,
+                                    register.height + 2 * y_margin, cart.position[0], cart.position[1],
+                                    cart.width,
+                                    cart.height):
+                register.carts_in_zone.remove(cart)

@@ -27,7 +27,8 @@ class Register(InteractiveObject):
         self.food_images = defaultdict()
         self.food_quantities = defaultdict(int)
         self.num_items = 0
-        self.last_player = None
+        self.prev_player = None
+        self.curr_player = None
 
         self.checking_contents = False
         self.select_index = 0
@@ -37,6 +38,8 @@ class Register(InteractiveObject):
         self.pickup_item = False
         self.buying = False
 
+        self.carts_in_zone = []
+
     def __str__(self):
         return "a checkout counter"
 
@@ -45,30 +48,35 @@ class Register(InteractiveObject):
                        x_position, y_position, obj.width, obj.height)
 
     def render(self, screen, camera):
-        screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
+        if self.image is not None:
+            image = pygame.transform.scale(pygame.image.load(self.image),
+                                           (int(2.3 * config.SCALE), int(3 * config.SCALE)))
+            screen.blit(image, ((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
                                  (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE))
-        self.render_items(screen, camera)
+            self.render_items(screen, camera)
 
     def render_items(self, screen, camera):
         x_pos = self.position[0] - camera.position[0]
         y_pos = self.position[1] - camera.position[1]
 
         food_positions = [[x_pos + 1.7, y_pos], [x_pos + 1.7, y_pos + .1], [x_pos + 1.7, y_pos + .2],
-                               [x_pos + 1.7, y_pos + .3], [x_pos + 1.7, y_pos + .4], [x_pos + 1.7, y_pos + .5],
-                               [x_pos + 1.9, y_pos + 0], [x_pos + 1.9, y_pos + .1], [x_pos + 1.9, y_pos + .2],
-                               [x_pos + 1.9, y_pos + .3], [x_pos + 1.9, y_pos + .4], [x_pos + 1.9, y_pos + .5]]
+                          [x_pos + 1.7, y_pos + .3], [x_pos + 1.7, y_pos + .4], [x_pos + 1.7, y_pos + .5],
+                          [x_pos + 1.9, y_pos + 0], [x_pos + 1.9, y_pos + .1], [x_pos + 1.9, y_pos + .2],
+                          [x_pos + 1.9, y_pos + .3], [x_pos + 1.9, y_pos + .4], [x_pos + 1.9, y_pos + .5]]
 
         counter = 0
         for food_name in self.food_images.keys():
             for i in range(0, self.food_quantities[food_name]):
                 if counter > 12:
-                   counter = 0
+                    counter = 0
 
                 rect = pygame.Rect(food_positions[counter][0] * config.SCALE,
                                    food_positions[counter][1] * config.SCALE,
                                    config.SCALE, config.SCALE)
-
-                screen.blit(self.food_images[food_name], rect)
+                food = pygame.transform.scale(
+                    pygame.image.load(self.food_images[food_name]),
+                    (int(.30 * config.SCALE), int(.30 * config.SCALE)))
+                screen.blit(food, rect)
                 counter += 1
 
     def render_interaction(self, game, screen):
@@ -152,15 +160,25 @@ class Register(InteractiveObject):
 
     def interact(self, game, player):
         if game.bagging:
-            self.last_player = player
+            if self.curr_player is None:
+                self.prev_player = player
+            else:
+                self.prev_player = self.curr_player
+            self.curr_player = player
             self.long_interact(game, player)
         else:
             self.short_interact(game, player)
 
     def long_interact(self, game, player):
+
+        if self.num_items > 0 and player != self.prev_player:
+            self.interaction_message = "Please wait in line."
+            self.curr_player = self.prev_player
+            self.interactive_stage = 1
+            return
+        if not game.render_messages:
+            self.interactive_stage = 1
         if not player.holding_food and self.num_items == 0:
-            if not game.render_messages:
-                self.interactive_stage = 1
             if self.interactive_stage == 0:
                 self.interaction_message = "Hello! Would you like to check out?"
                 return
@@ -174,10 +192,11 @@ class Register(InteractiveObject):
                 self.interaction_message = "Would you like to put " + player.holding_food + " on the counter?"
             if self.interactive_stage == 1:
                 if self.num_items < self.counter_capacity:
+                    # put food on counter
                     if player.holding_food in self.food_images:
                         self.food_quantities[player.holding_food] += 1
                     else:
-                        self.food_images[player.holding_food] = player.holding_food_image
+                        self.food_images[player.holding_food] = game.food_images[player.holding_food]
                         self.food_quantities[player.holding_food] = 1
                     self.interaction_message = "You put " + player.holding_food + " on the counter."
                     player.holding_food = None
@@ -186,15 +205,13 @@ class Register(InteractiveObject):
                 else:
                     self.interaction_message = "Sorry, no more room on the counter."
             return
-                # place item on counter
+            # place item on counter
         if not player.holding_food and self.num_items > 0:
-            if not game.render_messages:
-                self.interactive_stage = 1
             if self.interactive_stage == 0:
                 self.checking_contents = True
                 game.item_select = True
                 self.interaction_message = None
-            if self.interactive_stage == 1 or not game.render_messages:
+            if self.interactive_stage == 1:
                 self.select_index = 0
                 self.checking_contents = False
                 if self.buying or not game.render_messages:
@@ -216,8 +233,9 @@ class Register(InteractiveObject):
                         self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
                         self.buying = False
                 elif self.selected_food != "Exit":
-                    self.pickup(self.selected_food, self.last_player, self.selected_food_image)
+                    self.pickup(self.selected_food, self.curr_player, self.selected_food_image)
                     self.pickup_item = False
+                    self.num_items -= 1
                     self.interaction_message = "You took " + self.selected_food + " off the counter."
                 else:
                     self.interaction_message = "Please place items on the counter."
@@ -225,6 +243,11 @@ class Register(InteractiveObject):
 
     def short_interact(self, game, player):
         # first interactive stage is just rendering prompt
+        if len(self.carts_in_zone) > 0 and player != self.carts_in_zone[0].last_held:
+            self.interaction_message = "Please wait in line."
+            self.curr_player = self.prev_player
+            self.interactive_stage = 1
+            return
         if not game.render_messages:
             self.interactive_stage = 1
         if self.interactive_stage == 0:
@@ -306,4 +329,25 @@ class Register(InteractiveObject):
         # give to player
         player.holding_food = food
         player.holding_food_image = food_image
+
+    def check_zones(self, game):
+        x_margin = 0.5
+        y_margin = 1
+        for cart in game.carts:
+            if overlap(self.position[0] - x_margin,
+                       self.position[1] - y_margin,
+                       self.width + 2 * x_margin,
+                       self.height + 2 * y_margin, cart.position[0], cart.position[1],
+                       cart.width,
+                       cart.height):
+                if cart not in self.carts_in_zone:
+                    self.carts_in_zone.append(cart)
+        for cart in self.carts_in_zone:
+            if not overlap(self.position[0] - x_margin,
+                           self.position[1] - y_margin,
+                           self.width + 2 * x_margin,
+                           self.height + 2 * y_margin, cart.position[0], cart.position[1],
+                           cart.width,
+                           cart.height):
+                self.carts_in_zone.remove(cart)
 

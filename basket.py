@@ -1,3 +1,4 @@
+import random
 from collections import defaultdict
 
 import pygame
@@ -25,6 +26,10 @@ class Basket(InteractiveObject):
             else:
                 self.interaction_message = "The basket is full! The food won't fit."
         else:
+            if not game.render_messages and len(self.contents) > 0:
+                food_list = list(self.contents.items())
+                random_item = random.choice(food_list)
+                self.pickup(random_item[0], player, game.food_images[random_item[0]])
             self.checking_contents = True
             game.item_select = True
             self.interaction_message = None
@@ -93,14 +98,6 @@ class Basket(InteractiveObject):
 
     def render(self, screen, camera):
         image = None
-        if not self.interaction:
-            self.checking_contents = False
-            self.select_index = 0
-            # this is messy but like whatevs
-            if self.pickup_item:
-                self.pickup(self.selected_food, self.last_held, self.selected_food_image)
-                self.pickup_item = False
-            # remove food from cart and give to player
         if self.state == CartState.EMPTY or self.state == CartState.PURCHASED:
             image = pygame.transform.scale(pygame.image.load("images/baskets/grocery_basket_empty.png"),
                                                (int(.5 * config.SCALE), int(.5 * config.SCALE)))
@@ -115,7 +112,15 @@ class Basket(InteractiveObject):
         screen.blit(image, rect)
 
     def can_interact(self, player):
-        return player.curr_cart != self and can_interact_default(self, player)
+        if not self.interaction:
+            # turns off menu rendering
+            self.checking_contents = False
+            self.select_index = 0
+            # picks up item
+            if self.pickup_item:
+                self.pickup(self.selected_food, self.last_held, self.selected_food_image)
+                self.pickup_item = False
+        return player.curr_basket != self and can_interact_default(self, player)
 
     def empty_basket(self):
         self.contents = {}

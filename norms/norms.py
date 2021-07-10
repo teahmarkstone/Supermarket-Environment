@@ -2,8 +2,13 @@ import math
 from collections import defaultdict
 
 from checkout import Register
+from cart import Cart
+from shoppingcarts import Carts
+from baskets import Baskets
 from counters import Counter
+from basket import Basket
 from enums.direction import Direction
+from enums.game_state import GameState
 from enums.player_action import PlayerAction
 from helper import pos_collision, overlap
 from norms.norm import Norm, NormViolation
@@ -212,7 +217,6 @@ class ReturnCartNorm(Norm):
         return violations
 
     def reset(self):
-        print("resetting")
         super(ReturnCartNorm, self).reset()
 
 
@@ -261,6 +265,8 @@ class PlayerCollisionNorm(Norm):
         violations = set()
         next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
         for i, player in enumerate(game.players):
+            if player.left_store:
+                continue
             cart = player.curr_cart
             prev_dir = player.direction
             next_pos = next_positions[i]
@@ -269,6 +275,8 @@ class PlayerCollisionNorm(Norm):
                 cart.update_position(next_pos[0], next_pos[1])
             for j, player2 in enumerate(game.players):
                 if i == j:
+                    continue
+                if player2.left_store:
                     continue
                 if 1 <= action[i] <= 4 and overlap(next_pos[0], next_pos[1], player.width, player.height,
                                                    next_positions[j][0], next_positions[j][1], player2.width,
@@ -627,9 +635,13 @@ class PersonalSpaceNorm(Norm):
         violations = set()
         next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
         for i, player in enumerate(game.players):
+            if player.left_store:
+                continue
             next_pos = next_positions[i]
             center = [next_pos[0] + player.width / 2., next_pos[1] + player.height / 2.]
             for j, player2 in enumerate(game.players):
+                if player2.left_store:
+                    continue
                 if i == j:
                     continue
                 center2 = [next_positions[j][0] + player2.width / 2., next_positions[j][1] + player2.height / 2.]
@@ -671,3 +683,298 @@ class InteractionCancellationNorm(Norm):
                                                                Counter)) and target.interaction and target.interactive_stage == 0:
                     violations.add(InteractionCancellationViolation(player, target, 1))
         return violations
+
+
+class WaitForCheckoutViolation(NormViolation):
+    def __init__(self, player1, player2):
+        super(WaitForCheckoutViolation, self).__init__()
+        self.player1 = player1
+        self.player2 = player2
+
+    def as_string(self):
+        return "{player1} did not wait for {player2} to finish checking out".format(
+            player1=self.player1, player2=self.player2)
+
+
+class WaitForCheckoutNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Register):
+                    if game.bagging:
+                        if interaction_object.num_items > 0 and interaction_object.prev_player != player:
+                            if game.render_messages:
+                                if game.game_state == GameState.EXPLORATORY:
+                                    violations.add(WaitForCheckoutViolation(player, interaction_object.prev_player))
+                                    self.known_violations.add(player)
+                            else:
+                                violations.add(WaitForCheckoutViolation(player, interaction_object.prev_player))
+                                self.known_violations.add(player)
+                    else:
+                        if len(interaction_object.carts_in_zone) > 0:
+                            first_player = interaction_object.carts_in_zone[0].last_held
+                            if player != first_player:
+                                if game.render_messages:
+                                    if game.game_state == GameState.EXPLORATORY:
+                                        violations.add(WaitForCheckoutViolation(player, first_player))
+                                        self.known_violations.add(player)
+                                else:
+                                    violations.add(WaitForCheckoutViolation(player, first_player))
+                                    self.known_violations.add(player)
+
+        return violations
+
+
+class ItemTheftFromCartViolation(NormViolation):
+    def __init__(self, player1, player2):
+        super(ItemTheftFromCartViolation, self).__init__()
+        self.player1 = player1
+        self.player2 = player2
+
+    def as_string(self):
+        return "{player1} stole an item from {player2}'s cart".format(
+            player1=self.player1, player2=self.player2)
+
+
+class ItemTheftFromCartNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Cart):
+                    if player != interaction_object.owner:
+                        if game.render_messages:
+                            if interaction_object.pickup_item:
+                                violations.add(ItemTheftFromCartViolation(player, interaction_object.owner))
+                                self.known_violations.add(player)
+                        elif not player.holding_food:
+                            violations.add(ItemTheftFromCartViolation(player, interaction_object.owner))
+                            self.known_violations.add(player)
+        return violations
+
+
+class ItemTheftFromBasketViolation(NormViolation):
+    def __init__(self, player1, player2):
+        super(ItemTheftFromBasketViolation, self).__init__()
+        self.player1 = player1
+        self.player2 = player2
+
+    def as_string(self):
+        return "{player1} stole an item from {player2}'s basket".format(
+            player1=self.player1, player2=self.player2)
+
+
+class ItemTheftFromBasketNorm(Norm):
+    def pre_monitor(self, game, action):
+
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Basket):
+                    if player != interaction_object.owner:
+                        if game.render_messages:
+                            if interaction_object.pickup_item:
+                                violations.add(ItemTheftFromBasketViolation(player, interaction_object.owner))
+                                self.known_violations.add(player)
+                        elif not player.holding_food:
+                            violations.add(ItemTheftFromBasketViolation(player, interaction_object.owner))
+                            self.known_violations.add(player)
+
+        return violations
+
+
+class AdhereToListViolation(NormViolation):
+    def __init__(self, player, food):
+        super(AdhereToListViolation, self).__init__()
+        self.player = player
+        self.food = food
+
+    def as_string(self):
+        return "{player} took an item, {food}, that is not on their shopping list".format(
+            player=self.player, food=self.food)
+
+
+class AdhereToListNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
+                    if interaction_object.string_type not in player.shopping_list and not player.holding_food \
+                            and game.game_state == GameState.EXPLORATORY:
+                        violations.add(AdhereToListViolation(player, interaction_object.string_type))
+                        self.known_violations.add(player)
+        return violations
+
+
+class TookTooManyViolation(NormViolation):
+    def __init__(self, player, food):
+        super(TookTooManyViolation, self).__init__()
+        self.player = player
+        self.food = food
+
+    def as_string(self):
+        return "{player} took more {food} than they needed".format(
+            player=self.player, food=self.food)
+
+
+class TookTooManyNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
+                    if interaction_object.string_type in player.shopping_list and not player.holding_food \
+                            and game.game_state == GameState.EXPLORATORY:
+                        quantity = calculate_quantities(interaction_object.string_type, game.carts, game.baskets,
+                                                        player)
+                        if quantity >= player.list_quant[player.shopping_list.index(interaction_object.string_type)]:
+                            violations.add(TookTooManyViolation(player, interaction_object.string_type))
+                            self.known_violations.add(player)
+        return violations
+
+
+def calculate_quantities(food_item, carts, baskets, player):
+    food_quantity = 0
+    for cart in carts:
+        if cart.last_held == player:
+            if food_item in cart.contents:
+                food_quantity += cart.contents[food_item]
+            if food_item in cart.purchased_contents:
+                food_quantity += cart.purchased_contents[food_item]
+    for basket in baskets:
+        if basket.last_held == player:
+            if food_item in basket.contents:
+                food_quantity += basket.contents[food_item]
+            if food_item in basket.purchased_contents:
+                food_quantity += basket.purchased_contents[food_item]
+    if player.holding_food == food_item:
+        food_quantity += 1
+
+    return food_quantity
+
+
+class MoreThanSixViolation(NormViolation):
+    def __init__(self, player):
+        super(MoreThanSixViolation, self).__init__()
+        self.player = player
+
+    def as_string(self):
+        return "{player} took a basket when they have more than 6 items on their shopping list".format(
+            player=self.player)
+
+
+class MoreThanSixNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Baskets) and player.curr_basket is None and player.curr_cart is None \
+                        and game.game_state == GameState.EXPLORATORY:
+                    num_items = 0
+                    for i in range(0, len(player.list_quant)):
+                        num_items += player.list_quant[i]
+                    if num_items > 6:
+                        violations.add(MoreThanSixViolation(player))
+                        self.known_violations.add(player)
+        return violations
+
+
+class SixOrLessViolation(NormViolation):
+    def __init__(self, player):
+        super(SixOrLessViolation, self).__init__()
+        self.player = player
+
+    def as_string(self):
+        return "{player} took a cart when they have 6 or less items on their shopping list".format(
+            player=self.player)
+
+
+class SixOrLessNorm(Norm):
+    def pre_monitor(self, game, action):
+        violations = set()
+        for i, player in enumerate(game.players):
+            if action[i] == PlayerAction.INTERACT:
+                interaction_object = game.interaction_object(player)
+                if isinstance(interaction_object, Carts) and player.curr_cart is None and player.curr_basket is None \
+                        and game.game_state == GameState.EXPLORATORY:
+                    num_items = 0
+                    for i in range(0, len(player.list_quant)):
+                        num_items += player.list_quant[i]
+                    if num_items <= 6:
+                        violations.add(SixOrLessViolation(player))
+                        self.known_violations.add(player)
+        return violations
+
+
+class UnattendedCheckoutViolation(NormViolation):
+    def __init__(self, player, distance, time):
+        super().__init__()
+        self.player = player
+        self.time = time
+        self.distance = distance
+
+    def as_string(self):
+        return "{player} has been too far away (distance={dist}) from checkout for too long(time={time})".format(
+            player=self.player,
+            time=self.time,
+            dist=self.distance)
+
+
+class UnattendedCheckoutNorm(Norm):
+    def post_monitor(self, game, action):
+        violations = set()
+        for register in game.objects:
+            if isinstance(register, Register):
+                if not game.bagging:
+                    for i in range(0, len(register.carts_in_zone)):
+                        distance = math.dist(register.position, register.carts_in_zone[i].last_held.position)
+                        if distance > self.dist_threshold:
+                            self.time_too_far_away[register] += 1
+                            if self.time_too_far_away[register] > self.time_threshold \
+                                    and register not in self.old_violations:
+                                violations.add(UnattendedCheckoutViolation(register.carts_in_zone[i].last_held,
+                                                                           distance=self.dist_threshold,
+                                                                           time=self.time_threshold))
+
+                                self.old_violations.add(register)
+                        else:
+                            self.time_too_far_away[register] = 0
+                            if register in self.old_violations:
+                                self.old_violations.remove(register)
+                else:
+                    if register.num_items > 0:
+                        distance = math.dist(register.position, register.curr_player.position)
+                        if distance > self.dist_threshold:
+                            self.time_too_far_away[register] += 1
+                            if self.time_too_far_away[register] > self.time_threshold \
+                                    and register not in self.old_violations:
+                                violations.add(UnattendedCheckoutViolation(register.curr_player,
+                                                                           distance=self.dist_threshold,
+                                                                           time=self.time_threshold))
+
+                                self.old_violations.add(register)
+                        else:
+                            self.time_too_far_away[register] = 0
+                            if register in self.old_violations:
+                                self.old_violations.remove(register)
+        return violations
+
+    def reset(self):
+        super(UnattendedCheckoutNorm, self).reset()
+        self.time_too_far_away = defaultdict(int)
+        self.old_violations = set()
+
+    def __init__(self, dist_threshold=5, time_threshold=5):
+        super(UnattendedCheckoutNorm, self).__init__()
+        self.dist_threshold = dist_threshold
+        self.time_threshold = time_threshold
+        self.time_too_far_away = defaultdict(int)
+        self.old_violations = set()
