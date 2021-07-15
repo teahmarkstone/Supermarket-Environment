@@ -107,7 +107,6 @@ class Shelf(InteractiveObject):
                             screen.blit(self.food_image, rect)
 
     def interact(self, game, player):
-        print(self.item_quantity)
         empty = False
         if self.item_quantity == 0:
             empty = True
