@@ -26,10 +26,10 @@ class Basket(InteractiveObject):
             else:
                 self.interaction_message = "The basket is full! The food won't fit."
         else:
-            if not game.render_messages and len(self.contents) > 0:
-                food_list = list(self.contents.items())
-                random_item = random.choice(food_list)
-                self.pickup(random_item[0], player, game.food_images[random_item[0]])
+            if not game.keyboard_input:
+                if game.selected_food in self.contents or game.selected_food in self.purchased_contents:
+                    self.pickup(game.selected_food, player, game.food_images[game.selected_food])
+                game.selected_food = None
             self.checking_contents = True
             game.item_select = True
             self.interaction_message = None
@@ -81,15 +81,16 @@ class Basket(InteractiveObject):
             self.menu_length = self.get_menu_length()
             if self.interaction is not None:
                 if self.checking_contents:
-                    if game.select_up:
-                        game.select_up = False
-                        if self.select_index != 0:
-                            self.select_index -= 1
+                    if game.keyboard_input:
+                        if game.select_up:
+                            game.select_up = False
+                            if self.select_index != 0:
+                                self.select_index -= 1
 
-                    if game.select_down:
-                        game.select_down = False
-                        if self.select_index < self.menu_length:
-                            self.select_index += 1
+                        if game.select_down:
+                            game.select_down = False
+                            if self.select_index < self.menu_length:
+                                self.select_index += 1
                     self.render_contents(screen)
                     if self.selected_food is not None:
                         self.selected_food_image = pygame.transform.scale(

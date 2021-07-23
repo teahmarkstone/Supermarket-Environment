@@ -9,4 +9,5 @@ class PlayerAction(IntEnum):
     WEST = 4,
     INTERACT = 5,
     TOGGLE = 6,
-    CANCEL = 7
+    CANCEL = 7,
+    SELECT = 8

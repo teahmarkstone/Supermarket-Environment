@@ -251,7 +251,7 @@ if __name__ == "__main__":
     # Make the env
     # env_id = 'Supermarket-v0'  # NovelGridworld-v6, NovelGridworld-Pogostick-v0, NovelGridworld-Bow-v0
     # env = gym.make(env_id)
-    env = SupermarketEnv(args.num_players, render_messages=args.render_messages, headless=args.headless,
+    env = SupermarketEnv(args.num_players, render_messages=args.keyboard_input, headless=args.headless,
                          initial_state_filename=args.file,
                          bagging=args.bagging,
                          follow_player=args.follow if args.num_players > 1 else 0,

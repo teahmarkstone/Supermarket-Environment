@@ -154,8 +154,11 @@ class Game:
         self.random_start = random_start
 
         self.item_select = False
-        self.select_up = False
-        self.select_down = False
+        if self.keyboard_input:
+            self.select_up = False
+            self.select_down = False
+        else:
+            self.selected_food = None
 
         self.loaded = False
         if initial_state_filename is not None:
@@ -736,6 +739,13 @@ class Game:
     def set_baskets(self):
         baskets = Baskets(3.5, 18.5)
         self.objects.append(baskets)
+
+    def select(self, i, food):
+        if self.players[i].left_store:
+            return
+        if not self.game_state == GameState.INTERACTIVE:
+            return
+        self.selected_food = self.food_list[food]
 
     # checking if a player is facing an object
     # TODO maybe alter so that shopping carts have slightly different interaction zones?

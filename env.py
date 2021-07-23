@@ -11,7 +11,7 @@ class SupermarketEnv(gym.Env):
 
     def __init__(self, num_players=1, player_speed=0.15, keyboard_input=False, render_messages=True, bagging=False,
                  headless=False, initial_state_filename=None, follow_player=-1, random_start=False,
-                 render_number=False):
+                 render_number=False, max_num_items=33):
 
         super(SupermarketEnv, self).__init__()
 
@@ -29,7 +29,8 @@ class SupermarketEnv(gym.Env):
 
         self.initial_state_filename = initial_state_filename
 
-        self.action_space = gym.spaces.MultiDiscrete([len(PlayerAction)]*self.num_players)
+        self.action_space = gym.spaces.Tuple([gym.spaces.Tuple((gym.spaces.Discrete(len(PlayerAction)),
+                                                                gym.spaces.Discrete(max_num_items)))] * num_players)
         self.observation_space = gym.spaces.Dict()
         self.headless = headless
         self.random_start = random_start
@@ -37,6 +38,7 @@ class SupermarketEnv(gym.Env):
     def step(self, action):
         done = False
         for i, player_action in enumerate(action):
+            player_action, arg = player_action
             if player_action in MOVEMENT_ACTIONS:
                 self.game.player_move(i, player_action)
             elif player_action == PlayerAction.NOP:
@@ -48,6 +50,8 @@ class SupermarketEnv(gym.Env):
                 self.game.toggle_basket(i)
             elif player_action == PlayerAction.CANCEL:
                 self.game.cancel_interaction(i)
+            elif player_action == PlayerAction.SELECT:
+                self.game.select(i, arg)
         observation = self.game.observation()
         self.step_count += 1
         if not self.game.running:

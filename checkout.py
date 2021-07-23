@@ -85,15 +85,16 @@ class Register(InteractiveObject):
             self.menu_length = self.get_menu_length()
             if self.interaction is not None:
                 if self.checking_contents:
-                    if game.select_up:
-                        game.select_up = False
-                        if self.select_index != 0:
-                            self.select_index -= 1
+                    if game.keyboard_input:
+                        if game.select_up:
+                            game.select_up = False
+                            if self.select_index != 0:
+                                self.select_index -= 1
 
-                    if game.select_down:
-                        game.select_down = False
-                        if self.select_index < self.menu_length:
-                            self.select_index += 1
+                        if game.select_down:
+                            game.select_down = False
+                            if self.select_index < self.menu_length:
+                                self.select_index += 1
                     self.render_contents(screen)
 
                     if self.selected_food == "Buy":
@@ -233,6 +234,10 @@ class Register(InteractiveObject):
                         self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
                         self.buying = False
                 elif self.selected_food != "Exit":
+                    if not game.keyboard_input and game.selected_food in self.food_images:
+                        self.selected_food = game.selected_food
+                        self.selected_food_image = game.food_images[game.selected_food]
+                        game.selected_food = None
                     self.pickup(self.selected_food, self.curr_player, self.selected_food_image)
                     self.pickup_item = False
                     self.num_items -= 1
