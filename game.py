@@ -128,7 +128,9 @@ class Game:
         self.camera = Camera()
         self.food_directory = defaultdict(int)
         self.sprite_paths = sprite_paths
+
         self.record_path = record_path
+        self.recording = False
 
         self.frame_num = 0
 
@@ -344,7 +346,7 @@ class Game:
             if self.render_messages:
                 render.render_money(self.screen, self.camera, self.players[self.curr_player])
 
-            if self.record_path is not None:
+            if self.record_path is not None and self.recording:
                 if not os.path.exists(self.record_path):
                     os.makedirs(self.record_path)
                 filename = os.path.join(self.record_path, f'{self.frame_num:06d}.png')
@@ -352,6 +354,10 @@ class Game:
                 self.frame_num += 1
             # checking keyboard input/events for either exploratory or interactive
             pygame.display.flip()
+
+    def toggle_record(self):
+        self.recording = not self.recording
+        print(("Started" if self.recording else "Stopped") + " recording.")
 
     def interact(self, player_index):
         if self.players[player_index].left_store:

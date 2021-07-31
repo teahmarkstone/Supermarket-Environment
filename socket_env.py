@@ -56,6 +56,8 @@ class SupermarketEventHandler:
                 filename = input("Please enter a filename for saving the state.\n>>> ")
                 self.env.game.save_state(filename)
                 print("State saved to {filename}.".format(filename=filename))
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                self.env.game.toggle_record()
             elif self.keyboard_input:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
