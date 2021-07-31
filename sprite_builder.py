@@ -2,9 +2,9 @@ import pygame
 import random
 from pathlib import Path
 
-def build_sprites(player_num):
+def build_sprites(player_num, sheet_filename=None):
     # loads all sprite sheets, returns two random ones
-    sprite_sheet = load_sheets(player_num)
+    sprite_sheet = load_sheets(player_num, sheet_filename)
     sprites = splice_and_merge([48, 72], sprite_sheet)
     return sprites
 
@@ -14,15 +14,14 @@ def pick_sprites(sprite_sheets):
     return rand_sheet
 
 
-def load_sheets(player_num):
+def load_sheets(player_num, sheet_path=None):
     sprite_sheets = []
-    my_path = Path("images/sprites/sprite_sheets")
-    files = [str(f) for f in Path(my_path).iterdir() if f.match("*.png")]
-    for image in files:
-        sprite_sheets.append(pygame.image.load(image))
-
-    rand_sheet = sprite_sheets[player_num]
-    return rand_sheet
+    if sheet_path is None:
+        my_path = Path("images/sprites/sprite_sheets")
+        files = [str(f) for f in Path(my_path).iterdir() if f.match("*.png")]
+        return pygame.image.load(files[player_num])
+    else:
+        return pygame.image.load(sheet_path)
 
 
 def splice_and_merge(size, sheet, pos=(0, 24)):

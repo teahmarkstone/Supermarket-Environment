@@ -11,12 +11,14 @@ from render_game import render_text
 
 
 class Player:
-    def __init__(self, x_position, y_position, direction, player_number, render_number=False):
+    def __init__(self, x_position, y_position, direction, player_number, render_number=False, sprite_path=None):
         # player ID
         self.player_number = player_number
         # which way player is facing
         self.direction = direction
         self.position = [x_position, y_position]
+
+        self.sprite_path = sprite_path
 
         # stage of walking animation, indices correspond to direction (north = 0, south = 1, east = 2, west = 3)
         self.stage = [0, 0, 0, 0]
@@ -318,15 +320,19 @@ class Player:
                 basket.state = CartState.EMPTY
 
     def load_images(self):
-        sprites = sprite_builder.build_sprites(self.player_number)
-        for i in range(0, 6):
-            self.east_images.append(sprites[i])
-        for i in range(6, 12):
-            self.north_images.append(sprites[i])
-        self.north_images.append(sprites[11])
-        for i in range(12, 18):
-            self.west_images.append(sprites[i])
-        for i in range(18, 23):
-            self.south_images.append(sprites[i])
-        self.south_images.append(sprites[22])
-        self.south_images.append(sprites[22])
+        sprites = sprite_builder.build_sprites(self.player_number, self.sprite_path)
+        self.east_images = sprites[0:6]
+        self.north_images = sprites[6:12] + [sprites[11]]
+        self.west_images = sprites[12:18]
+        self.south_images = sprites[18:23] + 2*[sprites[22]]
+        # for i in range(0, 6):
+        #     self.east_images.append(sprites[i])
+        # for i in range(6, 12):
+        #     self.north_images.append(sprites[i])
+        # self.north_images.append(sprites[11])
+        # for i in range(12, 18):
+        #     self.west_images.append(sprites[i])
+        # for i in range(18, 23):
+        #     self.south_images.append(sprites[i])
+        # self.south_images.append(sprites[22])
+        # self.south_images.append(sprites[22])

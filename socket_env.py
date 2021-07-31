@@ -244,6 +244,12 @@ if __name__ == "__main__":
         action='store_true'
     )
 
+    parser.add_argument(
+        '--player_sprites',
+        nargs='+',
+        type=str,
+    )
+
     args = parser.parse_args()
 
     # np.random.seed(0)
@@ -257,7 +263,8 @@ if __name__ == "__main__":
                          follow_player=args.follow if args.num_players > 1 else 0,
                          keyboard_input=args.keyboard_input,
                          random_start=args.random_start,
-                         render_number=args.render_number
+                         render_number=args.render_number,
+                         player_sprites=args.player_sprites,
                          )
 
     norms = [CartTheftNorm(),

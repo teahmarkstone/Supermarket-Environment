@@ -104,7 +104,7 @@ class Game:
 
     def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False, bagging=False,
                  headless=False, initial_state_filename=None, follow_player=-1, random_start=False,
-                 render_number=False):
+                 render_number=False, sprite_paths=None):
 
         self.screen = None
         self.clock = None
@@ -126,6 +126,7 @@ class Game:
         self.map = []
         self.camera = Camera()
         self.food_directory = defaultdict(int)
+        self.sprite_paths = sprite_paths
 
         self.num_players = num_players
         self.game_state = GameState.NONE
@@ -174,7 +175,7 @@ class Game:
         for player_dict in obs['players']:
             pos = player_dict['position']
             player = Player(pos[0], pos[1], DIRECTIONS[player_dict['direction']], player_dict['index'],
-                            self.render_number)
+                            self.render_number, player_dict['sprite_path'])
             player.shopping_list = player_dict['shopping_list']
             player.list_quant = player_dict['list_quant']
             player.holding_food = player_dict['holding_food']
@@ -293,7 +294,8 @@ class Game:
 
         if len(self.players) == 0:
             for i in range(0, self.num_players):
-                player = Player(i + 1.2, 15.6, Direction.EAST, i, self.render_number)
+                sprite_path = None if self.sprite_paths is None or len(self.sprite_paths) <= i else self.sprite_paths[i]
+                player = Player(i + 1.2, 15.6, Direction.EAST, i, self.render_number, sprite_path)
                 if self.random_start:
                     self.randomize_position(player)
                 player.set_shopping_list(self.food_list)
@@ -792,6 +794,7 @@ class Game:
                 "position": player.position,
                 "width": player.width,
                 "height": player.height,
+                "sprite_path": player.sprite_path,
                 "direction": DIRECTION_TO_INT[player.direction],
                 "curr_cart": self.get_cart_index(player.curr_cart),
                 "shopping_list": player.shopping_list,
