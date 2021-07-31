@@ -170,6 +170,7 @@ class Register(InteractiveObject):
         else:
             self.short_interact(game, player)
 
+    #TODO(teah) we may need to fix the logic here to match the short_interact logic.
     def long_interact(self, game, player):
 
         if self.num_items > 0 and player != self.prev_player:
@@ -258,25 +259,20 @@ class Register(InteractiveObject):
         if self.interactive_stage == 0:
             self.interaction_message = "Hello! Would you like to check out?"
             return
-        if self.interactive_stage == 1 or not game.render_messages:
+        if self.interactive_stage == 1:
             has_items = False
             can_afford = True
             curr_money = 0
             x_margin = 0.5
             y_margin = 1
+            carts = []
+
+            food_list = defaultdict(int)
 
             # buying food player is holding
             if player.holding_food is not None and not player.bought_holding_food:
-                food_list = defaultdict(int)
                 food_list[player.holding_food] = 1
-                curr_money = self.can_afford(player, food_list)
-                if curr_money >= 0:
-                    # determine if player can afford stuff here
-                    player.bought_holding_food = True
-                    has_items = True
-                    player.budget = curr_money
-                else:
-                    can_afford = False
+                has_items = True
 
             # buying food in carts
             for cart in game.carts:
@@ -285,35 +281,34 @@ class Register(InteractiveObject):
                                     self.height + 2 * y_margin, cart.position[0], cart.position[1], cart.width,
                                     cart.height):
                     if sum(cart.contents.values()) > 0:
-                        # curr_money = self.can_afford(player, cart.contents)
-                        # if curr_money >= 0:
-                        # determine if player can afford stuff here
-                        cart.buy()
+                        carts.append(cart)
                         has_items = True
-                        # player.budget = curr_money
-                        # else:
-                        #    can_afford = False
+                        for food in cart.contents:
+                            food_list[food] += cart.contents[food]
 
             # buying food in basket
             if player.curr_basket is not None:
-
                 if sum(player.curr_basket.contents.values()) > 0:
                     # determine if player can afford stuff here
-                    curr_money = self.can_afford(player, player.curr_basket.contents)
-                    if curr_money >= 0:
-                        # determine if player can afford stuff here
+                    has_items = True
+                    for food in player.curr_basket.contents:
+                        food_list[food] += player.curr_basket.contents[food]
+            if has_items:
+                curr_money = self.can_afford(player, food_list)
+                if curr_money >= 0:
+                    player.budget = curr_money
+                    if player.holding_food:
+                        player.bought_holding_food = True
+                    for cart in carts:
+                        cart.buy()
+                    if player.curr_basket is not None:
                         player.curr_basket.buy()
-                        has_items = True
-                        player.budget = curr_money
-                    else:
-                        can_afford = False
-
-            if has_items and can_afford:
-                self.interaction_message = "Thank you for shopping with us!"
-            elif can_afford:
-                self.interaction_message = "You need items in order to check out, silly!"
+                    self.interaction_message = "Thank you for shopping with us!"
+                else:
+                    self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
             else:
-                self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
+                self.interaction_message = "You need items in order to check out, silly!"
+
 
     def can_afford(self, player, food_list):
         curr_money = player.budget
