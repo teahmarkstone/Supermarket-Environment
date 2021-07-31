@@ -345,6 +345,8 @@ class Game:
                 render.render_money(self.screen, self.camera, self.players[self.curr_player])
 
             if self.record_path is not None:
+                if not os.path.exists(self.record_path):
+                    os.makedirs(self.record_path)
                 filename = os.path.join(self.record_path, f'{self.frame_num:06d}.png')
                 pygame.image.save(self.screen, filename)
                 self.frame_num += 1
