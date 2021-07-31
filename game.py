@@ -2,6 +2,7 @@ from random import uniform, choice
 
 import pygame
 import config
+import os
 import render_game as render
 from camera import Camera
 from cart import Cart
@@ -104,7 +105,7 @@ class Game:
 
     def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False, bagging=False,
                  headless=False, initial_state_filename=None, follow_player=-1, random_start=False,
-                 render_number=False, sprite_paths=None):
+                 render_number=False, sprite_paths=None, record_path=None):
 
         self.screen = None
         self.clock = None
@@ -127,6 +128,9 @@ class Game:
         self.camera = Camera()
         self.food_directory = defaultdict(int)
         self.sprite_paths = sprite_paths
+        self.record_path = record_path
+
+        self.frame_num = 0
 
         self.num_players = num_players
         self.game_state = GameState.NONE
@@ -339,6 +343,11 @@ class Game:
 
             if self.render_messages:
                 render.render_money(self.screen, self.camera, self.players[self.curr_player])
+
+            if self.record_path is not None:
+                filename = os.path.join(self.record_path, f'{self.frame_num:06d}.png')
+                pygame.image.save(self.screen, filename)
+                self.frame_num += 1
             # checking keyboard input/events for either exploratory or interactive
             pygame.display.flip()
 

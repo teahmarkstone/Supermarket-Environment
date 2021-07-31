@@ -250,6 +250,11 @@ if __name__ == "__main__":
         type=str,
     )
 
+    parser.add_argument(
+        '--record_path',
+        type=str,
+    )
+
     args = parser.parse_args()
 
     # np.random.seed(0)
@@ -265,6 +270,7 @@ if __name__ == "__main__":
                          random_start=args.random_start,
                          render_number=args.render_number,
                          player_sprites=args.player_sprites,
+                         record_path=args.record_path,
                          )
 
     norms = [CartTheftNorm(),

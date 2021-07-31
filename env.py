@@ -11,7 +11,7 @@ class SupermarketEnv(gym.Env):
 
     def __init__(self, num_players=1, player_speed=0.15, keyboard_input=False, render_messages=True, bagging=False,
                  headless=False, initial_state_filename=None, follow_player=-1, random_start=False,
-                 render_number=False, max_num_items=33, player_sprites=None):
+                 render_number=False, max_num_items=33, player_sprites=None, record_path=None):
 
         super(SupermarketEnv, self).__init__()
 
@@ -27,6 +27,8 @@ class SupermarketEnv(gym.Env):
         self.player_speed = player_speed
         self.game = None
         self.player_sprites = player_sprites
+
+        self.record_path = record_path
 
         self.initial_state_filename = initial_state_filename
 
@@ -67,7 +69,8 @@ class SupermarketEnv(gym.Env):
                          headless=self.headless, initial_state_filename=self.initial_state_filename,
                          follow_player=self.follow_player, random_start=self.random_start,
                          render_number=self.render_number,
-                         sprite_paths=self.player_sprites)
+                         sprite_paths=self.player_sprites,
+                         record_path=self.record_path)
         self.game.set_up()
         if obs is not None:
             self.game.set_observation(obs)
