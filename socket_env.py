@@ -11,7 +11,7 @@ from norms.norm import NormWrapper
 from norms.norms import *
 from utils import recv_socket_data
 
-ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL']
+ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL', 'SELECT']
 import pygame
 
 
@@ -32,8 +32,8 @@ class SupermarketEventHandler:
         env.reset()
         self.running = True
 
-    def single_player_action(self, action):
-        return self.curr_player, action
+    def single_player_action(self, action, arg=0):
+        return self.curr_player, action, arg
         # full_action = [PlayerAction.NOP]*self.env.num_players
         # full_action[self.curr_player] = action
         # return full_action
@@ -167,8 +167,10 @@ def is_single_player(command_):
 def get_player_and_command(command_):
     split_command = command_.split(' ')
     if len(split_command) == 1:
-        return 0, split_command[0]
-    return split_command[0], split_command[1]
+        return 0, split_command[0], 0
+    elif len(split_command) == 2:
+        return int(split_command[0]), split_command[1], 0
+    return int(split_command[0]), split_command[1], int(split_command[2])
 
 
 def get_commands(command_):
@@ -327,7 +329,7 @@ if __name__ == "__main__":
     while env.game.running:
         events = sel.select(timeout=0)
         should_perform_action = False
-        curr_action = [0] * env.num_players
+        curr_action = [(0,0)] * env.num_players
         e = []
         if not args.headless:
             handler.handle_events()
@@ -350,12 +352,11 @@ if __name__ == "__main__":
                                 from json import loads
                                 env.reset(obs=loads(obs))
                             if is_single_player(command):
-                                player, command = get_player_and_command(command)
+                                player, command, arg = get_player_and_command(command)
                                 e.append((key, mask, command))
-                                player = int(player)
                                 if command in ACTION_COMMANDS:
                                     action_id = ACTION_COMMANDS.index(command)
-                                    curr_action[player] = action_id
+                                    curr_action[player] = (action_id, arg)
                                     should_perform_action = True
                                     # print(action)
                                 else:

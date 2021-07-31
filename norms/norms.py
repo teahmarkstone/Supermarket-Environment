@@ -35,7 +35,7 @@ class CartTheftNorm(Norm):
     def __init__(self):
         super(CartTheftNorm, self).__init__()
 
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         new_violations = set()
         for player in game.players:
             cart = player.curr_cart
@@ -70,7 +70,7 @@ class BasketTheftNorm(Norm):
     def __init__(self):
         super(BasketTheftNorm, self).__init__()
 
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         new_violations = set()
         for player in game.players:
             basket = player.curr_basket
@@ -105,7 +105,7 @@ class ShopliftingNorm(Norm):
     def __init__(self):
         super(ShopliftingNorm, self).__init__()
 
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         new_violations = set()
         for player in game.players:
             if player.position[0] >= 0:
@@ -140,7 +140,7 @@ class LeftWithBasketNorm(Norm):
     def __init__(self):
         super(LeftWithBasketNorm, self).__init__()
 
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         new_violations = set()
         for player in game.players:
             if player.position[0] <= 0 and player.curr_basket is not None and game.bagging:
@@ -169,14 +169,14 @@ class ReturnBasketNorm(Norm):
     def __init__(self):
         super(ReturnBasketNorm, self).__init__()
 
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         for player in game.players:
             abandoned_baskets = 0
             for basket in game.baskets:
                 if basket.owner == player and not basket.being_held:
                     abandoned_baskets += 1
-            if player.position[0] < 0 and abandoned_baskets > 0:
+            if player.position[0] < 0 < abandoned_baskets:
                 violation = ReturnBasketViolation(player, abandoned_baskets)
                 if player not in self.known_violations:
                     violations.add(violation)
@@ -202,14 +202,14 @@ class ReturnCartNorm(Norm):
     def __init__(self):
         super(ReturnCartNorm, self).__init__()
 
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         for player in game.players:
             abandoned_carts = 0
             for cart in game.carts:
                 if cart.owner == player and not cart.being_held:
                     abandoned_carts += 1
-            if player.position[0] < 0 and abandoned_carts > 0:
+            if player.position[0] < 0 < abandoned_carts:
                 violation = ReturnCartViolation(player, abandoned_carts)
                 if player not in self.known_violations:
                     violations.add(violation)
@@ -239,7 +239,7 @@ class WrongShelfNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            if player.holding_food is not None and action[i] == PlayerAction.INTERACT:
+            if player.holding_food is not None and action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) and interaction_object.string_type != player.holding_food:
                     violations.add(WrongShelfViolation(player, player.holding_food, interaction_object))
@@ -263,7 +263,7 @@ class PlayerCollisionViolation(NormViolation):
 class PlayerCollisionNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
-        next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
+        next_positions = [game.next_position(player, action[i][0]) for i, player in enumerate(game.players)]
         for i, player in enumerate(game.players):
             if player.left_store:
                 continue
@@ -271,26 +271,26 @@ class PlayerCollisionNorm(Norm):
             prev_dir = player.direction
             next_pos = next_positions[i]
             if cart is not None:
-                cart.set_direction(game.next_direction(player, action[i]))
+                cart.set_direction(game.next_direction(player, action[i][0]))
                 cart.update_position(next_pos[0], next_pos[1])
             for j, player2 in enumerate(game.players):
                 if i == j:
                     continue
                 if player2.left_store:
                     continue
-                if 1 <= action[i] <= 4 and overlap(next_pos[0], next_pos[1], player.width, player.height,
+                if 1 <= action[i][0] <= 4 and overlap(next_pos[0], next_pos[1], player.width, player.height,
                                                    next_positions[j][0], next_positions[j][1], player2.width,
                                                    player2.height):
                     if (player, player2) not in self.old_collisions:
                         violations.add(PlayerCollisionViolation(collider=player, collidee=player2, with_cart=False))
                         self.old_collisions.add((player, player2))
-                elif 1 <= action[i] <= 4 and cart is not None and \
+                elif 1 <= action[i][0] <= 4 and cart is not None and \
                         overlap(cart.position[0], cart.position[1], cart.width, cart.height,
                                 next_positions[j][0], next_positions[j][1], player2.width, player2.height):
                     if (player, player2) not in self.old_collisions:
                         violations.add(PlayerCollisionViolation(player, player2, with_cart=True))
                         self.old_collisions.add((player, player2))
-                elif (player, player2) in self.old_collisions and not action[i] == 0:
+                elif (player, player2) in self.old_collisions and not action[i][0] == 0:
                     self.old_collisions.remove((player, player2))
             if cart is not None:
                 cart.set_direction(prev_dir)
@@ -323,25 +323,25 @@ class ObjectCollisionNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            next_pos = game.next_position(player, action[i])
+            next_pos = game.next_position(player, action[i][0])
             cart = player.curr_cart
             prev_dir = player.direction
             if cart is not None:
-                cart.set_direction(game.next_direction(player, action[i]))
+                cart.set_direction(game.next_direction(player, action[i][0]))
                 cart.update_position(next_pos[0], next_pos[1])
             for obj in game.objects:
                 if player.curr_cart is not None and obj == player.curr_cart:
                     continue
-                if 1 <= action[i] <= 4 and obj.collision(player, next_pos[0], next_pos[1]):
+                if 1 <= action[i][0] <= 4 and obj.collision(player, next_pos[0], next_pos[1]):
                     if (player, obj) not in self.old_collisions:
                         violations.add(ObjectCollisionViolation(player, obj, with_cart=False))
                         self.old_collisions.add((player, obj))
-                elif 1 <= action[i] <= 4 and cart is not None and obj.collision(cart, cart.position[0],
+                elif 1 <= action[i][0] <= 4 and cart is not None and obj.collision(cart, cart.position[0],
                                                                                 cart.position[1]):
                     if (player, obj) not in self.old_collisions:
                         violations.add(ObjectCollisionViolation(player, obj, with_cart=True))
                         self.old_collisions.add((player, obj))
-                elif (player, obj) in self.old_collisions and not action[i] == 0:
+                elif (player, obj) in self.old_collisions and not action[i][0] == 0:
                     self.old_collisions.remove((player, obj))
             if cart is not None:
                 cart.set_direction(prev_dir)
@@ -376,17 +376,17 @@ class WallCollisionNorm(Norm):
             cart = player.curr_cart
             prev_dir = player.direction
             if cart is not None:
-                cart.set_direction(game.next_direction(player, action[i]))
+                cart.set_direction(game.next_direction(player, action[i][0]))
                 cart.update_position(next_pos[0], next_pos[1])
-            if 1 <= action[i] <= 4 and game.hits_wall(player, next_pos[0], next_pos[1]):
+            if 1 <= action[i][0] <= 4 and game.hits_wall(player, next_pos[0], next_pos[1]):
                 if player not in self.old_collisions:
                     new_violations.add(WallCollisionViolation(player, with_cart=False))
                     self.old_collisions.add(player)
-            elif 1 <= action[i] <= 4 and cart is not None and game.hits_wall(cart, cart.position[0], cart.position[1]):
+            elif 1 <= action[i][0] <= 4 and cart is not None and game.hits_wall(cart, cart.position[0], cart.position[1]):
                 if player not in self.old_collisions:
                     new_violations.add(WallCollisionViolation(player, with_cart=True))
                     self.old_collisions.add(player)
-            elif player in self.old_collisions and not action[i] == 0:
+            elif player in self.old_collisions and not action[i][0] == 0:
                 self.old_collisions.remove(player)
             if cart is not None:
                 cart.set_direction(prev_dir)
@@ -428,7 +428,7 @@ class BlockingExitNorm(Norm):
         self.time_in_exit = defaultdict(int)
         self.old_violations = set()
 
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         for player in game.players:
             if (in_exit_zone(player) or in_entrance_zone(player)) and not player.left_store:
@@ -461,7 +461,7 @@ class EntranceOnlyViolation(NormViolation):
 
 
 class EntranceOnlyNorm(Norm):
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         for player in game.players:
             if player.position[0] < 0 and in_entrance_zone(player):
@@ -486,7 +486,7 @@ class UnattendedCartViolation(NormViolation):
 
 
 class UnattendedCartNorm(Norm):
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         for cart in game.carts:
             if cart.last_held is not None:
@@ -531,7 +531,7 @@ class UnattendedBasketViolation(NormViolation):
 
 
 class UnattendedBasketNorm(Norm):
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         for basket in game.baskets:
             if basket.last_held is not None:
@@ -571,7 +571,7 @@ class OneCartOnlyViolation(NormViolation):
 
 
 class OneCartOnlyNorm(Norm):
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         has_cart = set()
         for cart in game.carts:
@@ -596,7 +596,7 @@ class OneBasketOnlyViolation(NormViolation):
 
 
 class OneBasketOnlyNorm(Norm):
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         has_basket = set()
         for basket in game.baskets:
@@ -633,7 +633,7 @@ def moving_towards(direction, pos_1, pos_2):
 class PersonalSpaceNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
-        next_positions = [game.next_position(player, action[i]) for i, player in enumerate(game.players)]
+        next_positions = [game.next_position(player, action[i][0]) for i, player in enumerate(game.players)]
         for i, player in enumerate(game.players):
             if player.left_store:
                 continue
@@ -645,7 +645,7 @@ class PersonalSpaceNorm(Norm):
                 if i == j:
                     continue
                 center2 = [next_positions[j][0] + player2.width / 2., next_positions[j][1] + player2.height / 2.]
-                if 1 <= action[i] <= 4 and moving_towards(game.next_direction(player, action[i]),
+                if 1 <= action[i][0] <= 4 and moving_towards(game.next_direction(player, action[i][0]),
                                                           next_pos, next_positions[j]) \
                         and math.dist(center, center2) < self.dist_threshold:
                     if (player, player2) not in self.known_violations:
@@ -677,7 +677,7 @@ class InteractionCancellationNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            if action[i] == PlayerAction.CANCEL:
+            if action[i][0] == PlayerAction.CANCEL:
                 target = game.interaction_object(player)
                 if (isinstance(target, Register) or isinstance(target,
                                                                Counter)) and target.interaction and target.interactive_stage == 0:
@@ -700,7 +700,7 @@ class WaitForCheckoutNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            if action[i] == PlayerAction.INTERACT:
+            if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Register):
                     if game.bagging:
@@ -742,7 +742,7 @@ class ItemTheftFromCartNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            if action[i] == PlayerAction.INTERACT:
+            if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Cart):
                     if player != interaction_object.owner:
@@ -772,7 +772,7 @@ class ItemTheftFromBasketNorm(Norm):
 
         violations = set()
         for i, player in enumerate(game.players):
-            if action[i] == PlayerAction.INTERACT:
+            if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Basket):
                     if player != interaction_object.owner:
@@ -827,7 +827,7 @@ class TookTooManyNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            if action[i] == PlayerAction.INTERACT:
+            if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
                     if interaction_object.string_type in player.shopping_list and not player.holding_food \
@@ -874,7 +874,7 @@ class MoreThanSixNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            if action[i] == PlayerAction.INTERACT:
+            if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Baskets) and player.curr_basket is None and player.curr_cart is None \
                         and game.game_state == GameState.EXPLORATORY:
@@ -901,7 +901,7 @@ class SixOrLessNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            if action[i] == PlayerAction.INTERACT:
+            if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Carts) and player.curr_cart is None and player.curr_basket is None \
                         and game.game_state == GameState.EXPLORATORY:
@@ -929,7 +929,7 @@ class UnattendedCheckoutViolation(NormViolation):
 
 
 class UnattendedCheckoutNorm(Norm):
-    def post_monitor(self, game, action):
+    def post_monitor(self, game, _):
         violations = set()
         for register in game.objects:
             if isinstance(register, Register):

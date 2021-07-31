@@ -29,6 +29,7 @@ class SupermarketEnv(gym.Env):
         self.player_sprites = player_sprites
 
         self.record_path = record_path
+        self.max_num_items=max_num_items
 
         self.initial_state_filename = initial_state_filename
 
@@ -88,28 +89,31 @@ class SinglePlayerSupermarketEnv(gym.Wrapper):
     def __init__(self, env):
         super(SinglePlayerSupermarketEnv, self).__init__(env)
         self.action_space = gym.spaces.Tuple((gym.spaces.Discrete(self.num_players),
-                                              gym.spaces.Discrete(len(PlayerAction))))
+                                              gym.spaces.Discrete(len(PlayerAction)),
+                                              gym.spaces.Discrete(self.max_num_items)))
 
     def convert_action(self, player_action):
-        i, action = player_action
-        full_action = [PlayerAction.NOP]*self.num_players
-        full_action[i] = action
+        i, action, arg = player_action
+        full_action = [(PlayerAction.NOP, 0)]*self.num_players
+        full_action[i] = (action, arg)
         return full_action
 
     def step(self, player_action):
         done = False
-        i, action = player_action
-        if action in MOVEMENT_ACTIONS:
-            self.game.player_move(i, action)
-        elif action == PlayerAction.NOP:
+        i, player_action, arg = player_action
+        if player_action in MOVEMENT_ACTIONS:
+            self.game.player_move(i, player_action)
+        elif player_action == PlayerAction.NOP:
             self.game.nop(i)
-        elif action == PlayerAction.INTERACT:
+        elif player_action == PlayerAction.INTERACT:
             self.game.interact(i)
-        elif action == PlayerAction.TOGGLE:
+        elif player_action == PlayerAction.TOGGLE:
             self.game.toggle_cart(i)
             self.game.toggle_basket(i)
-        elif action == PlayerAction.CANCEL:
+        elif player_action == PlayerAction.CANCEL:
             self.game.cancel_interaction(i)
+        elif player_action == PlayerAction.SELECT:
+            self.game.select(i, arg)
         observation = self.game.observation()
         self.step_count += 1
         if not self.game.running:
