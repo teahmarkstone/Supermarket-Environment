@@ -39,7 +39,7 @@ class Counter(InteractiveObject):
 
     def interact(self, game, player):
         if not game.render_messages:
-            self.set_interaction_stage(player)(player, 1)
+            self.set_interaction_stage(player, 1)
         if self.get_interaction_stage(player) == 0:
             self.set_interaction_message(player, "Hello! Would you like to buy " + self.string_type + "?")
         elif self.get_interaction_stage(player) == 1:

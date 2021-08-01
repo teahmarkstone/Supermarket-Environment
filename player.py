@@ -60,6 +60,8 @@ class Player:
         self.holding_food_image = None
         self.bought_holding_food = False
 
+        self.interacting = False
+
         # money -- should be passed in prob
         self.budget = 100
 

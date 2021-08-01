@@ -12,7 +12,6 @@ from checkout import Register
 from counters import Counter
 from enums.cart_state import CartState
 from enums.direction import Direction
-from enums.game_state import GameState
 from enums.player_action import PlayerAction
 from player import Player
 from shelves import Shelf
@@ -135,11 +134,9 @@ class Game:
         self.frame_num = 0
 
         self.num_players = num_players
-        self.game_state = GameState.NONE
         self.players = []
 
         self.render_number = render_number
-
 
         # list of all food items in game, built when shelves are made
         self.food_list = []
@@ -153,8 +150,8 @@ class Game:
 
         # The logic here is that if we've enabled render_messages and we're not following anyone,
         # we still want to get *someone's* messages
-        if self.curr_player == -1 and render_messages:
-            self.curr_player = 0
+        # if self.curr_player == -1 and render_messages:
+        #     self.curr_player = 0
 
         self.keyboard_input = keyboard_input
 
@@ -205,7 +202,8 @@ class Game:
         for basket_dict in obs['baskets']:
             # JUMP
             pos = basket_dict['position']
-            basket = Basket(pos[0], pos[1], self.players[basket_dict['owner']], DIRECTIONS[basket_dict["direction"]], basket_dict["capacity"])
+            basket = Basket(pos[0], pos[1], self.players[basket_dict['owner']], DIRECTIONS[basket_dict["direction"]],
+                            basket_dict["capacity"])
             basket.being_held = basket_dict['being_held']
             if basket_dict['being_held']:
                 self.players[basket_dict['last_held']].curr_basket = basket
@@ -277,10 +275,6 @@ class Game:
             self.food_list.append(food_name)
             self.food_images[food_name] = food_image
 
-
-        # JUMPP
-
-
     def load_from_file(self, file_path):
         from ast import literal_eval
         with open(file_path, "r") as file:
@@ -291,7 +285,6 @@ class Game:
     def set_up(self):
 
         self.running = True
-        self.game_state = GameState.EXPLORATORY
 
         self.load_map("01")
 
@@ -373,14 +366,7 @@ class Game:
         player = self.players[player_index]
         if player.left_store:
             return
-        if self.game_state == GameState.EXPLORATORY:
-            obj = self.interaction_object(player)
-            if obj is not None:
-                obj.start_interaction(self, player)
-                obj.interact(self, player)
-                if self.render_messages:
-                    self.game_state = GameState.INTERACTIVE # TODO(dkasenberg) this should be player-specific
-        elif self.game_state == GameState.INTERACTIVE:
+        if player.interacting:
             obj = self.check_interactions(player)
             if obj is not None:
                 # if number of completed stages exceeds the number of stages for the object, end interaction
@@ -388,21 +374,24 @@ class Game:
                     obj.set_interaction_stage(player, 0)
                     # this is what turns off rendering of text screens
                     obj.end_interaction(self, player)
-                    self.game_state = GameState.EXPLORATORY
                 else:
                     # continue interaction
                     obj.set_interaction_stage(player, obj.get_interaction_stage(player) + 1)
                     obj.interact(self, self.players[player_index])
+        else:
+            obj = self.interaction_object(player)
+            if obj is not None:
+                obj.start_interaction(self, player)
+                obj.interact(self, player)
 
     def cancel_interaction(self, i):
         player = self.players[i]
         if player.left_store:
             return
-        if self.game_state == GameState.INTERACTIVE:
+        if player.interacting:
             obj = self.check_interactions(player)
             if obj is not None:
                 obj.end_interaction(self, player)
-                self.game_state = GameState.EXPLORATORY
 
     def toggle_cart(self, player_index):
         player = self.players[player_index]
@@ -464,7 +453,7 @@ class Game:
 
     def at_door(self, unit, x, y):
         return (x >= 0 and self.map[round(y - 0.4)][round(x)] == "F") or (
-                    x <= 0 and self.map[round(y - 0.4)][round(x + unit.width)] == "F")
+                x <= 0 and self.map[round(y - 0.4)][round(x + unit.width)] == "F")
 
     def hits_wall(self, unit, x, y):
         wall_width = 0.4
@@ -687,7 +676,8 @@ class Game:
     def select(self, i, food):
         if self.players[i].left_store:
             return
-        if not self.game_state == GameState.INTERACTIVE:
+        if not self.players[
+            i].interacting:  # TODO fix this? should players be able to select food without having interacted?
             return
         self.selected_food = self.food_list[food]
 
@@ -701,7 +691,7 @@ class Game:
 
     # checks if any objects are being interacted with
     def check_interactions(self, player):
-        for obj  in self.objects:
+        for obj in self.objects:
             if obj.is_interacting(player):
                 return obj
         return None
@@ -712,15 +702,17 @@ class Game:
         # if not self.headless:
         #     food = pygame.transform.scale(pygame.image.load(food_filename),
         #                                   (int(.30 * config.SCALE), int(.30 * config.SCALE)))
-        shelf = Shelf(x_position, y_position, shelf_filename, food, string_name, food_price, quantity, quantity, not self.headless)
+        shelf = Shelf(x_position, y_position, shelf_filename, food, string_name, food_price, quantity, quantity,
+                      not self.headless)
         self.food_directory[string_name] = food_price
         self.objects.append(shelf)
         self.food_list.append(string_name)
         self.food_images[string_name] = food_filename
 
     def get_interactivity_data(self):
+        # TODO(dkasenberg) will need to fix this
         obj = self.interaction_object(self.players[self.curr_player])
-        if self.game_state == GameState.INTERACTIVE and obj is not None:
+        if obj is not None:
             return {"interactive_stage": obj.interactive_stage, "total_stages": obj.num_stages}
         else:
             return {"interactive_stage": -1, "total_stages": 0}

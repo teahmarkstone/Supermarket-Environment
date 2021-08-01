@@ -8,9 +8,8 @@ from baskets import Baskets
 from counters import Counter
 from basket import Basket
 from enums.direction import Direction
-from enums.game_state import GameState
 from enums.player_action import PlayerAction
-from helper import pos_collision, overlap
+from helper import overlap
 from norms.norm import Norm, NormViolation
 from shelves import Shelf
 
@@ -424,6 +423,7 @@ class BlockingExitViolation(NormViolation):
 
 class BlockingExitNorm(Norm):
     def __init__(self, time_threshold=30):
+        super().__init__()
         self.time_threshold = time_threshold
         self.time_in_exit = defaultdict(int)
         self.old_violations = set()
@@ -663,6 +663,7 @@ class PersonalSpaceNorm(Norm):
 
 class InteractionCancellationViolation(NormViolation):
     def __init__(self, player, obj, num_times):
+        super().__init__()
         self.player = player
         self.obj = obj
         self.num_times = num_times
@@ -707,7 +708,7 @@ class WaitForCheckoutNorm(Norm):
                     if game.bagging:
                         if interaction_object.num_items > 0 and interaction_object.prev_player != player:
                             if game.render_messages:
-                                if game.game_state == GameState.EXPLORATORY:
+                                if not player.interacting: # TODO(dkasenberg) may need to troubleshoot this one
                                     violations.add(WaitForCheckoutViolation(player, interaction_object.prev_player))
                                     self.known_violations.add(player)
                             else:
@@ -718,7 +719,7 @@ class WaitForCheckoutNorm(Norm):
                             first_player = interaction_object.carts_in_zone[0].last_held
                             if player != first_player:
                                 if game.render_messages:
-                                    if game.game_state == GameState.EXPLORATORY:
+                                    if not player.interacting:
                                         violations.add(WaitForCheckoutViolation(player, first_player))
                                         self.known_violations.add(player)
                                 else:
@@ -748,7 +749,7 @@ class ItemTheftFromCartNorm(Norm):
                 if isinstance(interaction_object, Cart):
                     if player != interaction_object.owner:
                         if game.render_messages:
-                            if interaction_object.pickup_item:
+                            if interaction_object.pickup_item: # TODO(dksenberg) fix this
                                 violations.add(ItemTheftFromCartViolation(player, interaction_object.owner))
                                 self.known_violations.add(player)
                         elif not player.holding_food:
@@ -807,7 +808,7 @@ class AdhereToListNorm(Norm):
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
                     if interaction_object.string_type not in player.shopping_list and not player.holding_food \
-                            and game.game_state == GameState.EXPLORATORY:
+                            and not player.interacting:
                         violations.add(AdhereToListViolation(player, interaction_object.string_type))
                         self.known_violations.add(player)
         return violations
@@ -832,7 +833,7 @@ class TookTooManyNorm(Norm):
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
                     if interaction_object.string_type in player.shopping_list and not player.holding_food \
-                            and game.game_state == GameState.EXPLORATORY:
+                            and not player.interacting:
                         quantity = calculate_quantities(interaction_object.string_type, game.carts, game.baskets,
                                                         player)
                         if quantity >= player.list_quant[player.shopping_list.index(interaction_object.string_type)]:
@@ -878,7 +879,7 @@ class MoreThanSixNorm(Norm):
             if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Baskets) and player.curr_basket is None and player.curr_cart is None \
-                        and game.game_state == GameState.EXPLORATORY:
+                        and not player.interacting:
                     num_items = 0
                     for i in range(0, len(player.list_quant)):
                         num_items += player.list_quant[i]
@@ -905,7 +906,7 @@ class SixOrLessNorm(Norm):
             if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Carts) and player.curr_cart is None and player.curr_basket is None \
-                        and game.game_state == GameState.EXPLORATORY:
+                        and not player.interacting:
                     num_items = 0
                     for i in range(0, len(player.list_quant)):
                         num_items += player.list_quant[i]

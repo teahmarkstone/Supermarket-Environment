@@ -38,10 +38,12 @@ class InteractiveObject(abc.ABC):
     def end_interaction(self, game, player):
         if player is not None:
             self.interactions[player.player_number].active = False
+            player.interacting = False
 
     def start_interaction(self, game, player):
         if player is not None:
             self.interactions[player.player_number].active = True
+            player.interacting = True
 
     def set_interaction_message(self, player, message):
         if player is not None:

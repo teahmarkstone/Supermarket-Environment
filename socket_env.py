@@ -1,28 +1,18 @@
 # Author: Daniel Kasenberg (adapted from Gyan Tatiya's Minecraft socket)
 import argparse
 import json
-import socket
 import selectors
+import socket
 import types
 
-from enums.game_state import GameState
 from env import SupermarketEnv, SinglePlayerSupermarketEnv
 from norms.norm import NormWrapper
 from norms.norms import *
-from utils import recv_socket_data
 
-ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL', 'SELECT']
 import pygame
 
+ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL', 'SELECT']
 
-# def get_goal(env_):
-#     goal = {'goalType': 'ITEM'}
-#     if env_.last_done:
-#         goal['goalAchieved'] = True
-#     else:
-#         goal['goalAchieved'] = False
-#
-#     return goal
 
 class SupermarketEventHandler:
     def __init__(self, env, keyboard_input=False):
@@ -34,21 +24,16 @@ class SupermarketEventHandler:
 
     def single_player_action(self, action, arg=0):
         return self.curr_player, action, arg
-        # full_action = [PlayerAction.NOP]*self.env.num_players
-        # full_action[self.curr_player] = action
-        # return full_action
 
     def handle_events(self):
-        if self.env.game.game_state == GameState.EXPLORATORY:
-            self.handle_exploratory_events()
-        else:
+        if self.env.game.players[self.curr_player].interacting:
             self.handle_interactive_events()
+        else:
+            self.handle_exploratory_events()
         self.env.render(mode='violations')
 
     def handle_exploratory_events(self):
-        # print("DID THIS")
-        # print(self.env.game.update_observation())
-
+        player = self.env.game.players[self.curr_player]
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.env.game.running = False
@@ -64,14 +49,14 @@ class SupermarketEventHandler:
                         self.env.step(self.single_player_action(PlayerAction.INTERACT))
                     # i key shows inventory
                     elif event.key == pygame.K_i:
-                        self.env.game.players[self.curr_player].render_shopping_list = False
-                        self.env.game.players[self.curr_player].render_inventory = True
-                        self.env.game.game_state = GameState.INTERACTIVE
+                        player.render_shopping_list = False
+                        player.render_inventory = True
+                        player.interacting = True
                     # l key shows shopping list
                     elif event.key == pygame.K_l:
-                        self.env.game.players[self.curr_player].render_inventory = False
-                        self.env.game.players[self.curr_player].render_shopping_list = True
-                        self.env.game.game_state = GameState.INTERACTIVE
+                        player.render_inventory = False
+                        player.render_shopping_list = True
+                        player.interacting = True
 
                     elif event.key == pygame.K_c:
                         self.env.step(self.single_player_action(PlayerAction.TOGGLE))
@@ -84,7 +69,7 @@ class SupermarketEventHandler:
                             if event.key == pygame.key.key_code(str(i)):
                                 self.curr_player = i - 1
                                 self.env.curr_player = i - 1
-                                self.env.game.curr_player = i-1
+                                self.env.game.curr_player = i - 1
 
                 # player stands still if not moving
                 elif event.type == pygame.KEYUP:
@@ -92,7 +77,6 @@ class SupermarketEventHandler:
 
         if self.keyboard_input:
             keys = pygame.key.get_pressed()
-
             if keys[pygame.K_UP]:  # up
                 self.env.step(self.single_player_action(PlayerAction.NORTH))
             elif keys[pygame.K_DOWN]:  # down
@@ -107,6 +91,7 @@ class SupermarketEventHandler:
         self.running = self.env.game.running
 
     def handle_interactive_events(self):
+        player = self.env.game.players[self.curr_player]
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.env.game.running = False
@@ -121,14 +106,14 @@ class SupermarketEventHandler:
                     self.env.step(self.single_player_action(PlayerAction.INTERACT))
                 # i key turns off inventory rendering
                 elif event.key == pygame.K_i:
-                    if self.env.game.players[self.curr_player].render_inventory:
-                        self.env.game.players[self.curr_player].render_inventory = False
-                        self.env.game.game_state = GameState.EXPLORATORY
+                    if player.render_inventory:
+                        player.render_inventory = False
+                        player.interacting = False
                 # l key turns off shopping list rendering
                 elif event.key == pygame.K_l:
-                    if self.env.game.players[self.curr_player].render_shopping_list:
-                        self.env.game.players[self.curr_player].render_shopping_list = False
-                        self.env.game.game_state = GameState.EXPLORATORY
+                    if player.render_shopping_list:
+                        player.render_shopping_list = False
+                        player.interacting = False
 
                 # use up and down arrows to navigate item select menu
                 if self.env.game.item_select:

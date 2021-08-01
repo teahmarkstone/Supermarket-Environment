@@ -23,9 +23,9 @@ class Cart(CartLike):
         self.direction = direction
         self.width = .01
         self.height = .01
-        self.set_direction(direction)
         self.render_offset_x = 0
         self.render_offset_y = 0
+        self.set_direction(direction)
 
     def set_direction(self, direction):
         self.direction = direction
