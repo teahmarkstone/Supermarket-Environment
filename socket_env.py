@@ -16,10 +16,10 @@ ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_
 
 class SupermarketEventHandler:
     def __init__(self, env, keyboard_input=False):
-        self.curr_player = 0
         self.env = env
         self.keyboard_input = keyboard_input
         env.reset()
+        self.curr_player = env.game.curr_player
         self.running = True
 
     def single_player_action(self, action, arg=0):
@@ -282,8 +282,8 @@ if __name__ == "__main__":
              ReturnBasketNorm(),
              ReturnCartNorm(),
              WaitForCheckoutNorm(),
-             ItemTheftFromCartNorm(),
-             ItemTheftFromBasketNorm(),
+             # ItemTheftFromCartNorm(),
+             # ItemTheftFromBasketNorm(),
              AdhereToListNorm(),
              TookTooManyNorm(),
              MoreThanSixNorm(),
@@ -302,6 +302,7 @@ if __name__ == "__main__":
     HOST = '127.0.0.1'
     PORT = args.port
     sock_agent = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock_agent.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock_agent.bind((HOST, PORT))
     sock_agent.listen()
     print('Listening on', (HOST, PORT))
