@@ -680,7 +680,8 @@ class InteractionCancellationNorm(Norm):
             if action[i][0] == PlayerAction.CANCEL:
                 target = game.interaction_object(player)
                 if (isinstance(target, Register) or isinstance(target,
-                                                               Counter)) and target.interaction and target.interactive_stage == 0:
+                                                               Counter)) \
+                        and target.is_interacting(player) and target.get_interactive_stage(player) == 0:
                     violations.add(InteractionCancellationViolation(player, target, 1))
         return violations
 

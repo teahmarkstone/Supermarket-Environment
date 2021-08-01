@@ -84,6 +84,7 @@ class SupermarketEventHandler:
                             if event.key == pygame.key.key_code(str(i)):
                                 self.curr_player = i - 1
                                 self.env.curr_player = i - 1
+                                self.env.game.curr_player = i-1
 
                 # player stands still if not moving
                 elif event.type == pygame.KEYUP:

@@ -39,26 +39,21 @@ class Counter(InteractiveObject):
 
     def interact(self, game, player):
         if not game.render_messages:
-            self.interactive_stage = 1
-        #     self.silent_interact(player)
-        if self.interactive_stage == 0:
-            self.interaction_message = "Hello! Would you like to buy " + self.string_type + "?"
-        elif self.interactive_stage == 1 or not game.render_messages:
+            self.set_interaction_stage(player)(player, 1)
+        if self.get_interaction_stage(player) == 0:
+            self.set_interaction_message(player, "Hello! Would you like to buy " + self.string_type + "?")
+        elif self.get_interaction_stage(player) == 1:
             if player.curr_cart is None and player.holding_food is None:
                 if player.curr_basket is None:
                     player.hold_food(self.string_type, self.food_image)
-                    self.interaction_message = "You picked up your order."
+                    self.set_interaction_message(player, "You picked up your order.")
                 else:
                     if not player.curr_basket.hit_limit():
-                        self.interaction_message = "You put " + self.string_type + " in your basket."
+                        self.set_interaction_message(player, "You put " + self.string_type + " in your basket.")
                         player.curr_basket.add_food(self.string_type, False)
                     else:
-                        self.interaction_message = "The basket is full! The food won't fit."
+                        self.set_interaction_message(player, "The basket is full! The food won't fit.")
             elif player.holding_food is not None:
-                self.interaction_message = "Let go of the food you're holding to pick up food here!"
+                self.set_interaction_message(player, "Let go of the food you're holding to pick up food here!")
             else:
-                self.interaction_message = "Let go of your cart to pick up food here!"
-
-    # def silent_interact(self, player):
-    #     if player.curr_cart is None and player.holding_food is None:
-    #         player.hold_food(self.string_type, self.food_image)
+                self.set_interaction_message(player, "Let go of your cart to pick up food here!")

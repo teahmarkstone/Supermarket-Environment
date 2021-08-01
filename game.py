@@ -151,6 +151,11 @@ class Game:
 
         self.curr_player = follow_player
 
+        # The logic here is that if we've enabled render_messages and we're not following anyone,
+        # we still want to get *someone's* messages
+        if self.curr_player == -1 and render_messages:
+            self.curr_player = 0
+
         self.keyboard_input = keyboard_input
 
         self.render_messages = render_messages
@@ -321,6 +326,11 @@ class Game:
             f.write(str(self.observation(True)))
             # f.write(str(self.observation(False)))
 
+    def current_player(self):
+        if self.curr_player == -1:
+            return None
+        return self.players[self.curr_player]
+
     # called in while running loop, handles events, renders, etc
     def update(self):
         # rendering
@@ -360,37 +370,38 @@ class Game:
         print(("Started" if self.recording else "Stopped") + " recording.")
 
     def interact(self, player_index):
-        if self.players[player_index].left_store:
+        player = self.players[player_index]
+        if player.left_store:
             return
         if self.game_state == GameState.EXPLORATORY:
-            player = self.players[player_index]
             obj = self.interaction_object(player)
             if obj is not None:
-                obj.interaction = True
+                obj.start_interaction(self, player)
                 obj.interact(self, player)
                 if self.render_messages:
-                    self.game_state = GameState.INTERACTIVE
+                    self.game_state = GameState.INTERACTIVE # TODO(dkasenberg) this should be player-specific
         elif self.game_state == GameState.INTERACTIVE:
-            obj = self.check_interactions()
+            obj = self.check_interactions(player)
             if obj is not None:
                 # if number of completed stages exceeds the number of stages for the object, end interaction
-                if obj.interactive_stage + 1 >= obj.num_stages:
-                    obj.interactive_stage = 0
+                if obj.get_interaction_stage(player) + 1 >= obj.num_stages:
+                    obj.set_interaction_stage(player, 0)
                     # this is what turns off rendering of text screens
-                    obj.interaction = False
+                    obj.end_interaction(self, player)
                     self.game_state = GameState.EXPLORATORY
                 else:
                     # continue interaction
-                    obj.interactive_stage += 1
+                    obj.set_interaction_stage(player, obj.get_interaction_stage(player) + 1)
                     obj.interact(self, self.players[player_index])
 
     def cancel_interaction(self, i):
-        if self.players[i].left_store:
+        player = self.players[i]
+        if player.left_store:
             return
         if self.game_state == GameState.INTERACTIVE:
-            obj = self.check_interactions()
+            obj = self.check_interactions(player)
             if obj is not None:
-                obj.interaction = False
+                obj.end_interaction(self, player)
                 self.game_state = GameState.EXPLORATORY
 
     def toggle_cart(self, player_index):
@@ -500,92 +511,6 @@ class Game:
             basket.set_direction(direction)
 
         self.move_unit(player, [current_speed * x1, current_speed * y1])
-
-    # main keyboard input
-    def exploratory_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-
-            if event.type == pygame.KEYDOWN:
-
-                if event.key == pygame.K_ESCAPE:
-                    self.running = False
-                elif event.key == pygame.K_RETURN:
-                    self.interact(self.curr_player)
-
-                # i key shows inventory
-                elif event.key == pygame.K_i:
-
-                    self.players[self.curr_player].render_shopping_list = False
-                    self.players[self.curr_player].render_inventory = True
-                    self.game_state = GameState.INTERACTIVE
-
-                # l key shows shopping list
-                elif event.key == pygame.K_l:
-                    self.players[self.curr_player].render_inventory = False
-                    self.players[self.curr_player].render_shopping_list = True
-                    self.game_state = GameState.INTERACTIVE
-
-                # switch players
-                elif event.key == pygame.K_1:
-                    self.curr_player = 0
-                elif event.key == pygame.K_2:
-                    self.curr_player = 1
-
-                elif event.key == pygame.K_c:
-                    self.toggle_cart(self.curr_player)
-                # elif event.key == pygame.K_b:
-                #     self.toggle_basket(self.curr_player)
-
-            # player stands still if not moving, player stops holding cart if c button released
-            if event.type == pygame.KEYUP:
-                self.nop(self.curr_player)
-
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_UP]:  # up
-            self.player_move(self.curr_player, PlayerAction.NORTH)
-
-        elif keys[pygame.K_DOWN]:  # down
-            self.player_move(self.curr_player, PlayerAction.SOUTH)
-
-        elif keys[pygame.K_LEFT]:  # left
-            self.player_move(self.curr_player, PlayerAction.WEST)
-
-        elif keys[pygame.K_RIGHT]:  # right
-            self.player_move(self.curr_player, PlayerAction.EAST)
-
-    # NOT BEING USED keyboard input when player is interacting with an object
-    def interactive_events(self):
-
-        for event in pygame.event.get():
-
-            if event.type == pygame.QUIT:
-                self.running = False
-
-            if event.type == pygame.KEYDOWN:
-
-                if event.key == pygame.K_ESCAPE:
-                    self.running = False
-
-                # b key cancels interaction
-                elif event.key == pygame.K_b:
-                    self.cancel_interaction(self.curr_player)
-
-                # return key continues interaction
-                elif event.key == pygame.K_RETURN:
-                    self.interact(self.curr_player)
-                # i key turns off inventory rendering
-                elif event.key == pygame.K_i:
-                    if self.players[self.curr_player].render_inventory:
-                        self.players[self.curr_player].render_inventory = False
-                        self.game_state = GameState.EXPLORATORY
-                # l key turns off shopping list rendering
-                elif event.key == pygame.K_l:
-                    if self.players[self.curr_player].render_shopping_list:
-                        self.players[self.curr_player].render_shopping_list = False
-                        self.game_state = GameState.EXPLORATORY
 
     # Reading in map
     def load_map(self, file_name):
@@ -775,11 +700,10 @@ class Game:
         return None
 
     # checks if any objects are being interacted with
-    def check_interactions(self):
-        for object in self.objects:
-            if object.interaction:
-                return object
-
+    def check_interactions(self, player):
+        for obj  in self.objects:
+            if obj.is_interacting(player):
+                return obj
         return None
 
     def set_shelf(self, shelf_filename, food_filename, string_name, food_price, x_position, y_position):
@@ -803,7 +727,7 @@ class Game:
 
     def observation(self, render_static_objects=True):
         obs = {"players": [], "carts": [], "baskets": []}
-        obs.update(self.get_interactivity_data())
+        # obs.update(self.get_interactivity_data())
 
         for i, player in enumerate(self.players):
             player_data = {

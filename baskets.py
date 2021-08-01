@@ -31,17 +31,14 @@ class Baskets(InteractiveObject):
                                  (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
 
     def can_interact(self, player):
-        if player.direction == Direction.SOUTH:
-            range = .5 if player.curr_basket is not None or self.interaction else 0.5
-            return can_interact_default(self, player, range=range)
-        return False
+        return can_interact_default(self, player, range=.5)
 
     def collision(self, obj, x_position, y_position):
         return overlap(self.position[0], self.position[1], self.width, self.height,
                        x_position, y_position, obj.width, obj.height)
 
     def interact(self, game, player):
-        if self.interactive_stage == 0:
+        if self.get_interaction_stage(player) == 0:
             # Player is not holding a basket
             if player.curr_basket is None:
                 if player.holding_food is None:
@@ -54,12 +51,12 @@ class Baskets(InteractiveObject):
                     game.objects.append(new_basket)
                     player.curr_basket = new_basket
                     new_basket.being_held = True
-                    self.interaction_message = "You picked up basket. Press c to let go and pick up."
+                    self.set_interaction_message(player, "You picked up basket. Press c to let go and pick up.")
                 else:
-                    self.interaction_message = "Can't pick up a basket while holding food!"
+                    self.set_interaction_message(player, "Can't pick up a basket while holding food!")
                 # Player is holding a basket; return it
             else:
-                self.interaction_message = "You put the basket back."
+                self.set_interaction_message(player, "You put the basket back.")
                 basket = player.curr_basket
                 player.curr_basket = None
                 game.baskets.remove(basket)
