@@ -150,8 +150,8 @@ class Game:
 
         # The logic here is that if we've enabled render_messages and we're not following anyone,
         # we still want to get *someone's* messages
-        # if self.curr_player == -1 and render_messages:
-        #     self.curr_player = 0
+        if self.curr_player == -1 and render_messages:
+            self.curr_player = 0
 
         self.keyboard_input = keyboard_input
 
