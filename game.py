@@ -341,6 +341,8 @@ class Game:
             pygame.display.flip()
 
     def interact(self, player_index):
+        if player_index not in range(0, len(self.players)):
+            return
         if self.players[player_index].left_store:
             return
         if self.game_state == GameState.EXPLORATORY:
@@ -366,6 +368,8 @@ class Game:
                     obj.interact(self, self.players[player_index])
 
     def cancel_interaction(self, i):
+        if i not in range(0, len(self.players)):
+            return
         if self.players[i].left_store:
             return
         if self.game_state == GameState.INTERACTIVE:
@@ -375,6 +379,8 @@ class Game:
                 self.game_state = GameState.EXPLORATORY
 
     def toggle_cart(self, player_index):
+        if player_index not in range(0, len(self.players)):
+            return
         player = self.players[player_index]
         if player.left_store:
             return
@@ -395,6 +401,8 @@ class Game:
 
     # TODO: not working currently, not sure if player should be able to put basket down
     def toggle_basket(self, player_index):
+        if player_index not in range(0, len(self.players)):
+            return
         player = self.players[player_index]
         if player.left_store:
             return
@@ -414,6 +422,8 @@ class Game:
                         break
 
     def nop(self, player):
+        if player not in range(0, len(self.players)):
+            return
         self.players[player].stand_still()
 
     def next_direction(self, player, action):
@@ -444,6 +454,8 @@ class Game:
 
     # TODO we may need to think a little more about the logic of breaking ties when two players move onto the same spot.
     def player_move(self, player_index, action):
+        if player_index not in range(0, len(self.players)):
+            return
 
         player = self.players[player_index]
         if player.left_store:
@@ -741,11 +753,14 @@ class Game:
         self.objects.append(baskets)
 
     def select(self, i, food):
+        if i not in range(0, len(self.players)):
+            return
         if self.players[i].left_store:
             return
         if not self.game_state == GameState.INTERACTIVE:
             return
         self.selected_food = self.food_list[food]
+        print(self.selected_food)
 
     # checking if a player is facing an object
     # TODO maybe alter so that shopping carts have slightly different interaction zones?

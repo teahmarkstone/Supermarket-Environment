@@ -14,6 +14,7 @@ class Baskets(InteractiveObject):
         self.position = [x_position, y_position]
         self.width = 0.3
         self.height = 0.2
+        self.quantity = 12
 
         self.image = None
 
@@ -24,10 +25,11 @@ class Baskets(InteractiveObject):
         return "the basket return"
 
     def render(self, screen, camera):
-        if self.image is None:
-            self.image = pygame.transform.scale(pygame.image.load("images/baskets/baskets.png"),
+        if self.quantity > 0:
+            if self.image is None:
+                self.image = pygame.transform.scale(pygame.image.load("images/baskets/baskets.png"),
                                    (int(.6 * config.SCALE), int(.75 * config.SCALE)))
-        screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
+            screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
                                  (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
 
     def can_interact(self, player):
@@ -44,19 +46,23 @@ class Baskets(InteractiveObject):
         if self.interactive_stage == 0:
             # Player is not holding a basket
             if player.curr_basket is None:
-                if player.holding_food is None:
-                    new_basket = Basket(0,
-                                    0,
-                                    player,
-                                    Direction.SOUTH)
-                    new_basket.update_position(player.position[0], player.position[1])
-                    game.baskets.append(new_basket)
-                    game.objects.append(new_basket)
-                    player.curr_basket = new_basket
-                    new_basket.being_held = True
-                    self.interaction_message = "You picked up basket. Press c to let go and pick up."
+                if self.quantity > 0:
+                    if player.holding_food is None:
+                        new_basket = Basket(0,
+                                        0,
+                                        player,
+                                        Direction.SOUTH)
+                        new_basket.update_position(player.position[0], player.position[1])
+                        game.baskets.append(new_basket)
+                        game.objects.append(new_basket)
+                        player.curr_basket = new_basket
+                        new_basket.being_held = True
+                        self.quantity -= 1
+                        self.interaction_message = "You picked up basket. Press c to let go and pick up."
+                    else:
+                        self.interaction_message = "Can't pick up a basket while holding food!"
                 else:
-                    self.interaction_message = "Can't pick up a basket while holding food!"
+                    self.interaction_message = "There are no baskets left."
                 # Player is holding a basket; return it
             else:
                 self.interaction_message = "You put the basket back."
@@ -64,5 +70,6 @@ class Baskets(InteractiveObject):
                 player.curr_basket = None
                 game.baskets.remove(basket)
                 game.objects.remove(basket)
+                self.quantity += 1
 
 

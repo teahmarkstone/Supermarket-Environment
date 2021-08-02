@@ -87,6 +87,7 @@ class SinglePlayerSupermarketEnv(gym.Wrapper):
 
     def convert_action(self, player_action):
         i, action = player_action
+        i = i[0]
         full_action = [PlayerAction.NOP]*self.num_players
         full_action[i] = action
         return full_action
