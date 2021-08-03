@@ -52,7 +52,7 @@ class Register(InteractiveObject):
             image = pygame.transform.scale(pygame.image.load(self.image),
                                            (int(2.3 * config.SCALE), int(3 * config.SCALE)))
             screen.blit(image, ((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
-                                 (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE))
+                                (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE))
             self.render_items(screen, camera)
 
     def render_items(self, screen, camera):
@@ -83,7 +83,7 @@ class Register(InteractiveObject):
         super().render_interaction(game, screen)
         if game.render_messages:
             self.menu_length = self.get_menu_length()
-            if self.interaction is not None:
+            if self.is_interacting(game.current_player()):
                 if self.checking_contents:
                     if game.keyboard_input:
                         if game.select_up:
@@ -146,7 +146,6 @@ class Register(InteractiveObject):
         text = render_text("Exit", True, (0, 0, 0))
         screen.blit(text, (x_pos + 53, y_position + spacing))
 
-
         if self.select_index == counter:
             screen.blit(select_arrow, (x_pos + 423, y_position - 4))
             selected_food = "Buy"
@@ -170,28 +169,30 @@ class Register(InteractiveObject):
         else:
             self.short_interact(game, player)
 
+    # TODO(teah) we may need to fix the logic here to match the short_interact logic.
     def long_interact(self, game, player):
 
         if self.num_items > 0 and player != self.prev_player:
-            self.interaction_message = "Please wait in line."
+            self.set_interaction_message(player, "Please wait in line.")
             self.curr_player = self.prev_player
-            self.interactive_stage = 1
+            self.set_interaction_stage(player, 1)
             return
         if not game.render_messages:
-            self.interactive_stage = 1
+            self.set_interaction_stage(player, 1)
         if not player.holding_food and self.num_items == 0:
-            if self.interactive_stage == 0:
-                self.interaction_message = "Hello! Would you like to check out?"
+            if self.get_interaction_stage(player) == 0:
+                self.set_interaction_message(player, "Hello! Would you like to check out?")
                 return
-            if self.interactive_stage == 1:
-                self.interaction_message = "Please place items on the counter."
+            if self.get_interaction_stage(player) == 1:
+                self.set_interaction_message(player, "Please place items on the counter.")
                 return
         if player.holding_food:
             if not game.render_messages:
-                self.interactive_stage = 1
-            if self.interactive_stage == 0:
-                self.interaction_message = "Would you like to put " + player.holding_food + " on the counter?"
-            if self.interactive_stage == 1:
+                self.set_interaction_stage(player, 1)
+            if self.get_interaction_stage(player) == 0:
+                self.set_interaction_message(player,
+                                             "Would you like to put " + player.holding_food + " on the counter?")
+            if self.get_interaction_stage(player) == 1:
                 if self.num_items < self.counter_capacity:
                     # put food on counter
                     if player.holding_food in self.food_images:
@@ -199,20 +200,20 @@ class Register(InteractiveObject):
                     else:
                         self.food_images[player.holding_food] = game.food_images[player.holding_food]
                         self.food_quantities[player.holding_food] = 1
-                    self.interaction_message = "You put " + player.holding_food + " on the counter."
+                    self.set_interaction_message(player, "You put " + player.holding_food + " on the counter.")
                     player.holding_food = None
                     player.holding_food_image = None
                     self.num_items += 1
                 else:
-                    self.interaction_message = "Sorry, no more room on the counter."
+                    self.set_interaction_message(player, "Sorry, no more room on the counter.")
             return
             # place item on counter
         if not player.holding_food and self.num_items > 0:
-            if self.interactive_stage == 0:
+            if self.get_interaction_stage(player) == 0:
                 self.checking_contents = True
                 game.item_select = True
-                self.interaction_message = None
-            if self.interactive_stage == 1:
+                self.set_interaction_message(player, None)
+            if self.get_interaction_stage(player) == 1:
                 self.select_index = 0
                 self.checking_contents = False
                 if self.buying or not game.render_messages:
@@ -227,11 +228,11 @@ class Register(InteractiveObject):
                         self.food_images.clear()
                         self.num_items = 0
                         player.budget = curr_money
-                        self.interaction_message = "Thank you for shopping with us!"
+                        self.set_interaction_message(player, "Thank you for shopping with us!")
                         self.buying = False
                         self.pickup_item = False
                     else:
-                        self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
+                        self.set_interaction_message(player, "Sorry, you are short $" + str(abs(curr_money)) + ".")
                         self.buying = False
                 elif self.selected_food != "Exit":
                     if not game.keyboard_input:
@@ -245,42 +246,37 @@ class Register(InteractiveObject):
                     self.pickup(self.selected_food, self.curr_player, self.selected_food_image)
                     self.pickup_item = False
                     self.num_items -= 1
-                    self.interaction_message = "You took " + self.selected_food + " off the counter."
+                    self.set_interaction_message(player, "You took " + self.selected_food + " off the counter.")
                 else:
-                    self.interaction_message = "Please place items on the counter."
+                    self.set_interaction_message(player, "Please place items on the counter.")
                 # buy items on counter --> give them back to player as bought items in something.. a bag? idk
 
     def short_interact(self, game, player):
         # first interactive stage is just rendering prompt
         if len(self.carts_in_zone) > 0 and player != self.carts_in_zone[0].last_held:
-            self.interaction_message = "Please wait in line."
+            self.set_interaction_message(player, "Please wait in line.")
             self.curr_player = self.prev_player
-            self.interactive_stage = 1
+            self.set_interaction_stage(player, 1)
             return
         if not game.render_messages:
-            self.interactive_stage = 1
-        if self.interactive_stage == 0:
-            self.interaction_message = "Hello! Would you like to check out?"
+            self.set_interaction_stage(player, 1)
+        if self.get_interaction_stage(player) == 0:
+            self.set_interaction_message(player, "Hello! Would you like to check out?")
             return
-        if self.interactive_stage == 1 or not game.render_messages:
+        if self.get_interaction_stage(player) == 1:
             has_items = False
             can_afford = True
             curr_money = 0
             x_margin = 0.5
             y_margin = 1
+            carts = []
+
+            food_list = defaultdict(int)
 
             # buying food player is holding
             if player.holding_food is not None and not player.bought_holding_food:
-                food_list = defaultdict(int)
                 food_list[player.holding_food] = 1
-                curr_money = self.can_afford(player, food_list)
-                if curr_money >= 0:
-                    # determine if player can afford stuff here
-                    player.bought_holding_food = True
-                    has_items = True
-                    player.budget = curr_money
-                else:
-                    can_afford = False
+                has_items = True
 
             # buying food in carts
             for cart in game.carts:
@@ -289,35 +285,33 @@ class Register(InteractiveObject):
                                     self.height + 2 * y_margin, cart.position[0], cart.position[1], cart.width,
                                     cart.height):
                     if sum(cart.contents.values()) > 0:
-                        # curr_money = self.can_afford(player, cart.contents)
-                        # if curr_money >= 0:
-                        # determine if player can afford stuff here
-                        cart.buy()
+                        carts.append(cart)
                         has_items = True
-                        # player.budget = curr_money
-                        # else:
-                        #    can_afford = False
+                        for food in cart.contents:
+                            food_list[food] += cart.contents[food]
 
             # buying food in basket
             if player.curr_basket is not None:
-
                 if sum(player.curr_basket.contents.values()) > 0:
                     # determine if player can afford stuff here
-                    curr_money = self.can_afford(player, player.curr_basket.contents)
-                    if curr_money >= 0:
-                        # determine if player can afford stuff here
+                    has_items = True
+                    for food in player.curr_basket.contents:
+                        food_list[food] += player.curr_basket.contents[food]
+            if has_items:
+                curr_money = self.can_afford(player, food_list)
+                if curr_money >= 0:
+                    player.budget = curr_money
+                    if player.holding_food:
+                        player.bought_holding_food = True
+                    for cart in carts:
+                        cart.buy()
+                    if player.curr_basket is not None:
                         player.curr_basket.buy()
-                        has_items = True
-                        player.budget = curr_money
-                    else:
-                        can_afford = False
-
-            if has_items and can_afford:
-                self.interaction_message = "Thank you for shopping with us!"
-            elif can_afford:
-                self.interaction_message = "You need items in order to check out, silly!"
+                    self.set_interaction_message(player, "Thank you for shopping with us!")
+                else:
+                    self.set_interaction_message(player, "Sorry, you are short $" + str(abs(curr_money)) + ".")
             else:
-                self.interaction_message = "Sorry, you are short $" + str(abs(curr_money)) + "."
+                self.set_interaction_message(player, "You need items in order to check out, silly!")
 
     def can_afford(self, player, food_list):
         curr_money = player.budget
@@ -334,7 +328,6 @@ class Register(InteractiveObject):
         if self.food_quantities[food] == 0:
             self.food_quantities.pop(food)
             self.food_images.pop(food)
-
 
         # give to player
         player.holding_food = food
@@ -360,4 +353,3 @@ class Register(InteractiveObject):
                            cart.width,
                            cart.height):
                 self.carts_in_zone.remove(cart)
-

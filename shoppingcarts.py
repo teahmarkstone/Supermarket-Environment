@@ -28,14 +28,14 @@ class Carts(InteractiveObject):
         if self.quantity > 0:
             if self.image is None:
                 self.image = pygame.transform.scale(pygame.image.load("images/cart/shoppingcartrack.png"),
-                                                    (int(1.5 * config.SCALE),
-                                                     6 * config.SCALE))
-            screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0]) * config.SCALE,
-                                     (self.position[1] + self.render_offset_y - camera.position[1]) * config.SCALE))
+                                       (int(1.5 * config.SCALE),
+                                        6 * config.SCALE))
+            screen.blit(self.image, ((self.position[0] + self.render_offset_x - camera.position[0])*config.SCALE,
+                                     (self.position[1] + self.render_offset_y - camera.position[1])*config.SCALE))
 
     def can_interact(self, player):
         if player.direction == Direction.SOUTH:
-            range = 1.5 if player.curr_cart is not None or self.interaction else 0.5
+            range = 1.5 if player.curr_cart is not None or self.is_interacting(player) else 0.5
             return can_interact_default(self, player, range=range)
         return False
 
@@ -44,7 +44,7 @@ class Carts(InteractiveObject):
                        x_position, y_position, obj.width, obj.height)
 
     def interact(self, game, player):
-        if self.interactive_stage == 0:
+        if self.get_interaction_stage(player) == 0:
             # Player is not holding a cart
             if player.curr_cart is None:
                 if player.curr_basket is None:
@@ -59,20 +59,17 @@ class Carts(InteractiveObject):
                             game.objects.append(new_cart)
                             player.curr_cart = new_cart
                             new_cart.being_held = True
-                            self.quantity -= 1
-                            self.interaction_message = "You picked up shopping cart. Press c to let go and pick up."
-
+                            self.set_interaction_message(player, "You picked up shopping cart. Press c to let go and pick up.")
                         else:
-                            self.interaction_message = "Can't pick up a cart while holding food!"
+                            self.set_interaction_message(player, "Can't pick up a cart while holding food!")
                     else:
-                        self.interaction_message = "There are no more shopping carts."
+                        self.set_interaction_message(player, "There are no more carts.")
                 else:
-                    self.interaction_message = "Can't pick up a cart while holding a basket!"
+                    self.set_interaction_message(player, "Can't pick up a cart while holding a basket!")
                 # Player is holding a cart; return it
             else:
-                self.interaction_message = "You put the shopping cart back."
+                self.set_interaction_message(player, "You put the shopping cart back.")
                 cart = player.curr_cart
                 player.curr_cart = None
                 game.carts.remove(cart)
                 game.objects.remove(cart)
-                self.quantity += 1

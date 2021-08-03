@@ -11,7 +11,7 @@ class SupermarketEnv(gym.Env):
 
     def __init__(self, num_players=1, player_speed=0.15, keyboard_input=False, render_messages=True, bagging=False,
                  headless=False, initial_state_filename=None, follow_player=-1, random_start=False,
-                 render_number=False, max_num_items=33):
+                 render_number=False, max_num_items=33, player_sprites=None, record_path=None):
 
         super(SupermarketEnv, self).__init__()
 
@@ -26,6 +26,10 @@ class SupermarketEnv(gym.Env):
         self.num_players = num_players
         self.player_speed = player_speed
         self.game = None
+        self.player_sprites = player_sprites
+
+        self.record_path = record_path
+        self.max_num_items=max_num_items
 
         self.initial_state_filename = initial_state_filename
 
@@ -65,7 +69,9 @@ class SupermarketEnv(gym.Env):
                          bagging=self.bagging,
                          headless=self.headless, initial_state_filename=self.initial_state_filename,
                          follow_player=self.follow_player, random_start=self.random_start,
-                         render_number=self.render_number)
+                         render_number=self.render_number,
+                         sprite_paths=self.player_sprites,
+                         record_path=self.record_path)
         self.game.set_up()
         if obs is not None:
             self.game.set_observation(obs)
@@ -83,29 +89,31 @@ class SinglePlayerSupermarketEnv(gym.Wrapper):
     def __init__(self, env):
         super(SinglePlayerSupermarketEnv, self).__init__(env)
         self.action_space = gym.spaces.Tuple((gym.spaces.Discrete(self.num_players),
-                                              gym.spaces.Discrete(len(PlayerAction))))
+                                              gym.spaces.Discrete(len(PlayerAction)),
+                                              gym.spaces.Discrete(self.max_num_items)))
 
     def convert_action(self, player_action):
-        i, action = player_action
-        i = i[0]
-        full_action = [PlayerAction.NOP]*self.num_players
-        full_action[i] = action
+        i, action, arg = player_action
+        full_action = [(PlayerAction.NOP, 0)]*self.num_players
+        full_action[i] = (action, arg)
         return full_action
 
     def step(self, player_action):
         done = False
-        i, action = player_action
-        if action in MOVEMENT_ACTIONS:
-            self.game.player_move(i, action)
-        elif action == PlayerAction.NOP:
+        i, player_action, arg = player_action
+        if player_action in MOVEMENT_ACTIONS:
+            self.game.player_move(i, player_action)
+        elif player_action == PlayerAction.NOP:
             self.game.nop(i)
-        elif action == PlayerAction.INTERACT:
+        elif player_action == PlayerAction.INTERACT:
             self.game.interact(i)
-        elif action == PlayerAction.TOGGLE:
+        elif player_action == PlayerAction.TOGGLE:
             self.game.toggle_cart(i)
             self.game.toggle_basket(i)
-        elif action == PlayerAction.CANCEL:
+        elif player_action == PlayerAction.CANCEL:
             self.game.cancel_interaction(i)
+        elif player_action == PlayerAction.SELECT:
+            self.game.select(i, arg)
         observation = self.game.observation()
         self.step_count += 1
         if not self.game.running:

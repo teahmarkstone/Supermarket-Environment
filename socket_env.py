@@ -1,54 +1,39 @@
 # Author: Daniel Kasenberg (adapted from Gyan Tatiya's Minecraft socket)
 import argparse
 import json
-import socket
 import selectors
+import socket
 import types
 
-from enums.game_state import GameState
 from env import SupermarketEnv, SinglePlayerSupermarketEnv
 from norms.norm import NormWrapper
 from norms.norms import *
-from utils import recv_socket_data
 
-ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL']
 import pygame
 
+ACTION_COMMANDS = ['NOP', 'NORTH', 'SOUTH', 'EAST', 'WEST', 'INTERACT', 'TOGGLE_CART', 'CANCEL', 'SELECT']
 
-# def get_goal(env_):
-#     goal = {'goalType': 'ITEM'}
-#     if env_.last_done:
-#         goal['goalAchieved'] = True
-#     else:
-#         goal['goalAchieved'] = False
-#
-#     return goal
 
 class SupermarketEventHandler:
     def __init__(self, env, keyboard_input=False):
-        self.curr_player = 0
         self.env = env
         self.keyboard_input = keyboard_input
         env.reset()
+        self.curr_player = env.game.curr_player
         self.running = True
 
-    def single_player_action(self, action):
-        return self.curr_player, action
-        # full_action = [PlayerAction.NOP]*self.env.num_players
-        # full_action[self.curr_player] = action
-        # return full_action
+    def single_player_action(self, action, arg=0):
+        return self.curr_player, action, arg
 
     def handle_events(self):
-        if self.env.game.game_state == GameState.EXPLORATORY:
-            self.handle_exploratory_events()
-        else:
+        if self.env.game.players[self.curr_player].interacting:
             self.handle_interactive_events()
+        else:
+            self.handle_exploratory_events()
         self.env.render(mode='violations')
 
     def handle_exploratory_events(self):
-        # print("DID THIS")
-        # print(self.env.game.update_observation())
-
+        player = self.env.game.players[self.curr_player]
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.env.game.running = False
@@ -56,20 +41,22 @@ class SupermarketEventHandler:
                 filename = input("Please enter a filename for saving the state.\n>>> ")
                 self.env.game.save_state(filename)
                 print("State saved to {filename}.".format(filename=filename))
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                self.env.game.toggle_record()
             elif self.keyboard_input:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.env.step(self.single_player_action(PlayerAction.INTERACT))
                     # i key shows inventory
                     elif event.key == pygame.K_i:
-                        self.env.game.players[self.curr_player].render_shopping_list = False
-                        self.env.game.players[self.curr_player].render_inventory = True
-                        self.env.game.game_state = GameState.INTERACTIVE
+                        player.render_shopping_list = False
+                        player.render_inventory = True
+                        player.interacting = True
                     # l key shows shopping list
                     elif event.key == pygame.K_l:
-                        self.env.game.players[self.curr_player].render_inventory = False
-                        self.env.game.players[self.curr_player].render_shopping_list = True
-                        self.env.game.game_state = GameState.INTERACTIVE
+                        player.render_inventory = False
+                        player.render_shopping_list = True
+                        player.interacting = True
 
                     elif event.key == pygame.K_c:
                         self.env.step(self.single_player_action(PlayerAction.TOGGLE))
@@ -82,6 +69,7 @@ class SupermarketEventHandler:
                             if event.key == pygame.key.key_code(str(i)):
                                 self.curr_player = i - 1
                                 self.env.curr_player = i - 1
+                                self.env.game.curr_player = i - 1
 
                 # player stands still if not moving
                 elif event.type == pygame.KEYUP:
@@ -89,7 +77,6 @@ class SupermarketEventHandler:
 
         if self.keyboard_input:
             keys = pygame.key.get_pressed()
-
             if keys[pygame.K_UP]:  # up
                 self.env.step(self.single_player_action(PlayerAction.NORTH))
             elif keys[pygame.K_DOWN]:  # down
@@ -104,6 +91,7 @@ class SupermarketEventHandler:
         self.running = self.env.game.running
 
     def handle_interactive_events(self):
+        player = self.env.game.players[self.curr_player]
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.env.game.running = False
@@ -118,14 +106,14 @@ class SupermarketEventHandler:
                     self.env.step(self.single_player_action(PlayerAction.INTERACT))
                 # i key turns off inventory rendering
                 elif event.key == pygame.K_i:
-                    if self.env.game.players[self.curr_player].render_inventory:
-                        self.env.game.players[self.curr_player].render_inventory = False
-                        self.env.game.game_state = GameState.EXPLORATORY
+                    if player.render_inventory:
+                        player.render_inventory = False
+                        player.interacting = False
                 # l key turns off shopping list rendering
                 elif event.key == pygame.K_l:
-                    if self.env.game.players[self.curr_player].render_shopping_list:
-                        self.env.game.players[self.curr_player].render_shopping_list = False
-                        self.env.game.game_state = GameState.EXPLORATORY
+                    if player.render_shopping_list:
+                        player.render_shopping_list = False
+                        player.interacting = False
 
                 # use up and down arrows to navigate item select menu
                 if self.env.game.item_select:
@@ -165,8 +153,10 @@ def is_single_player(command_):
 def get_player_and_command(command_):
     split_command = command_.split(' ')
     if len(split_command) == 1:
-        return 0, split_command[0]
-    return split_command[0], split_command[1]
+        return 0, split_command[0], 0
+    elif len(split_command) == 2:
+        return int(split_command[0]), split_command[1], 0
+    return int(split_command[0]), split_command[1], int(split_command[2])
 
 
 def get_commands(command_):
@@ -244,6 +234,17 @@ if __name__ == "__main__":
         action='store_true'
     )
 
+    parser.add_argument(
+        '--player_sprites',
+        nargs='+',
+        type=str,
+    )
+
+    parser.add_argument(
+        '--record_path',
+        type=str,
+    )
+
     args = parser.parse_args()
 
     # np.random.seed(0)
@@ -257,7 +258,9 @@ if __name__ == "__main__":
                          follow_player=args.follow if args.num_players > 1 else 0,
                          keyboard_input=args.keyboard_input,
                          random_start=args.random_start,
-                         render_number=args.render_number
+                         render_number=args.render_number,
+                         player_sprites=args.player_sprites,
+                         record_path=args.record_path,
                          )
 
     norms = [CartTheftNorm(),
@@ -279,8 +282,8 @@ if __name__ == "__main__":
              ReturnBasketNorm(),
              ReturnCartNorm(),
              WaitForCheckoutNorm(),
-             ItemTheftFromCartNorm(),
-             ItemTheftFromBasketNorm(),
+             # ItemTheftFromCartNorm(),
+             # ItemTheftFromBasketNorm(),
              AdhereToListNorm(),
              TookTooManyNorm(),
              MoreThanSixNorm(),
@@ -299,6 +302,7 @@ if __name__ == "__main__":
     HOST = '127.0.0.1'
     PORT = args.port
     sock_agent = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock_agent.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock_agent.bind((HOST, PORT))
     sock_agent.listen()
     print('Listening on', (HOST, PORT))
@@ -312,7 +316,7 @@ if __name__ == "__main__":
     while env.game.running:
         events = sel.select(timeout=0)
         should_perform_action = False
-        curr_action = [0] * env.num_players
+        curr_action = [(0,0)] * env.num_players
         e = []
         if not args.headless:
             handler.handle_events()
@@ -335,12 +339,11 @@ if __name__ == "__main__":
                                 from json import loads
                                 env.reset(obs=loads(obs))
                             if is_single_player(command):
-                                player, command = get_player_and_command(command)
+                                player, command, arg = get_player_and_command(command)
                                 e.append((key, mask, command))
-                                player = int(player)
                                 if command in ACTION_COMMANDS:
                                     action_id = ACTION_COMMANDS.index(command)
-                                    curr_action[player] = action_id
+                                    curr_action[player] = (action_id, arg)
                                     should_perform_action = True
                                     # print(action)
                                 else:

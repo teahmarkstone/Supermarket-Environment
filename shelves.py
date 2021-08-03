@@ -113,7 +113,7 @@ class Shelf(InteractiveObject):
         if player.curr_cart is None and player.curr_basket is None:
             if player.holding_food is not None:
                 # check what kind of food...
-                self.interaction_message = "You put " + player.holding_food + " back on the shelf."
+                self.set_interaction_message(player, "You put " + player.holding_food + " back on the shelf.")
                 empty = False
 
                 if player.holding_food == self.string_type:
@@ -125,17 +125,17 @@ class Shelf(InteractiveObject):
                 if not empty:
                     player.holding_food = self.string_type
                     player.holding_food_image = self.food_image
-                    self.interaction_message = "You picked up " + self.string_type + "."
+                    self.set_interaction_message(player, "You picked up " + self.string_type + ".")
                     self.item_quantity -= 1
         elif player.curr_basket is None:
-            self.interaction_message = "Let go of your cart to pick up food!"
+            self.set_interaction_message(player, "Let go of your cart to pick up food!")
         else:
             if not empty:
                 if not player.curr_basket.hit_limit():
-                    self.interaction_message = "You put " + self.string_type + " in your basket."
+                    self.set_interaction_message(player, "You put " + self.string_type + " in your basket.")
                     player.curr_basket.add_food(self.string_type, False)
                     self.item_quantity -= 1
                 else:
-                    self.interaction_message = "The basket is full! The food won't fit."
+                    self.set_interaction_message(player, "The basket is full! The food won't fit.")
         if empty:
-            self.interaction_message = "The shelf is empty."
+            self.set_interaction_message(player, "The shelf is empty.")
