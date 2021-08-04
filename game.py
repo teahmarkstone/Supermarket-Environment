@@ -36,6 +36,7 @@ DIRECTION_VECTOR = {
 
 DIRECTION_TO_INT = {Direction.NORTH: 0, Direction.SOUTH: 1, Direction.EAST: 2, Direction.WEST: 3}
 DIRECTIONS = [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]
+BOUNCE_COEFFICIENT = 0.2
 
 # milk aisle
 FOOD_IMAGES = {
@@ -486,15 +487,26 @@ class Game:
             cart.update_position(player.position[0] + current_speed * x1, player.position[1] + current_speed * y1)
             if self.collide(cart, cart.position[0], cart.position[1]) or self.hits_wall(cart, cart.position[0],
                                                                                         cart.position[1]):
+                # make the cart bounce if it was already facing the right way  and it can do so
+                new_position = player.position
+                if direction == prev_direction:
+                    bounce_position = (player.position[0] - BOUNCE_COEFFICIENT * current_speed * x1,
+                                       player.position[1] - BOUNCE_COEFFICIENT * current_speed * y1)
+                    if not self.collide(cart, bounce_position[0], bounce_position[1]) \
+                            and not self.hits_wall(cart, bounce_position[0], bounce_position[1]):
+                        new_position = bounce_position
+                        current_speed = - 1 * BOUNCE_COEFFICIENT * current_speed
+
                 # Undo the turning of the cart bc we're canceling the action
                 cart.set_direction(prev_direction)
-                cart.update_position(player.position[0], player.position[1])
-                return
+                cart.update_position(new_position[0], new_position[1])
+                if direction != prev_direction:
+                    return
 
         player.direction = direction
-        cart = player.curr_cart
-        if cart is not None:
-            cart.set_direction(direction)
+        # cart = player.curr_cart
+        # if cart is not None:
+        #     cart.set_direction(direction)
         basket = player.curr_basket
         if basket is not None:
             basket.set_direction(direction)
@@ -521,11 +533,11 @@ class Game:
                 obj.check_zones(self)
         new_position = [unit.position[0] + position_change[0], unit.position[1] + position_change[1]]
 
-        if self.collide(unit, new_position[0], new_position[1]):
-            return
-
-        if self.hits_wall(unit, new_position[0], new_position[1]):
-            return
+        if self.collide(unit, new_position[0], new_position[1]) or self.hits_wall(unit, new_position[0], new_position[1]):
+            position_change = (-BOUNCE_COEFFICIENT * position_change[0], -BOUNCE_COEFFICIENT * position_change[1])
+            new_position = [unit.position[0] + position_change[0], unit.position[1] + position_change[1]]
+            if self.hits_wall(unit, new_position[0], new_position[1]):
+                return
 
         # TODO stop rendering and disable actions for players who have left the store.
 
@@ -548,6 +560,8 @@ class Game:
                 return True
         # checking if players are colliding
         for player in self.players:
+            if isinstance(unit, Cart) and player.curr_cart == unit:
+                continue
             if player != unit and not player.left_store:
                 if player.collision(unit, x_position, y_position):
                     return True
