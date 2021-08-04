@@ -371,7 +371,7 @@ class WallCollisionNorm(Norm):
     def pre_monitor(self, game, action):
         new_violations = set()
         for i, player in enumerate(game.players):
-            next_pos = game.next_position(player, action[i])
+            next_pos = game.next_position(player, action[i][0])
             cart = player.curr_cart
             prev_dir = player.direction
             if cart is not None:
