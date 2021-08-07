@@ -320,6 +320,7 @@ if __name__ == "__main__":
         e = []
         if not args.headless:
             handler.handle_events()
+            env.render()
         for key, mask in events:
             if key.data is None:
                 accept_wrapper(key.fileobj)
@@ -364,5 +365,5 @@ if __name__ == "__main__":
                 json_to_send = get_action_json(command, env, obs, reward, done, info)
                 data = key.data
                 data.outb = str.encode(json.dumps(json_to_send) + "\n")
-        env.render()
+            env.render()
     sock_agent.close()
