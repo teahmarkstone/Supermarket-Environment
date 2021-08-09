@@ -97,9 +97,10 @@ class CartLike(InteractiveObject, abc.ABC):
             if not game.keyboard_input:
                 # TODO(dkasenberg) fix this: a socket player shouldn't have to do multiple commands to remove food
                 # from the cart.
-                if game.selected_food in self.contents or game.selected_food in self.purchased_contents:
-                    self.pickup(game.selected_food, player, game.food_images[game.selected_food])
-                game.selected_food = None
+                # if game.selected_food in self.contents or game.selected_food in self.purchased_contents:
+                #     self.pickup(game.selected_food, player, game.food_images[game.selected_food])
+                # game.selected_food = None
+                return
             else:
                 self.checking_contents = True
                 game.item_select = True

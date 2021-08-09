@@ -167,8 +167,7 @@ class Game:
         if self.keyboard_input:
             self.select_up = False
             self.select_down = False
-        else:
-            self.selected_food = None
+
 
         self.loaded = False
         if initial_state_filename is not None:
@@ -276,6 +275,8 @@ class Game:
             self.food_list.append(food_name)
             self.food_images[food_name] = food_image
 
+
+
     def load_from_file(self, file_path):
         from ast import literal_eval
         with open(file_path, "r") as file:
@@ -295,6 +296,7 @@ class Game:
         self.set_counters()
         self.set_carts()
         self.set_baskets()
+        # print(self.food_list)
         # make players
 
         if len(self.players) == 0:
@@ -688,12 +690,17 @@ class Game:
         self.objects.append(baskets)
 
     def select(self, i, food):
+        food = self.food_list[food]
+        print(food)
         if self.players[i].left_store:
             return
-        if not self.players[
-            i].interacting:  # TODO fix this? should players be able to select food without having interacted?
-            return
-        self.selected_food = self.food_list[food]
+        # if not self.players[
+        #     i].interacting:  # TODO fix this? should players be able to select food without having interacted?
+        #     return
+        for obj in self.objects:
+            if isinstance(obj, Basket) or isinstance(obj, Cart) and obj.can_interact(self.players[i]):
+                if food in obj.contents or food in obj.purchased_contents:
+                    obj.pickup(food, self.players[i], self.food_images[food])
 
     # checking if a player is facing an object
     # TODO maybe alter so that shopping carts have slightly different interaction zones?
@@ -814,10 +821,14 @@ class Game:
                     object_data["food_images"] = [obj.food_images[food] for food in obj.food_images.keys()]
                     object_data["capacity"] = obj.counter_capacity
                     object_data["image"] = obj.image
+
                     if obj.curr_player is not None:
                         object_data["curr_player"] = self.players.index(obj.curr_player)
                     else:
                         object_data["curr_player"] = None
+
+                if isinstance(obj, Carts) or isinstance(obj, Baskets):
+                    object_data["quantity"] = obj.quantity
                 category = get_obj_category(obj)
                 if category not in obs:
                     obs[category] = []
