@@ -286,8 +286,8 @@ if __name__ == "__main__":
              # ItemTheftFromBasketNorm(),
              AdhereToListNorm(),
              TookTooManyNorm(),
-             MoreThanSixNorm(),
-             SixOrLessNorm(),
+             BasketItemQuantNorm(basket_max=6),
+             CartItemQuantNorm(cart_min=6),
              UnattendedCheckoutNorm()
              ]
 

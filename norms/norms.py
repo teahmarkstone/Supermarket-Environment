@@ -862,17 +862,19 @@ def calculate_quantities(food_item, carts, baskets, player):
     return food_quantity
 
 
-class MoreThanSixViolation(NormViolation):
-    def __init__(self, player):
-        super(MoreThanSixViolation, self).__init__()
+class BasketItemQuantViolation(NormViolation):
+    def __init__(self, player, max):
+        super(BasketItemQuantViolation, self).__init__()
         self.player = player
+        self.max = max
+
 
     def as_string(self):
-        return "{player} took a basket when they have more than 6 items on their shopping list".format(
-            player=self.player)
+        return "{player} took a basket when they have more than {max} items on their shopping list".format(
+            player=self.player, max=self.max)
 
-
-class MoreThanSixNorm(Norm):
+# here
+class BasketItemQuantNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
@@ -883,23 +885,28 @@ class MoreThanSixNorm(Norm):
                     num_items = 0
                     for i in range(0, len(player.list_quant)):
                         num_items += player.list_quant[i]
-                    if num_items > 6:
-                        violations.add(MoreThanSixViolation(player))
+                    if num_items > self.basket_max:
+                        violations.add(BasketItemQuantViolation(player, self.basket_max))
                         self.known_violations.add(player)
         return violations
 
+    def __init__(self, basket_max):
+        super().__init__()
+        self.basket_max = basket_max
 
-class SixOrLessViolation(NormViolation):
-    def __init__(self, player):
-        super(SixOrLessViolation, self).__init__()
+
+class CartItemQuantViolation(NormViolation):
+    def __init__(self, player, min):
+        super(CartItemQuantViolation, self).__init__()
         self.player = player
+        self.min = min
 
     def as_string(self):
-        return "{player} took a cart when they have 6 or less items on their shopping list".format(
-            player=self.player)
+        return "{player} took a cart when they have less than {min} items on their shopping list".format(
+            player=self.player, min=self.min)
 
 
-class SixOrLessNorm(Norm):
+class CartItemQuantNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
@@ -910,10 +917,14 @@ class SixOrLessNorm(Norm):
                     num_items = 0
                     for i in range(0, len(player.list_quant)):
                         num_items += player.list_quant[i]
-                    if num_items <= 6:
-                        violations.add(SixOrLessViolation(player))
+                    if num_items < self.cart_min:
+                        violations.add(CartItemQuantViolation(player, self.cart_min))
                         self.known_violations.add(player)
         return violations
+
+    def __init__(self, cart_min):
+        super().__init__()
+        self.cart_min = cart_min
 
 
 class UnattendedCheckoutViolation(NormViolation):
