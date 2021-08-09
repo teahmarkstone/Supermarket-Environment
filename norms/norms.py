@@ -804,7 +804,7 @@ class AdhereToListNorm(Norm):
     def pre_monitor(self, game, action):
         violations = set()
         for i, player in enumerate(game.players):
-            if action[i] == PlayerAction.INTERACT:
+            if action[i][0] == PlayerAction.INTERACT:
                 interaction_object = game.interaction_object(player)
                 if isinstance(interaction_object, Shelf) or isinstance(interaction_object, Counter):
                     if interaction_object.string_type not in player.shopping_list and not player.holding_food \
