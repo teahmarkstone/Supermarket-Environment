@@ -202,11 +202,10 @@ class Game:
         for basket_dict in obs['baskets']:
             # JUMP
             pos = basket_dict['position']
-            basket = Basket(pos[0], pos[1], self.players[basket_dict['owner']], DIRECTIONS[basket_dict["direction"]],
-                            basket_dict["capacity"])
-            basket.being_held = basket_dict['being_held']
-            if basket_dict['being_held']:
-                self.players[basket_dict['last_held']].curr_basket = basket
+            basket = Basket(pos[0], pos[1], self.players[basket_dict["owner"]], DIRECTIONS[basket_dict["direction"]],
+                        basket_dict["capacity"])
+            last_held = basket_dict["last_held"]
+            basket.last_held = self.players[last_held] if last_held != -1 else None
             if sum(basket_dict["contents_quant"]) + sum(basket_dict["purchased_quant"]) > 0:
                 basket.state = CartState.FULL
             for i, string in enumerate(basket_dict["contents"]):
@@ -691,7 +690,6 @@ class Game:
 
     def select(self, i, food):
         food = self.food_list[food]
-        print(food)
         if self.players[i].left_store:
             return
         # if not self.players[
@@ -774,9 +772,9 @@ class Game:
                     "purchased_quant": [basket.purchased_contents[food] for food in basket.purchased_contents],
                     "width": basket.width,
                     "height": basket.height,
-                    "being_held": basket.being_held,
                 }
-                obs["baskets"].append(basket_data)
+                if basket_data not in obs["baskets"]:
+                    obs["baskets"].append(basket_data)
 
         for i, cart in enumerate(self.carts):
             cart_data = {
