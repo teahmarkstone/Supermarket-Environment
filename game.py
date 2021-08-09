@@ -274,6 +274,17 @@ class Game:
             self.food_list.append(food_name)
             self.food_images[food_name] = food_image
 
+        for baskets_dict in obs["basketReturns"]:
+            pos = baskets_dict["position"]
+            basketReturn = Baskets(pos[0], pos[1])
+            basketReturn.quantity = baskets_dict["quantity"]
+            self.objects.append(basketReturn)
+
+        for carts_dict in obs["cartReturns"]:
+            pos = carts_dict["position"]
+            cartReturn = Carts(pos[0], pos[1])
+            cartReturn.quantity = carts_dict["quantity"]
+            self.objects.append(cartReturn)
 
 
     def load_from_file(self, file_path):
@@ -292,9 +303,10 @@ class Game:
         if not self.loaded:
             self.set_registers()
             self.set_shelves()
+            self.set_carts()
+            self.set_baskets()
         self.set_counters()
-        self.set_carts()
-        self.set_baskets()
+
         # print(self.food_list)
         # make players
 
@@ -827,6 +839,7 @@ class Game:
 
                 if isinstance(obj, Carts) or isinstance(obj, Baskets):
                     object_data["quantity"] = obj.quantity
+
                 category = get_obj_category(obj)
                 if category not in obs:
                     obs[category] = []

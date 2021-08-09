@@ -59,6 +59,7 @@ class Carts(InteractiveObject):
                             game.objects.append(new_cart)
                             player.curr_cart = new_cart
                             new_cart.being_held = True
+                            self.quantity -= 1
                             self.set_interaction_message(player, "You picked up shopping cart. Press c to let go and pick up.")
                         else:
                             self.set_interaction_message(player, "Can't pick up a cart while holding food!")
@@ -71,5 +72,6 @@ class Carts(InteractiveObject):
                 self.set_interaction_message(player, "You put the shopping cart back.")
                 cart = player.curr_cart
                 player.curr_cart = None
+                self.quantity += 1
                 game.carts.remove(cart)
                 game.objects.remove(cart)
