@@ -54,8 +54,8 @@ class SupermarketEnv(gym.Env):
                 self.game.toggle_basket(i)
             elif player_action == PlayerAction.CANCEL:
                 self.game.cancel_interaction(i)
-            elif player_action == PlayerAction.SELECT:
-                self.game.select(i, arg)
+            elif player_action == PlayerAction.PICKUP:
+                self.game.pickup(i, arg)
         observation = self.game.observation()
         self.step_count += 1
         if not self.game.running:
@@ -112,8 +112,8 @@ class SinglePlayerSupermarketEnv(gym.Wrapper):
             self.game.toggle_basket(i)
         elif player_action == PlayerAction.CANCEL:
             self.game.cancel_interaction(i)
-        elif player_action == PlayerAction.SELECT:
-            self.game.select(i, arg)
+        elif player_action == PlayerAction.PICKUP:
+            self.game.pickup(i, arg)
         observation = self.game.observation()
         self.step_count += 1
         if not self.game.running:

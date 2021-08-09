@@ -10,4 +10,4 @@ class PlayerAction(IntEnum):
     INTERACT = 5,
     TOGGLE = 6,
     CANCEL = 7,
-    SELECT = 8
+    PICKUP = 8

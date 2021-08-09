@@ -700,16 +700,17 @@ class Game:
         baskets = Baskets(3.5, 18.5)
         self.objects.append(baskets)
 
-    def select(self, i, food):
+    def pickup(self, i, food):
         food = self.food_list[food]
         if self.players[i].left_store:
             return
-        # if not self.players[
-        #     i].interacting:  # TODO fix this? should players be able to select food without having interacted?
-        #     return
+
         for obj in self.objects:
-            if isinstance(obj, Basket) or isinstance(obj, Cart) and obj.can_interact(self.players[i]):
+            if (isinstance(obj, Basket) or isinstance(obj, Cart)) and obj.can_interact(self.players[i]):
                 if food in obj.contents or food in obj.purchased_contents:
+                    obj.pickup(food, self.players[i], self.food_images[food])
+            elif isinstance(obj, Register) and obj.can_interact(self.players[i]):
+                if food in obj.food_images.keys():
                     obj.pickup(food, self.players[i], self.food_images[food])
 
     # checking if a player is facing an object

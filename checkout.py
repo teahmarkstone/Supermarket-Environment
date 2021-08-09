@@ -171,7 +171,6 @@ class Register(InteractiveObject):
 
     # TODO(teah) we may need to fix the logic here to match the short_interact logic.
     def long_interact(self, game, player):
-
         if self.num_items > 0 and player != self.prev_player:
             self.set_interaction_message(player, "Please wait in line.")
             self.curr_player = self.prev_player
@@ -322,7 +321,6 @@ class Register(InteractiveObject):
 
     def pickup(self, food, player, food_image):
         # take off of counter
-        print(food)
         self.food_quantities[food] -= 1
         player.bought_holding_food = False
         if self.food_quantities[food] == 0:
