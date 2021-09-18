@@ -338,7 +338,11 @@ if __name__ == "__main__":
                             if command.startswith("SET"):
                                 obs = command[4:]
                                 from json import loads
-                                env.reset(obs=loads(obs))
+                                obs_to_return = env.reset(obs=loads(obs))
+                                print(obs_to_return)
+                                json_to_send = get_action_json("SET", env, obs_to_return, 0., False, None)
+                                data = key.data
+                                data.outb = str.encode(json.dumps(json_to_send) + "\n")
                             if is_single_player(command):
                                 player, command, arg = get_player_and_command(command)
                                 e.append((key, mask, command))

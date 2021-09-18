@@ -64,6 +64,7 @@ class NormWrapper(gym.Wrapper):
         self.violations = set()
 
     def reset(self, **kwargs):
-        super(NormWrapper, self).reset(**kwargs)
+        obs = super(NormWrapper, self).reset(**kwargs)
         for norm in self.norms:
             norm.reset()
+        return obs

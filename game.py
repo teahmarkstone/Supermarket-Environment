@@ -178,8 +178,7 @@ class Game:
         self.players = []
         self.carts = []
         self.baskets = []
-        self.objects = [x for x in self.objects if isinstance(x, Carts) or isinstance(x, Baskets)
-                        or isinstance(x, Counter)]
+        self.objects = [x for x in self.objects if isinstance(x, Counter)]
         for player_dict in obs['players']:
             pos = player_dict['position']
             player = Player(pos[0], pos[1], DIRECTIONS[player_dict['direction']], player_dict['index'],
