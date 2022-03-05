@@ -105,7 +105,7 @@ class Game:
 
     def __init__(self, num_players=1, player_speed=0.07, keyboard_input=False, render_messages=False, bagging=False,
                  headless=False, initial_state_filename=None, follow_player=-1, random_start=False,
-                 render_number=False, sprite_paths=None, record_path=None):
+                 render_number=False, sprite_paths=None, record_path=None, stay_alive=False):
 
         self.screen = None
         self.clock = None
@@ -128,6 +128,7 @@ class Game:
         self.camera = Camera()
         self.food_directory = defaultdict(int)
         self.sprite_paths = sprite_paths
+        self.stay_alive = stay_alive
 
         self.record_path = record_path
         self.recording = False
@@ -499,7 +500,7 @@ class Game:
             cart.update_position(player.position[0] + current_speed * x1, player.position[1] + current_speed * y1)
             if self.collide(cart, cart.position[0], cart.position[1]) or self.hits_wall(cart, cart.position[0],
                                                                                         cart.position[1]):
-                # make the cart bounce if it was already facing the right way  and it can do so
+                # make the cart bounce if it was already facing the right way and it can do so
                 new_position = player.position
                 if direction == prev_direction:
                     bounce_position = (player.position[0] - BOUNCE_COEFFICIENT * current_speed * x1,
@@ -557,8 +558,8 @@ class Game:
         if self.out_of_bounds(unit):
             unit.left_store = True
 
-        if all(self.out_of_bounds(player) for player in self.players) or \
-                (self.curr_player >= 0 and self.out_of_bounds(self.players[self.curr_player])):
+        if (all(self.out_of_bounds(player) for player in self.players) or \
+                (self.curr_player >= 0 and self.out_of_bounds(self.players[self.curr_player]))) and not self.stay_alive:
             self.running = False
 
     # checks if given [x,y] collides with an object
